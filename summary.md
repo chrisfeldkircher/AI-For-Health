@@ -8,16 +8,16 @@ Binary audio classification: Cold vs Non-Cold on the ComParE 2017 Cold sub-chall
 
 ## Attack-plan status
 
-| Rung | Status       | Headline                                                                 |
-|------|--------------|--------------------------------------------------------------------------|
-| A2   | **locked**   | Frozen WavLM-Large + layer-weighted pooled-stats probe → **UAR 0.6428 ± 0.0034** |
-| A3   | next         | Phoneme-aware pooling (scoping: charsiu aligner, 5 phonetic categories)  |
-| A4   | planned      | Discrete audio tokens as auxiliary feature stream                        |
-| A5   | planned      | OOD feature family                                                       |
-| A5.5 | planned      | Augmentation — directly attacks training-speaker shortcut                |
-| A6   | planned      | Contrastive pretraining (speaker-masked loss)                            |
-| A7   | planned      | MDD adversarial head — highest-variance, highest-upside bet              |
-| A9   | planned      | Late fusion with ComParE + SVM                                           |
+| Rung | Status       | Headline                                                                                 |
+|------|--------------|------------------------------------------------------------------------------------------|
+| A2   | **locked**   | Frozen WavLM-Large + layer-weighted pooled-stats probe → **UAR 0.6428 ± 0.0034**         |
+| A3   | in progress  | Phoneme-aware pooling (wav2vec2-xlsr phoneme CTC, 6 categories) — frame cache scaffolded |
+| A4   | planned      | Discrete audio tokens as auxiliary feature stream                                        |
+| A5   | planned      | OOD feature family                                                                       |
+| A5.5 | planned      | Augmentation — directly attacks training-speaker shortcut                                |
+| A6   | planned      | Contrastive pretraining (speaker-masked loss)                                            |
+| A7   | planned      | MDD adversarial head — highest-variance, highest-upside bet                              |
+| A9   | planned      | Late fusion with ComParE + SVM                                                           |
 
 Expected gain per rung: A3–A5 worth ~0.5–1.5 UAR each; A5.5 and A6 worth ~1–2 each; A7 is 2–5 if it works, ~0 if it destabilises. Budget to baseline: ~8 UAR points across ~6 rungs.
 
@@ -70,7 +70,7 @@ model/
     augmentation.py       SpliceSpec + symmetric-across-class sampler (not yet wired)
   features/
     backbone.py           Backbone protocol; WavLM/HuBERT/Whisper concrete impls (fp16)
-    extract.py            Batched pooled-stats extraction with masked pooling
+    extract.py            Batched pooled-stats + frame-level extraction (extract_frames for A3)
     cache.py              CacheManifest (checkpoint_hash + version compat check)
     standardizer.py       FeatureStandardiser (per-position z-score, registered buffers)
     head.py               LayerWeightedPooledHead
@@ -81,7 +81,9 @@ model/
     probe.py              SpeakerProbe (2-layer MLP), extract_z, train_probe
   run.ipynb               orchestration cells — training, calibration, probe
 cache/
-  microsoft_wavlm-large/  pooled stats + per-seed head checkpoints (head_A2_seed{S}.pt)
+  microsoft_wavlm-large/
+    pooled/               pooled stats + per-seed head checkpoints (head_A2_seed{S}.pt)
+    frames/L{1,4,8,12,16,20,24}/  per-utterance fp16 frames, padding stripped (for A3/A4/A6)
   ecapa-voxceleb/         28652 × [192] fp16 speaker embeddings
   pseudo_speakers/        k{100,210,420}_seed42.tsv
   speechbrain/            auto-downloaded ECAPA checkpoint
@@ -102,12 +104,23 @@ results/
 - **Threshold on train_threshold, not devel**: reviewer's call — picking τ on devel and reporting on devel is the Huckvale dev-tuning trap.
 - **Pseudo-speakers via ECAPA + KMeans k=210**: URTIC has no speaker IDs; ECAPA (voxceleb-trained) + KMeans-on-train + nearest-centroid-on-devel gives defensible speaker groupings. k=210 wins silhouette sweep cleanly, matching URTIC's ~210-speakers-per-split prior.
 
-## Open decisions (for A3)
+## A3 status (in progress)
 
-1. **Phoneme aligner**: leaning `charsiu_forced_aligner` over MFA — Python-only, MFA-quality, no transcripts required. Open to MFA if you want the gold-standard.
-2. **Pooling granularity**: leaning **5 phonetic categories** (nasals, fricatives, plosives, vowels, silence) — respects Wagner's fricative/nasal finding without going so fine we get empty buckets on 2–8s chunks.
-3. **Version control**: repo is not git-initialised. Want me to `git init` + commit + tag `a2-locked`, or are you handling externally?
+**Locked decisions**:
 
-## Immediate next step
+- **Phoneme labeller**: `facebook/wav2vec2-xlsr-53-espeak-cv-ft` — multilingual per-frame phoneme CTC, direct IPA output at 50 Hz, no transcripts required. Pivoted away from charsiu (English defaults) and WebMAUS (needs ASR+align chain whose errors would correlate with cold signal on a German corpus).
+- **Categories**: **6** — vowels, nasals, fricatives, plosives, approximants, silence. Covers Wagner's fricative/nasal finding; approximants added as a distinct category per reviewer.
+- **Empty-bucket handling**: Option A — zero-fill the pooled stats + binary indicator per category, so the head can learn to down-weight missing categories rather than seeing noisy NaN-substitutes.
+- **Version control**: `git init` done. Root commit `ff0a32b` on `main`, tagged `a2-probed`.
 
-Awaiting go-ahead on the A3 scoping. Once decisions (1) and (2) are locked, I'll write `model/features/phoneme_align.py` + pooling head extension + notebook cell, run on the 3 lock seeds, and add the A3 row.
+**Done**:
+
+- `extract_frames()` added to `features/extract.py`; writes `cache/microsoft_wavlm-large/frames/L{N}/{stem}.pt` fp16, padding stripped. Per-layer file layout so A4/A6 can load subsets cheaply. Idempotent via `skip_existing=True`.
+- Notebook cell appended (last cell of `run.ipynb`), self-contained — runs over `train` + `devel`.
+
+**Remaining for A3**:
+
+1. Phoneme CTC module — batched inference with `facebook/wav2vec2-xlsr-53-espeak-cv-ft`, write `cache/phoneme_labels/{stem}.pt` fp16 (argmax phoneme ID per frame at 50 Hz). Verify frame rate matches WavLM; resample if not.
+2. `cache/phoneme_labels/categories.json` — IPA → 6-category int map.
+3. A3 head — per-category masked pooling (mean+std+skew+kurt) across selected WavLM layers, concat with A2 pooled features, keep empty-bucket indicators as auxiliary channels.
+4. Train on lock seeds `{42, 123, 7}`, re-run speaker probe (must not increase — phoneme pooling shouldn't *add* speaker structure), add A3 row to results table.

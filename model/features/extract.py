@@ -11,6 +11,9 @@ from .backbone import Backbone
 from .cache import CacheManifest, save_pooled
 
 
+DEFAULT_FRAME_LAYERS: tuple[int, ...] = (1, 4, 8, 12, 16, 20, 24)
+
+
 def pooled_stats(x: torch.Tensor) -> torch.Tensor:
     """
     Mean, std, skewness, kurtosis over the time axis.
@@ -132,4 +135,82 @@ def extract_pooled(
         n_chunks=n_written,
     )
     manifest.save(Path(cache_root) / backbone.backbone_id / "manifest.json")
+    return manifest
+
+
+def extract_frames(
+    backbone: Backbone,
+    dataset: Dataset,
+    cache_root: str,
+    layers: tuple[int, ...] = DEFAULT_FRAME_LAYERS,
+    batch_size: int = 4,
+    num_workers: int = 0,
+    skip_existing: bool = True,
+    progress: bool = True,
+) -> CacheManifest:
+    """
+    Write frame-level hidden states for the selected `layers` to
+    `{cache_root}/{backbone_id}/frames/L{N}/{stem}.pt`.
+
+    Each file holds a tensor of shape [T_valid, hidden_dim] in fp16, with
+    padding frames already stripped via the backbone output mask.
+
+    Layouting per-layer (rather than a single [len(layers), T, D] tensor per
+    file) lets downstream rungs load only the layers they need without paying
+    the bandwidth for the others.
+    """
+    root = Path(cache_root) / backbone.backbone_id / "frames"
+    for L in layers:
+        (root / f"L{L}").mkdir(parents=True, exist_ok=True)
+
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        collate_fn=_pad_collate,
+    )
+
+    if progress:
+        try:
+            from tqdm.auto import tqdm
+            loader_iter = tqdm(loader, desc=f"frames[{backbone.backbone_id}]")
+        except ImportError:
+            loader_iter = loader
+    else:
+        loader_iter = loader
+
+    n_written = 0
+    for batch in loader_iter:
+        file_names = batch["file_name"]
+
+        remaining_idx: list[tuple[int, str]] = []
+        for i, fn in enumerate(file_names):
+            stem = fn[:-4] if fn.endswith(".wav") else fn
+            if skip_existing and all((root / f"L{L}" / f"{stem}.pt").exists() for L in layers):
+                continue
+            remaining_idx.append((i, stem))
+        if not remaining_idx:
+            continue
+
+        hidden, out_mask = backbone(batch["audio"], batch["attention_mask"])
+
+        for i, stem in remaining_idx:
+            valid = out_mask[i]                                 # [T_out] bool
+            T_valid = int(valid.sum().item())
+            for L in layers:
+                target = root / f"L{L}" / f"{stem}.pt"
+                if skip_existing and target.exists():
+                    continue
+                frames = hidden[i, L, :T_valid, :].contiguous().to(torch.float16).cpu()
+                save_pooled(target, frames)
+                n_written += 1
+
+    manifest = CacheManifest.create(
+        backbone=backbone,
+        stat_dim=backbone.hidden_dim,
+        n_chunks=n_written,
+    )
+    manifest_path = Path(cache_root) / backbone.backbone_id / f"frames_manifest_L{'_'.join(str(L) for L in layers)}.json"
+    manifest.save(manifest_path)
     return manifest

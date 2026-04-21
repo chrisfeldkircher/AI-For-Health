@@ -1,5 +1,11 @@
 from .backbone import Backbone, WavLMBackbone, HuBERTBackbone, WhisperEncoderBackbone, build_backbone
-from .extract import extract_pooled, pooled_stats, pooled_stats_masked
+from .extract import (
+    extract_pooled,
+    extract_frames,
+    pooled_stats,
+    pooled_stats_masked,
+    DEFAULT_FRAME_LAYERS,
+)
 from .head import LayerWeightedPooledHead
 from .cache import CacheManifest, load_pooled, save_pooled
 from .standardizer import FeatureStandardiser
@@ -21,8 +27,10 @@ __all__ = [
     "WhisperEncoderBackbone",
     "build_backbone",
     "extract_pooled",
+    "extract_frames",
     "pooled_stats",
     "pooled_stats_masked",
+    "DEFAULT_FRAME_LAYERS",
     "LayerWeightedPooledHead",
     "CacheManifest",
     "load_pooled",
