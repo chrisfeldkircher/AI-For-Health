@@ -1,0 +1,44 @@
+# licensed / external raw data (not redistributable)
+/dataset/
+/ComParE2017_Cold_4students.zip
+
+# course materials / reference papers (may be copyrighted)
+*.pdf
+
+# caches (huge, regenerable from dataset + code)
+# but keep pseudo-speaker TSVs under version control — they encode the
+# clustering assumption for A5.5 / A6 / A7 and are small
+/cache/*
+!/cache/pseudo_speakers/
+# second cache location appears inside model/ because notebooks cwd is there
+/model/cache/
+
+# local model checkpoints (binary, regenerable)
+/checkpoints/
+
+# claude tooling / project settings
+/.claude/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+env/
+venv/
+
+# jupyter
+.ipynb_checkpoints/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+@eaDir/
+.vscode/
+.idea/
+
+# backups
+*.bak
+*.json.bak

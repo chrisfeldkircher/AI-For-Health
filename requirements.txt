@@ -1,0 +1,8 @@
+torch>=2.1
+torchaudio>=2.1
+transformers>=4.40
+numpy>=1.24
+scipy>=1.10
+librosa>=0.10
+opensmile>=2.5
+tqdm>=4.65
