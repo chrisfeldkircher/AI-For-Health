@@ -6,6 +6,12 @@ from .extract import (
     pooled_stats_masked,
     DEFAULT_FRAME_LAYERS,
 )
+from .phoneme import (
+    extract_phonemes,
+    classify_token,
+    build_category_map,
+    PHONEME_CATEGORIES,
+)
 from .head import LayerWeightedPooledHead
 from .cache import CacheManifest, load_pooled, save_pooled
 from .standardizer import FeatureStandardiser
@@ -31,6 +37,10 @@ __all__ = [
     "pooled_stats",
     "pooled_stats_masked",
     "DEFAULT_FRAME_LAYERS",
+    "extract_phonemes",
+    "classify_token",
+    "build_category_map",
+    "PHONEME_CATEGORIES",
     "LayerWeightedPooledHead",
     "CacheManifest",
     "load_pooled",
