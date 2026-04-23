@@ -12,6 +12,11 @@ from .phoneme import (
     build_category_map,
     PHONEME_CATEGORIES,
 )
+from .manner import (
+    extract_manner_labels,
+    compute_manner,
+    MANNER_CATEGORIES,
+)
 from .head import LayerWeightedPooledHead
 from .cache import CacheManifest, load_pooled, save_pooled
 from .standardizer import FeatureStandardiser
@@ -41,6 +46,9 @@ __all__ = [
     "classify_token",
     "build_category_map",
     "PHONEME_CATEGORIES",
+    "extract_manner_labels",
+    "compute_manner",
+    "MANNER_CATEGORIES",
     "LayerWeightedPooledHead",
     "CacheManifest",
     "load_pooled",
