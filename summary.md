@@ -108,6 +108,28 @@ results/
 - **Threshold on train_threshold, not devel**: reviewer's call — picking τ on devel and reporting on devel is the Huckvale dev-tuning trap.
 - **Pseudo-speakers via ECAPA + KMeans k=210**: URTIC has no speaker IDs; ECAPA (voxceleb-trained) + KMeans-on-train + nearest-centroid-on-devel gives defensible speaker groupings. k=210 wins silhouette sweep cleanly, matching URTIC's ~210-speakers-per-split prior.
 
+## Pseudo-speaker validation (ECAPA vs WavLM-SV)
+
+Probe-validation experiment in `model/test.ipynb` to substantiate the ECAPA + KMeans(k=210) choice with multi-method evidence and rule out a swap to WavLM-base-plus-sv. Run on train embeddings only (N=9505).
+
+**ECAPA-VoxCeleb (raw 192-d, L2-normalised, no UMAP)**:
+
+- KMeans k=210 silhouette: **+0.235** (positive, real structure)
+- HDBSCAN: **204 clusters**, 2.7% noise, silhouette +0.291
+- KMeans vs HDBSCAN agreement: **ARI 0.856 / NMI 0.962** — two methods with completely different inductive biases (centroid vs density-based) recover essentially the same partition.
+- kNN cohesion @ k=10: **0.957** — 96% of chunks have all 10 nearest neighbours sharing a cluster, exactly what same-speaker chunks should look like for a corpus where each speaker reads the same passage chunked into 8 s pieces.
+
+**WavLM-base-plus-sv (raw 512-d, post-UMAP-32d analysis)**: HDBSCAN flags **25.0% of points as noise**; KMeans-vs-HDBSCAN ARI = **0.093** — the two methods cannot agree on a partition, meaning there is no stable speaker structure in this embedding space on URTIC. Confirms the architectural-circularity concern empirically: a WavLM-derived speaker embedding doesn't recover speaker structure on URTIC the way an architecturally independent encoder (ECAPA, VoxCeleb-trained) does.
+
+**Headline take-aways for the write-up**:
+
+- HDBSCAN finding **204 clusters ≈ KMeans k=210**, *independently*, on raw ECAPA embeddings, is much stronger evidence for the chosen k than any single silhouette score.
+- 204 ≈ 210 ≈ URTIC's expected ~210 speakers/split corroborates that the structure being recovered is genuinely speaker-identity, not artefact.
+- Silhouette in UMAP-projected space is inflated (UMAP is designed to pull neighbours together — the +0.92 in UMAP-32d is a self-fulfilling number); raw-embedding silhouette is the honest figure to report.
+- WavLM-SV is now the documented *negative control* — not "we didn't try it", but "we tried it and it doesn't recover speaker structure on URTIC".
+
+**Decision (locked)**: stay on ECAPA + KMeans(k=210) for all probe and pseudo-speaker uses. Revisit (TitaNet-L or CAM++, both architecturally independent from WavLM) only before A6 (speaker-masked contrastive pretraining), where pseudo-speaker labels become *training targets* rather than just probe ground truth.
+
 ## A3 — full record
 
 **Headline**: phoneme-CTC labelling abandoned with empirical evidence; pivoted to acoustic-manner labelling (pYIN voicing + RMS energy); manner validation gate PASSED on 20-chunk subset; full extraction running. A3 head, training, and probe still to do.
