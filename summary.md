@@ -174,13 +174,19 @@ results/
 
 Time-range structure on `devel_0001` (399 frames = 7.98 s): speech bracketed by silence, alternating voiced/unvoiced with syllable-scale durations (vowels 300–900 ms, consonants 60–300 ms), trailing 1.46 s silence. No pathological 20-ms flicker. pYIN behaving exactly as advertised.
 
-### Remaining for A3 (after full extraction completes)
+### Full manner extraction (DONE)
 
-1. **Full manner extraction** over train + devel via the last cell of `run.ipynb` (running now). pYIN is single-threaded → expect ~30–60 min wall-time on CPU.
-2. **Category-pooling extractor** — reads `frames/L{N}/{stem}.pt` + `manner_labels/{stem}.pt`, writes `cache/microsoft_wavlm-large/manner_pooled/{stem}.pt` as `{pooled: [7 layers, 3 cats, 2*1024] fp16, indicator: [3] uint8}` (mean+std only; 3rd/4th moments too noisy on the smallest bucket per utterance).
-3. **A3 head** — two branches: A2 pooled-stats (25×4096 → softmax layer-mix → 4096) concat A3 manner-pooled (7×3×2048 → softmax layer-mix shared across cats → 3×2048 = 6144) concat indicator (3). FeatureStandardiser → MLP 128 → BN → GELU → dropout 0.6 → 2-class. Weight decay bumped to 3e-3 given capacity jump.
-4. **Train on lock seeds** `{42, 123, 7}`, **re-run speaker probe** — top-1 must not increase vs A2 (manner pooling mustn't smuggle in extra speaker structure).
-5. Add A3 row to `results/README.md` + write `results/A3.json`.
+Wall-time **22.6 h** on CPU (much slower than initial extrapolation; pYIN HMM-Viterbi cost per utterance is ~5× the 20-chunk validation estimate). Cache is idempotent (`skip_existing=True`), never needs to run again.
+
+- `cache/manner_labels/{stem}.pt` — **19101 int8 tensors** (train 9505 + devel 9596), aligned to WavLM L1 frame count per utterance.
+- `cache/manner_labels/categories.json` — `{"names": ["silence", "voiced", "unvoiced"]}`.
+
+### Remaining for A3
+
+1. **Category-pooling extractor** — reads `frames/L{N}/{stem}.pt` + `manner_labels/{stem}.pt`, writes `cache/microsoft_wavlm-large/manner_pooled/{stem}.pt` as `{pooled: [7 layers, 3 cats, 2*1024] fp16, indicator: [3] uint8}` (mean+std only; 3rd/4th moments too noisy on the smallest bucket per utterance).
+2. **A3 head** — two branches: A2 pooled-stats (25×4096 → softmax layer-mix → 4096) concat A3 manner-pooled (7×3×2048 → softmax layer-mix shared across cats → 3×2048 = 6144) concat indicator (3). FeatureStandardiser → MLP 128 → BN → GELU → dropout 0.6 → 2-class. Weight decay bumped to 3e-3 given capacity jump.
+3. **Train on lock seeds** `{42, 123, 7}`, **re-run speaker probe** — top-1 must not increase vs A2 (manner pooling mustn't smuggle in extra speaker structure).
+4. Add A3 row to `results/README.md` + write `results/A3.json`.
 
 **Acceptance**: A3 must beat A2's argmax UAR (0.6428 ± 0.0034) by ≥ 0.007 (2σ at N=3) AND speaker probe top-1 must not exceed A2's 0.0501 ± 0.0009 by more than 1σ. If the head beats A2 but the probe inflates, A3 is rejected as a confound (manner pooling smuggling speaker info). If neither: document as null result, keep `manner_pooled/` cache for possible late fusion, move to A4.
 
