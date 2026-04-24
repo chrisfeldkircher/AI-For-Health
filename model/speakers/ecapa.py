@@ -93,16 +93,29 @@ def load_ecapa_encoder(
     """
     Load speechbrain/spkrec-ecapa-voxceleb. Handles both SpeechBrain import
     layouts (inference.speaker in >=0.5.16, pretrained in older versions).
+
+    MPS workaround: SpeechBrain 1.1.0's Pretrained.__init__ only sets
+    `self.device_type` on the cpu/cuda branches, then constructs TorchAutocast
+    with `self.device_type` unconditionally — so passing device="mps" raises
+    AttributeError during init. Since TorchAutocast is a no-op at fp32, we
+    load on cpu and move the modules afterwards.
     """
     try:
         from speechbrain.inference.speaker import EncoderClassifier
     except ImportError:
         from speechbrain.pretrained import EncoderClassifier
-    return EncoderClassifier.from_hparams(
+
+    needs_move = device not in ("cpu",) and not device.startswith("cuda")
+    load_device = "cpu" if needs_move else device
+    enc = EncoderClassifier.from_hparams(
         source="speechbrain/spkrec-ecapa-voxceleb",
         savedir=savedir,
-        run_opts={"device": device},
+        run_opts={"device": load_device},
     )
+    if needs_move:
+        enc.mods.to(device)
+        enc.device = device
+    return enc
 
 
 @torch.no_grad()
