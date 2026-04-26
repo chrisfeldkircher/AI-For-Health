@@ -17,7 +17,12 @@ from .manner import (
     compute_manner,
     MANNER_CATEGORIES,
 )
+from .manner_pool import (
+    extract_manner_pooled,
+    pool_manner_one,
+)
 from .head import LayerWeightedPooledHead
+from .head_a3 import MannerAwareHead, MannerStandardiser
 from .cache import CacheManifest, load_pooled, save_pooled
 from .standardizer import FeatureStandardiser
 from .train import (
@@ -29,6 +34,11 @@ from .train import (
     predict_probs,
     sweep_threshold,
     evaluate_at_threshold,
+    train_head_joint,
+    evaluate_joint,
+    predict_probs_joint,
+    sweep_threshold_joint,
+    evaluate_at_threshold_joint,
 )
 
 __all__ = [
@@ -49,7 +59,11 @@ __all__ = [
     "extract_manner_labels",
     "compute_manner",
     "MANNER_CATEGORIES",
+    "extract_manner_pooled",
+    "pool_manner_one",
     "LayerWeightedPooledHead",
+    "MannerAwareHead",
+    "MannerStandardiser",
     "CacheManifest",
     "load_pooled",
     "save_pooled",
@@ -61,4 +75,9 @@ __all__ = [
     "predict_probs",
     "sweep_threshold",
     "evaluate_at_threshold",
+    "train_head_joint",
+    "evaluate_joint",
+    "predict_probs_joint",
+    "sweep_threshold_joint",
+    "evaluate_at_threshold_joint",
 ]

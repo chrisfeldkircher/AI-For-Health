@@ -71,6 +71,28 @@ def extract_z(
     return torch.cat(zs, dim=0), names
 
 
+@torch.no_grad()
+def extract_z_joint(
+    head: nn.Module,
+    ds: Dataset,
+    device: str,
+    batch_size: int = 256,
+) -> tuple[torch.Tensor, list[str]]:
+    """Variant for two-stream heads (e.g. MannerAwareHead) — uses the joint
+    collate and passes the batch dict to the head."""
+    from features.train import _joint_collate, _to_device_joint
+    loader = DataLoader(ds, batch_size=batch_size, shuffle=False, collate_fn=_joint_collate)
+    head.eval().to(device)
+    zs: list[torch.Tensor] = []
+    names: list[str] = []
+    for batch in loader:
+        feats = _to_device_joint(batch, device)
+        _, z = head(feats)
+        zs.append(z.detach().cpu())
+        names.extend(batch["file_name"])
+    return torch.cat(zs, dim=0), names
+
+
 @dataclass
 class ProbeResult:
     top1: float

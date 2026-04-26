@@ -102,6 +102,87 @@ class PooledCacheDataset(Dataset):
         return w
 
 
+class JointPooledMannerDataset(Dataset):
+    """
+    Loads pooled-stats + manner-pooled + indicator for the A3 two-stream head.
+
+    Each sample is a dict:
+        pooled        : [n_layers_a2, stat_dim] fp16    (A2 mean+std+skew+kurt per layer)
+        pooled_manner : [n_layers_m, n_cats, 2*hidden] fp16  (A3 mean+std per cat, per layer)
+        indicator     : [n_cats] uint8                  (1 if cat had >=1 frame)
+        label         : long scalar (1=Cold, 0=Non-Cold, -1=unlabelled)
+        file_name     : str
+    """
+
+    def __init__(
+        self,
+        data_dir: str,
+        cache_root: str,
+        backbone_id: str,
+        split: str = "train",
+        file_list: Optional[list[str]] = None,
+    ):
+        self.data_dir = data_dir
+        self.pooled_dir = Path(cache_root) / backbone_id / "pooled"
+        self.manner_dir = Path(cache_root) / backbone_id / "manner_pooled"
+        if not self.pooled_dir.exists():
+            raise FileNotFoundError(f"no pooled cache at {self.pooled_dir}")
+        if not self.manner_dir.exists():
+            raise FileNotFoundError(f"no manner_pooled cache at {self.manner_dir}")
+
+        self.labels = load_labels(data_dir)
+        pooled_stems = {p.stem for p in self.pooled_dir.glob("*.pt")}
+        manner_stems = {p.stem for p in self.manner_dir.glob("*.pt")}
+        cached_stems = pooled_stems & manner_stems
+
+        if file_list is not None:
+            self.files = list(file_list)
+        else:
+            self.files = sorted(
+                f for f in self.labels
+                if f.startswith(f"{split}_") and f[:-4] in cached_stems
+            )
+
+        missing = [f for f in self.files if f[:-4] not in cached_stems]
+        if missing:
+            raise FileNotFoundError(
+                f"{len(missing)} files missing from pooled+manner caches "
+                f"(first: {missing[:3]}). Run extraction first."
+            )
+
+    def __len__(self) -> int:
+        return len(self.files)
+
+    def __getitem__(self, idx: int) -> dict:
+        fn = self.files[idx]
+        stem = fn[:-4]
+        pooled = torch.load(
+            self.pooled_dir / f"{stem}.pt",
+            weights_only=True, map_location="cpu",
+        )
+        bundle = torch.load(
+            self.manner_dir / f"{stem}.pt",
+            weights_only=True, map_location="cpu",
+        )
+        return {
+            "pooled": pooled,
+            "pooled_manner": bundle["pooled"],
+            "indicator": bundle["indicator"],
+            "label": torch.tensor(self.labels.get(fn, -1), dtype=torch.long),
+            "file_name": fn,
+        }
+
+    def get_labels(self) -> list[int]:
+        return [self.labels[f] for f in self.files]
+
+    def class_counts(self) -> dict[int, int]:
+        counts: dict[int, int] = {}
+        for f in self.files:
+            lab = self.labels[f]
+            counts[lab] = counts.get(lab, 0) + 1
+        return counts
+
+
 def stratified_split(
     files: list[str],
     labels: dict[str, int],

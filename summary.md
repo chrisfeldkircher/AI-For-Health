@@ -8,18 +8,25 @@ Binary audio classification: Cold vs Non-Cold on the ComParE 2017 Cold sub-chall
 
 ## Attack-plan status
 
-| Rung | Status       | Headline                                                                                 |
-|------|--------------|------------------------------------------------------------------------------------------|
-| A2   | **locked**   | Frozen WavLM-Large + layer-weighted pooled-stats probe → **UAR 0.6428 ± 0.0034**         |
-| A3   | in progress  | Manner-aware pooling (pYIN+RMS, 3 cats) — phoneme-CTC pivoted, manner gate passed        |
-| A4   | planned      | Discrete audio tokens as auxiliary feature stream                                        |
-| A5   | planned      | OOD feature family                                                                       |
-| A5.5 | planned      | Augmentation — directly attacks training-speaker shortcut                                |
-| A6   | planned      | Contrastive pretraining (speaker-masked loss)                                            |
-| A7   | planned      | MDD adversarial head — highest-variance, highest-upside bet                              |
-| A9   | planned      | Late fusion with ComParE + SVM                                                           |
+- **A2** — *locked.* Frozen WavLM-Large + layer-weighted pooled-stats probe → **UAR 0.6428 ± 0.0034**
+- **A3** — *null result, rejected.* Manner-aware pooling (pYIN+RMS, 3 cats) → argmax UAR 0.6344 ± 0.0069 (−0.008 vs A2), probe top-1 0.0555 ± 0.0030 (+0.005 vs A2). Both acceptance gates failed. Cache kept for possible reuse as a feature group inside A5.
+- **A5** — *planned (next).* Enriched handcrafted features + honesty-score weighting + learned gating (late fusion, absorbs A9)
+- **A4** — *planned (speculative).* Discrete audio tokens (EnCodec/HuBERT-codes) as auxiliary stream
+- **A5.5** — *planned.* Augmentation — directly attacks training-speaker shortcut
+- **A6** — *planned.* Contrastive pretraining (speaker-masked loss)
+- **A7** — *planned.* MDD adversarial head — highest-variance, highest-upside bet
+- **A9** — *merged into A5.* Late fusion is A5's output stage, not a standalone rung
 
-Expected gain per rung: A3–A5 worth ~0.5–1.5 UAR each; A5.5 and A6 worth ~1–2 each; A7 is 2–5 if it works, ~0 if it destabilises. Budget to baseline: ~8 UAR points across ~6 rungs.
+Expected gain per rung: A3 worth ~0.5–1.5 UAR; A5 worth ~1–2 (the honesty-weighted fusion is the main de-confounding lever we have pre-A6); A5.5 and A6 worth ~1–2 each; A7 is 2–5 if it works, ~0 if it destabilises. Budget to baseline: ~8 UAR points across ~6 rungs.
+
+### Plan divergence from the original scaffold
+
+Tracked here so the write-up can describe what we actually did, not what we first sketched:
+
+- **A3 labeller pivoted then A3 head rejected**: phoneme-CTC (`wav2vec2-xlsr-53-espeak-cv-ft`) documented as abandoned negative result (84% blank, sharply confident → domain-mismatched). Replaced with pYIN voicing + RMS silence-gate → 3 acoustic-manner categories. Manner labels validated, full cache built, head trained on 3 seeds — both acceptance gates failed (UAR Δ −0.008 vs A2, probe top-1 +0.005). Rejected; manner caches retained as candidate feature group for A5. See [A3 full record](#a3--full-record).
+- **A5 scope expanded, absorbs A9**: old A5 ("OOD feature family") was vague. Replaced with a concrete enriched-handcrafted-features design weighted by a per-group **honesty score** (`label_association / speaker_association`) and closed over a **learned gate**. A9 (late fusion) is the A5 output stage rather than a separate rung — one fusion design, one end-to-end training run, one speaker-probe check.
+- **A5 promoted ahead of A4**: A5 attacks the speaker shortcut directly via a measurement (honesty score is the Huckvale trap in numerical form). A4 (discrete tokens) stays on the plan but is scheduled behind A5 — it's more speculative and gives no probe guarantee.
+- **Pseudo-speakers locked on ECAPA + KMeans(k=210)**: HDBSCAN-204-vs-KMeans-210 cross-method agreement (ARI 0.856 / NMI 0.962) is now the load-bearing evidence, not the raw silhouette number. WavLM-SV documented as a negative control. See [Pseudo-speaker validation](#pseudo-speaker-validation-ecapa-vs-wavlm-sv).
 
 ## Locked: A2 baseline
 
@@ -203,14 +210,88 @@ Wall-time **22.6 h** on CPU (much slower than initial extrapolation; pYIN HMM-Vi
 - `cache/manner_labels/{stem}.pt` — **19101 int8 tensors** (train 9505 + devel 9596), aligned to WavLM L1 frame count per utterance.
 - `cache/manner_labels/categories.json` — `{"names": ["silence", "voiced", "unvoiced"]}`.
 
-### Remaining for A3
+### Built and trained
 
-1. **Category-pooling extractor** — reads `frames/L{N}/{stem}.pt` + `manner_labels/{stem}.pt`, writes `cache/microsoft_wavlm-large/manner_pooled/{stem}.pt` as `{pooled: [7 layers, 3 cats, 2*1024] fp16, indicator: [3] uint8}` (mean+std only; 3rd/4th moments too noisy on the smallest bucket per utterance).
-2. **A3 head** — two branches: A2 pooled-stats (25×4096 → softmax layer-mix → 4096) concat A3 manner-pooled (7×3×2048 → softmax layer-mix shared across cats → 3×2048 = 6144) concat indicator (3). FeatureStandardiser → MLP 128 → BN → GELU → dropout 0.6 → 2-class. Weight decay bumped to 3e-3 given capacity jump.
-3. **Train on lock seeds** `{42, 123, 7}`, **re-run speaker probe** — top-1 must not increase vs A2 (manner pooling mustn't smuggle in extra speaker structure).
-4. Add A3 row to `results/README.md` + write `results/A3.json`.
+1. **Category-pooling extractor** — `model/features/manner_pool.py`. Per-utterance mean+std per (layer, category) over the 7-layer frame cache and 3-cat labels. Writes `cache/microsoft_wavlm-large/manner_pooled/{stem}.pt` as `{pooled: [7, 3, 2048] fp16, indicator: [3] uint8}`. Empty buckets zero-filled and flagged via the indicator. 19101 bundles cached (~12 min).
+2. **A3 head** — `model/features/head_a3.py::MannerAwareHead`. Two streams: A2 `[25, 4096]` and manner `[7, 3, 2048]`. Per-stream FeatureStandardiser (manner-side fit weighted by indicator so empty buckets don't deflate stds). Per-stream softmax layer-weights (lr×0.1). Concat `[4096 + 6144 + 3] = 10243` → MLP 128 → BN → GELU → dropout 0.6 → 2-class. AdamW wd=3e-3.
+3. **Three-seed training** `{42, 123, 7}`, splits identical to A2.
 
-**Acceptance**: A3 must beat A2's argmax UAR (0.6428 ± 0.0034) by ≥ 0.007 (2σ at N=3) AND speaker probe top-1 must not exceed A2's 0.0501 ± 0.0009 by more than 1σ. If the head beats A2 but the probe inflates, A3 is rejected as a confound (manner pooling smuggling speaker info). If neither: document as null result, keep `manner_pooled/` cache for possible late fusion, move to A4.
+### A3 result (FAIL — both acceptance gates)
+
+- **UAR argmax**: **0.6344 ± 0.0069**  vs A2 0.6428 ± 0.0034 → Δ −0.0084. Needed +0.0154 (2σ at N=3) → **FAIL**.
+- **UAR calibrated**: 0.6475 ± 0.0059 vs A2 0.6464 ± 0.0082 → Δ +0.0011, within noise.
+- **recall_C @ τ**: 0.4328 ± 0.0277 vs A2 0.432 ± 0.028 → ~0.
+- **recall_NC @ τ**: 0.8621 ± 0.0392 vs A2 0.861 ± 0.019 → ~0.
+- **val→test gap**: −0.0027 ± 0.0072 vs A2 −0.001 ± 0.005 → within noise.
+- **Probe top-1**: **0.0555 ± 0.0030** vs A2 0.0501 ± 0.0009 → Δ +0.0054. Needed ≤+0.0031 (1σ joint) → **FAIL**.
+- **Probe NMI**: 0.3907 ± 0.0023 vs A2 0.377 ± 0.003 → Δ +0.014, inflated.
+- **Probe train top-1**: 0.9958 vs A2 ~0.92 → Δ +0.07, severely inflated (z encoding speakers near-perfectly on train).
+
+Per-seed numbers stored in `results/A3.json`.
+
+### Diagnosis
+
+Two structural findings explain both failures:
+
+- **Manner stream concentrates on the earliest WavLM layers across all seeds.** Top-3 manner layer weights = (idx 0, 1, 2) = WavLM L1, L4, L8. Late layers (L20, L24) get the lowest weight. WavLM literature (Chen et al. 2022, SUPERB) places speaker/acoustic information in early layers and phonetic/semantic content in mid–late layers. The manner stream is preferentially weighting the very layers most loaded with speaker formants and spectral identity — exactly why probe top-1 inflated.
+- **A2 stream layer weights stayed pinned to uniform** across all 3 seeds (max−min spread < 0.004 over 25 layers vs uniform 0.04). Best epoch was 2–6 — the model latched onto easy-to-fit manner-stream features and stopped improving before the A2 layer-weight track could differentiate. The MLP is effectively running a manner-stream-only classifier with the A2 stream as untouched padding.
+- **Severe overfitting**: train acc 99.1–99.7% by epoch 12 despite dropout 0.6 + wd 3e-3. Probe train top-1 is 0.99+ (vs A2's 0.92), meaning z carries near-perfect speaker identity in the training set. The 18× train/devel probe gap that defined A2's Huckvale signature is now ~18× × (0.0555/0.0501) ≈ same shape, just more pronounced.
+
+**Why this happened, in one sentence**: per-utterance per-category mean of WavLM frames in early layers IS a speaker fingerprint (voiced-frame mean ≈ speaker formants; unvoiced-frame mean ≈ speaker spectral envelope), and z-scoring against the population mean does not remove the per-utterance offset that carries speaker identity.
+
+### Decision
+
+A3 rejected. **Calibrated UAR is statistically indistinguishable from A2 (+0.0011, within noise)** and the probe inflation, while modest, is consistent across seeds. The pYIN+RMS labels themselves are clean (manner gate passed) — the failure is in the head design: pooling WavLM frames by manner adds a speaker-leaky feature stream without contributing label-relevant signal beyond what A2 already captures.
+
+What the project keeps from A3:
+
+- **`cache/manner_labels/`** (19101 stems) — usable as a per-utterance handcrafted feature inside A5 (e.g., voiced-frame fraction is a one-line summary of vocal-fold activity that's nearly free).
+- **`cache/microsoft_wavlm-large/manner_pooled/`** (19101 bundles, mean+std per layer per cat) — a candidate feature group for A5's honesty-score table. If its honesty score is ≪ 1, A5 will down-weight it automatically; if ≥ 1, the per-cat pooled stats had a label-relevant dimension that the speaker-leaky early-layer weighting was masking.
+- **The diagnostic itself** — for the write-up, this is a clean documented attempt at manner-aware pooling with empirical evidence of why it doesn't work on URTIC. Useful section in the paper.
+
+### Possible rescue paths (NOT pursued — listed for write-up completeness)
+
+- **Per-utterance contrast features**: `mean(voiced) − mean(silence)` and `mean(unvoiced) − mean(silence)` per layer. Removes the per-utterance speaker baseline that's leaking. Would be the standard speech-recognition channel-normalisation approach.
+- **Manner pooling restricted to late WavLM layers** (L20, L24) where speaker information is weakest. Risks losing whatever cold signal the manner pooling was supposed to capture.
+- **Mid-late fusion** with a gradient-reversal speaker-adversarial head on the manner stream's z. Pushed to A7 territory; not a v1 fix.
+
+These are noted because A5's honesty-score framework is designed to handle exactly this kind of mixed-signal feature group cleanly, so re-engineering A3 in isolation is poor return on time vs putting the same effort into A5.
+
+## A5 — design (enriched handcrafted features + honesty-weighted fusion)
+
+**One-line framing**: an interpretable, openSMILE-grounded handcrafted branch whose per-group contribution to the final logit is weighted by a precomputed **honesty score** and further modulated by a learned gate. A5's output is the late-fusion stage that used to be A9.
+
+### Motivation
+
+A2's speaker probe shows train top-1 ≈ 0.92 vs devel top-1 ≈ 0.05 — the Huckvale trap in measured form. Every feature family has some mix of label-relevant and speaker-identity-relevant signal. A5 is the first rung that pre-measures that mix **per group** and down-weights groups where speaker identity dominates the label signal. This is a direct, numerical attack on the central methodological problem of the 2017 challenge — not a post-hoc defensive check.
+
+### Honesty score
+
+For each feature group $g$ (seeded from ComParE-2016 LLD families + Schuller/Huckvale literature on cold-relevant acoustics):
+
+- **label_association(g)** — UAR of a tiny group-only probe trained on `train_fit` Cold labels, evaluated on `devel_val`.
+- **speaker_association(g)** — top-1 of the same-shape group-only probe trained on `train_fit` pseudo-speakers (`cache/pseudo_speakers/k210_seed42.tsv`), evaluated on `devel` (same protocol as the A2 speaker probe).
+- **honesty(g)** = `label_association(g) / speaker_association(g)` (with a small floor to avoid div-by-zero).
+
+Report the full table in the paper. Groups with honesty > 1 pull their weight; groups with honesty ≪ 1 are the Huckvale rug-pulls to shrink.
+
+### v1 scoping decisions (locked)
+
+- **Groups**: reuse **ComParE 2016 functional-family partitions** (MFCC stats, F0, jitter/shimmer, HNR, spectral-shape, loudness/energy, voicing-probability, formants) instead of inventing a fresh taxonomy. The families already align with published cold-acoustics findings (Cummins 2017, Schuller 2017 baseline, Huckvale 2018).
+- **Drop quality/reliability metadata**: we have no per-chunk SNR or lab-recording flags on URTIC. If a quality proxy matters later, use voiced-frame fraction (free — we already have it from A3 manner labels).
+- **Stability score via bootstrap on `train_fit`**, not k-fold: k-fold re-builds pseudo-speaker KMeans on each fold which is ~25 min × k. Bootstrap is cheaper, comparable evidence.
+- **Late fusion first, mid-late fusion second**: A5 v1 concatenates group-summarised handcrafted logits with the A2/A3 head logits at the final layer. Mid-late (cross-attention between streams) is a follow-on only if late fusion lands a gain but the probe stays flat.
+- **Gating mechanism**: a per-group scalar $\alpha_g = \sigma(\text{honesty}(g)/T) \cdot \sigma(\text{learned}(g))$ — the honesty term is fixed (computed once from probes), the learned term is trained end-to-end against the Cold loss. Both sigmoids so the composition is interpretable as an elementwise attention.
+
+### Success criteria
+
+- A5 head UAR must beat the best of {A2, A3} by ≥ 0.007.
+- Speaker probe top-1 on the A5 representation must not exceed A2's by more than 1σ.
+- Honesty table must be reported in the paper with per-group numbers — this is the **novel methodological headline**, bankable regardless of whether A5 beats baseline.
+
+### Why this defers A4 behind A5
+
+A4 (discrete audio tokens) is more speculative and has no built-in anti-speaker-shortcut mechanism; A5 gives a probe-checkable, paper-reportable de-confounding result on its own. If A5 closes the gap to baseline, A4 may never be necessary.
 
 ## Git state
 

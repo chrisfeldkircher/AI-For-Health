@@ -35,6 +35,24 @@ def _pooled_collate(batch: list[dict]) -> dict:
     }
 
 
+def _joint_collate(batch: list[dict]) -> dict:
+    return {
+        "pooled": torch.stack([b["pooled"] for b in batch]),
+        "pooled_manner": torch.stack([b["pooled_manner"] for b in batch]),
+        "indicator": torch.stack([b["indicator"] for b in batch]),
+        "label": torch.stack([b["label"] for b in batch]),
+        "file_name": [b["file_name"] for b in batch],
+    }
+
+
+def _to_device_joint(batch: dict, device: str) -> dict:
+    return {
+        "pooled": batch["pooled"].to(device),
+        "pooled_manner": batch["pooled_manner"].to(device),
+        "indicator": batch["indicator"].to(device),
+    }
+
+
 def compute_uar(preds: np.ndarray, labels: np.ndarray) -> float:
     classes = np.unique(labels)
     recalls = []
@@ -356,5 +374,274 @@ def train_head(
         test_acc=test_acc,
         test_per_class_recall=test_pcr,
         layer_weights=final_w,
+        history=history,
+    )
+
+
+# ---------------------------------------------------------------------------
+# A3 joint-stream training (pooled + manner_pooled + indicator)
+# ---------------------------------------------------------------------------
+
+@torch.no_grad()
+def evaluate_joint(
+    head: nn.Module, loader: DataLoader, device: str
+) -> tuple[float, float, dict[int, float], np.ndarray, np.ndarray]:
+    head.eval()
+    all_preds: list[np.ndarray] = []
+    all_labels: list[np.ndarray] = []
+    for batch in loader:
+        feats = _to_device_joint(batch, device)
+        labels = batch["label"].to(device)
+        logits, _ = head(feats)
+        preds = logits.argmax(dim=-1)
+        all_preds.append(preds.cpu().numpy())
+        all_labels.append(labels.cpu().numpy())
+    preds = np.concatenate(all_preds)
+    labels = np.concatenate(all_labels)
+    uar = compute_uar(preds, labels)
+    acc = float((preds == labels).mean())
+    return uar, acc, per_class_recall(preds, labels), preds, labels
+
+
+@torch.no_grad()
+def predict_probs_joint(
+    head: nn.Module, loader: DataLoader, device: str
+) -> tuple[np.ndarray, np.ndarray]:
+    head.eval()
+    all_p: list[np.ndarray] = []
+    all_l: list[np.ndarray] = []
+    for batch in loader:
+        feats = _to_device_joint(batch, device)
+        logits, _ = head(feats)
+        p = torch.softmax(logits, dim=-1)[:, 1]
+        all_p.append(p.cpu().numpy())
+        all_l.append(batch["label"].cpu().numpy())
+    return np.concatenate(all_p), np.concatenate(all_l)
+
+
+def sweep_threshold_joint(
+    head: nn.Module,
+    loader: DataLoader,
+    device: str,
+    grid: Optional[np.ndarray] = None,
+) -> tuple[float, float, list[tuple[float, float]]]:
+    if grid is None:
+        grid = np.linspace(0.05, 0.95, 181)
+    probs, labels = predict_probs_joint(head, loader, device)
+    best_tau, best_uar = 0.5, -1.0
+    sweep: list[tuple[float, float]] = []
+    for t in grid:
+        preds = (probs >= t).astype(np.int64)
+        u = compute_uar(preds, labels)
+        sweep.append((float(t), float(u)))
+        if u > best_uar:
+            best_uar, best_tau = u, float(t)
+    return best_tau, best_uar, sweep
+
+
+@torch.no_grad()
+def evaluate_at_threshold_joint(
+    head: nn.Module, loader: DataLoader, device: str, tau: float
+) -> tuple[float, float, dict[int, float]]:
+    probs, labels = predict_probs_joint(head, loader, device)
+    preds = (probs >= tau).astype(np.int64)
+    uar = compute_uar(preds, labels)
+    acc = float((preds == labels).mean())
+    return uar, acc, per_class_recall(preds, labels)
+
+
+def train_head_joint(
+    head: nn.Module,
+    train_ds: Dataset,
+    val_ds: Dataset,
+    test_ds: Optional[Dataset] = None,
+    *,
+    epochs: int = 30,
+    batch_size: int = 64,
+    base_lr: float = 1e-3,
+    weight_decay: float = 3e-3,
+    early_stop_patience: int = 6,
+    class_weights: Optional[torch.Tensor] = None,
+    balanced_sampler: bool = True,
+    fit_scalers: bool = True,
+    device: str = "cuda",
+    ckpt_path: Optional[str] = None,
+    num_workers: int = 0,
+    seed: int = 42,
+) -> TrainResult:
+    """
+    Trains a two-stream head (e.g. MannerAwareHead) on the joint
+    pooled + manner_pooled + indicator cache. Mirrors train_head; differs in
+    collate, scaler-fit call (per-stream), and head invocation (batch dict).
+    """
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    head = head.to(device)
+
+    if balanced_sampler:
+        sampler = make_balanced_sampler(train_ds, seed=seed)
+        train_loader = DataLoader(
+            train_ds, batch_size=batch_size, sampler=sampler,
+            num_workers=num_workers, collate_fn=_joint_collate, drop_last=False,
+        )
+    else:
+        train_loader = DataLoader(
+            train_ds, batch_size=batch_size, shuffle=True,
+            num_workers=num_workers, collate_fn=_joint_collate, drop_last=False,
+        )
+    val_loader = DataLoader(
+        val_ds, batch_size=batch_size, shuffle=False,
+        num_workers=num_workers, collate_fn=_joint_collate,
+    )
+    test_loader = None
+    if test_ds is not None:
+        test_loader = DataLoader(
+            test_ds, batch_size=batch_size, shuffle=False,
+            num_workers=num_workers, collate_fn=_joint_collate,
+        )
+
+    if fit_scalers and hasattr(head, "fit_scalers"):
+        fit_loader = DataLoader(
+            train_ds, batch_size=256, shuffle=False,
+            num_workers=num_workers, collate_fn=_joint_collate,
+        )
+        head.scaler_a2.to(device)
+        head.scaler_m.to(device)
+        head.fit_scalers(fit_loader)
+
+    loss_fn = nn.CrossEntropyLoss(
+        weight=class_weights.to(device) if class_weights is not None else None
+    )
+    optim = torch.optim.AdamW(head.param_groups(base_lr=base_lr), weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=epochs)
+
+    try:
+        from tqdm.auto import tqdm
+        _tqdm = tqdm
+    except ImportError:
+        def _tqdm(it, **kw): return it
+
+    print(f"[train-joint] device={device}  train={len(train_ds)}  val={len(val_ds)}"
+          f"{'  test=' + str(len(test_ds)) if test_ds is not None else ''}")
+    print(f"[train-joint] balanced_sampler={balanced_sampler}  fit_scalers={fit_scalers}")
+    print(f"[train-joint] epochs={epochs}  batch={batch_size}  lr={base_lr}  wd={weight_decay}  patience={early_stop_patience}")
+
+    # Untrained sanity check
+    head.train()
+    diag_batch = next(iter(train_loader))
+    diag_feats = _to_device_joint(diag_batch, device)
+    diag_labels = diag_batch["label"].to(device)
+    with torch.no_grad():
+        diag_logits, _ = head(diag_feats)
+    diag_loss = loss_fn(diag_logits, diag_labels).item()
+    print(
+        f"[diag] untrained: logit_range=[{diag_logits.min().item():+.3f}, {diag_logits.max().item():+.3f}]  "
+        f"mean_p_C={torch.softmax(diag_logits, -1)[:, 1].mean().item():.3f}  "
+        f"loss={diag_loss:.4f}  any_nan={bool(torch.isnan(diag_logits).any())}"
+    )
+    if torch.isnan(diag_logits).any() or torch.isinf(diag_logits).any():
+        raise RuntimeError("Untrained joint forward produced NaN/inf")
+
+    best_val_uar = -1.0
+    best_epoch = -1
+    best_state: Optional[dict] = None
+    patience_counter = 0
+    history: list[dict] = []
+
+    for epoch in range(1, epochs + 1):
+        head.train()
+        running_loss = 0.0
+        n_seen = 0
+        correct = 0
+
+        pbar = _tqdm(train_loader, desc=f"ep {epoch:02d}/{epochs}", leave=False)
+        for batch in pbar:
+            feats = _to_device_joint(batch, device)
+            labels = batch["label"].to(device)
+
+            logits, _ = head(feats)
+            loss = loss_fn(logits, labels)
+
+            optim.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(head.parameters(), max_norm=5.0)
+            optim.step()
+
+            bs = labels.size(0)
+            running_loss += loss.item() * bs
+            n_seen += bs
+            correct += int((logits.argmax(-1) == labels).sum().item())
+            pbar.set_postfix(loss=f"{running_loss / n_seen:.4f}", acc=f"{correct/n_seen:.3f}")
+
+        scheduler.step()
+        train_loss = running_loss / max(n_seen, 1)
+        train_acc = correct / max(n_seen, 1)
+        val_uar, val_acc, val_pcr, _, _ = evaluate_joint(head, val_loader, device)
+
+        with torch.no_grad():
+            w_a2 = head.layer_softmax_a2().detach().cpu().numpy()
+            w_m = head.layer_softmax_m().detach().cpu().numpy()
+        top_a2 = np.argsort(w_a2)[::-1][:3]
+        top_m = np.argsort(w_m)[::-1][:3]
+        top_a2_str = ",".join(f"L{int(i)}:{w_a2[i]:.2f}" for i in top_a2)
+        top_m_str = ",".join(f"L{int(i)}:{w_m[i]:.2f}" for i in top_m)
+
+        improved = val_uar > best_val_uar
+        marker = "  *" if improved else ""
+        print(
+            f"[ep {epoch:02d}] loss={train_loss:.4f} acc={train_acc:.3f} | "
+            f"val_UAR={val_uar:.4f} (C={val_pcr.get(1, 0.0):.3f} NC={val_pcr.get(0, 0.0):.3f}) | "
+            f"a2[{top_a2_str}] m[{top_m_str}]{marker}"
+        )
+
+        history.append({
+            "epoch": epoch, "train_loss": train_loss, "train_acc": train_acc,
+            "val_uar": val_uar, "val_acc": val_acc,
+            "val_recall_C": val_pcr.get(1, 0.0), "val_recall_NC": val_pcr.get(0, 0.0),
+            "layer_weights_a2": w_a2.tolist(),
+            "layer_weights_manner": w_m.tolist(),
+        })
+
+        if improved:
+            best_val_uar = val_uar
+            best_epoch = epoch
+            best_state = {k: v.detach().cpu().clone() for k, v in head.state_dict().items()}
+            patience_counter = 0
+            if ckpt_path is not None:
+                Path(ckpt_path).parent.mkdir(parents=True, exist_ok=True)
+                torch.save({"state_dict": best_state, "val_uar": val_uar, "epoch": epoch}, ckpt_path)
+        else:
+            patience_counter += 1
+            if patience_counter >= early_stop_patience:
+                print(f"[train-joint] early stop at epoch {epoch}")
+                break
+
+    if best_state is not None:
+        head.load_state_dict(best_state)
+    print(f"[train-joint] best val_UAR={best_val_uar:.4f} at epoch {best_epoch}")
+
+    test_uar = 0.0
+    test_acc = 0.0
+    test_pcr: dict[int, float] = {}
+    if test_loader is not None:
+        test_uar, test_acc, test_pcr, _, _ = evaluate_joint(head, test_loader, device)
+        gap = best_val_uar - test_uar
+        verdict = "optimistic" if gap > 0.02 else "consistent" if abs(gap) <= 0.02 else "pessimistic"
+        print(
+            f"\n[HELD-OUT TEST] devel:  UAR={test_uar:.4f}  acc={test_acc:.4f}  "
+            f"C={test_pcr.get(1, 0.0):.4f}  NC={test_pcr.get(0, 0.0):.4f}  "
+            f"val-to-test gap={gap:+.4f} ({verdict})"
+        )
+
+    with torch.no_grad():
+        final_w_a2 = head.layer_softmax_a2().detach().cpu().numpy()
+
+    return TrainResult(
+        best_val_uar=best_val_uar,
+        best_epoch=best_epoch,
+        test_uar=test_uar,
+        test_acc=test_acc,
+        test_per_class_recall=test_pcr,
+        layer_weights=final_w_a2,
         history=history,
     )
