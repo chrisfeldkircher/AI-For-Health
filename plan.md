@@ -250,7 +250,52 @@ HuBERT-base or HuBERT-large built-in cluster IDs first; VQ-VAE on WavLM embeddin
 
 ### A5.5 — cross-speaker splicing augmentation
 
-Symmetric across classes (50 % cold + 50 % non-cold) so splice presence is uncorrelated with the label. 100–200 ms crossfades. **No pitch shift, no time-stretch, no speed perturbation** — they can mask or mimic cold-like signatures and break causal interpretability. Apply only after A5 to keep the de-confounding levers separable.
+Symmetric across classes (same `p`, same `K`, same `r`-distribution, same crossfade settings for cold and non-cold) so splice presence is uncorrelated with the label. **No pitch shift, no time-stretch, no speed perturbation** — they can mask or mimic cold-like signatures and break causal interpretability. Apply only after A5 to keep the de-confounding levers separable.
+
+**Recipe (per training chunk):**
+
+```text
+with probability p:
+    partner ← random chunk with same Cold label, different pseudo-speaker
+    r       ← Uniform(r_lo, r_hi)                       # replacement ratio
+    [t0,t1] ← splice boundaries inside silence run ≥ 40 ms in anchor
+              (fallback: unvoiced run ≥ 40 ms; final fallback: skip)
+    seg_B   ← partner segment of length r * len(anchor)
+    seg_B   ← rms_match(seg_B, local_rms(anchor[t0:t1]))
+    out     ← anchor[:t0] ⊕ crossfade(anchor[t0:], seg_B, 150 ms) ⊕
+              crossfade(seg_B, anchor[t1:], 150 ms)
+else:
+    out     ← anchor                                    # untouched
+```
+
+- **Crossfade**: equal-power (`fade_out = cos θ`, `fade_in = sin θ`), not linear (linear has a ~−6 dB perceptual dip mid-fade).
+- **Segment replacement, not concat**: output keeps anchor's duration so WavLM frame count stays at 399 and there's no duration shortcut.
+- **Boundary picker uses cached manner labels**: scan for silence runs of ≥ 40 ms in `cache/manner_labels/`, splice inside silence; fallback to unvoiced; document the skip rate for chunks with neither.
+- **RMS-match the partner segment** to the anchor's local RMS at the splice region — prevents loudness discontinuity becoming a class proxy.
+
+**Cache strategy:**
+
+- Pre-extract **K augmented variants of the pooled features only**, not frames. Pooled tensor ≈ 100 KB, current pooled cache ≈ 600 MB; K = 3 → ~2 GB. Manageable.
+- **Do not pre-extract K augmented frame variants.** Frame cache is 78 GB and we just hit disk-full. If A6 needs frame-level access to augmented data later, re-extract on a single layer at that point.
+- **Augmentation must happen pre-WavLM**, at the waveform level. Splicing pooled stats does not make physical sense — pooled stats are global per-utterance summaries.
+- One-time extraction cost: ~3× the current pooled extraction time (~10–15 min on GPU per K).
+
+**v1 default hyperparameters** (so it's not a sweep at extraction time):
+
+- `p = 0.5` — half of training chunks get an augmented variant.
+- `r ~ Uniform(0.20, 0.30)` — at 8 s × 50 Hz, replaces 80–120 frames out of 399.
+- Crossfade window `= 150 ms`.
+- `K = 3` precomputed variants per training sample. During training, sample one of `{original, aug_1, aug_2, aug_3}` per epoch.
+
+**Cold-partner pool size watch**: with ~9.5 % cold rate × 9505 train chunks ≈ 900 cold chunks across ~25 cold pseudo-speakers (URTIC prior). A cold anchor has plenty of different-speaker cold partners but drawn from a small pool — track partner-reuse statistics during cache build, flag if any single partner exceeds ~5 % of all cold splices.
+
+**Acceptance gates (three-dimensional):**
+
+- **Cold UAR**: A5.5 head UAR ≥ A5b − 1σ (no material drop from augmentation noise).
+- **Speaker probe**: top-1 drops by ≥ 1σ vs A5b — augmentation must measurably attack the shortcut to count.
+- **Splice-detector audit (hard gate)**: train a small linear probe on `train_fit` cached pooled features for `original` vs `spliced`, evaluate on `devel_val`. If detector UAR > **0.55**, the seams are detectable: increase crossfade length, enforce stricter low-energy boundary selection, RMS-match more carefully, or reduce `r`. **Do not promote A5.5 until the splice-detector gate passes.**
+
+A rung that drops speaker probe but fails the splice-detector audit is just teaching the model a new shortcut.
 
 ### A6 — supervised contrastive pretraining
 
