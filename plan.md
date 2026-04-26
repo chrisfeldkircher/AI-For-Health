@@ -117,9 +117,13 @@ URTIC has no speaker IDs in the 4students release. We rebuilt them:
 
 ---
 
-## 5. A5 — honesty-audited physiological feature fusion
+## 5. A5 — feature enhancement + honesty-audited late fusion
+
+**One-line framing**: we perform **feature enhancement** by deriving physiologically motivated, **regime-conditioned** acoustic feature groups from raw audio and pYIN/RMS acoustic states. Each group is audited for cold association and speaker association before being admitted into a constrained late-fusion model.
 
 This is the next rung and the **methodological headline of the paper**, regardless of UAR outcome. It absorbs the original PDF's A2 (handcrafted concat), A5 (OOD), and A9 (late fusion). Split into three sub-rungs so the contributions are separable.
+
+**Methodological lineage**: the *enhancement-then-classify* pattern is loosely inspired by ResST's data-enhancement stage (build auxiliary feature/similarity views before the downstream model), but **we adopt only the data/feature side, not the graph autoencoder**. Closer in-domain references: speech-side regime-conditioned functionals (Schuller-line ComParE), CMVN/VTLN-style speaker-channel normalisation, classical stacking ensembles (Wolpert 1992), and the 2017 ComParE Cold late-fusion baseline (Schuller / Tavarez).
 
 ### 5.1 A5a — honesty audit
 
@@ -152,6 +156,18 @@ Candidate groups (initial set, expandable):
 - **Spectral shape**: low-order MFCC stats, spectral centroid, rolloff, flux, high/low band ratios.
 - **Breath / frication**: high-frequency energy in unvoiced frames, ZCR, noise-like energy.
 - **A3-derived scalars** (free): voiced/unvoiced/silence fractions, mean voiced segment duration, voiced↔unvoiced transitions per second, mean RMS in low-energy regions, mean RMS voiced vs unvoiced.
+- **Regime-conditioned mel-band stats** — *kept as v1 candidate, explicitly flagged for rigorous verification.* Log-mel-band mean/std stratified by acoustic regime (`mel_band_mean[voiced]`, `[unvoiced]`, `[low_energy]`, plus contrast `Δ_mel = mean[unvoiced] − mean[voiced]`). Use 40 mel bands; per-band stats keep dimensionality bounded (~160 features). **Not** a parallel mel-CNN branch — that would just re-encode what WavLM's CNN feature-extractor already saw. The framing is "low-dimensional, regime-aware spectral view that the linear per-group probe can exploit, audited by honesty score for speaker-leak."
+
+  **Why the cautious framing**: the original attack-plan PDF mapped CQT/Gammatone+CNN to *"subsumed — WavLM trained on similar perceptual objectives at larger scale,"* and `mel_band_mean[voiced]` is structurally close to a speaker's vocal-tract envelope (the same fingerprint that crashed A3). Information-theoretic prior: redundant with WavLM and high speaker-leak risk.
+
+  **Anecdotal anchor pushing the other way**: a 2025 cohort team reports ~69 % UAR on this challenge with a CNN-on-mel-spec approach (above our A2). Whether that was additive on top of a foundation model or a standalone CNN is unclear — exactly the question G7 answers in our setting. Independently of the colleague's result, **the honesty table for G7 is worth reporting on its own** as paper evidence ("does mel-spec carry cold signal not already in WavLM? Yes / no, with measured speaker-leak").
+
+  **G7 acceptance protocol** (stricter than other groups, given the priors):
+  - `label_gain_g ≥ 0.05` (mel must show a meaningful linear cold signal on its own)
+  - `subtractive_honesty_g > 0` at default `λ = 1` (cold signal not dominated by speaker leak)
+  - Held-out check: per-group probe trained on `train_fit`, evaluated on **`devel_test`** (not `devel_val`) for one-shot honest UAR before being admitted into A5b's β table
+  - If G7 fails any of the three: drop from A5b, keep the row in the honesty table as documented negative result
+  - Coarse fallback if G7 borderline-fails (overfitting suspected): 8 octaves × 3 regimes = 24 features instead of 40 × 3 = 120
 - **OOD Mahalanobis distance** (one scalar; was the PDF's whole A5).
 
 **Explicitly excluded**: formants and raw MFCC means as their own group — known to be speaker-rich. If they appear at all, the honesty score should down-weight them automatically; we predict they will be among the lowest-scoring groups.
@@ -204,6 +220,25 @@ Apply at A5b first; A5c only if A5b is within striking distance.
 - Drop quality/reliability metadata — URTIC has no per-chunk SNR or lab flags.
 - Stability via bootstrap on `train_fit`, not k-fold (k-fold rebuilds pseudo-speaker KMeans per fold = ~25 min × k).
 - No SMOTE / ADASYN — Huckvale showed they don't help; balanced sampler covers the imbalance.
+
+### 5.7 v1 feature checklist (extraction spec)
+
+Pinned set so A5a is a definite coding task. Extracted once per utterance and cached as one tensor per group. Regime tags `[voiced]`, `[unvoiced]`, `[low_energy]` come from the existing pYIN+RMS labels in `cache/manner_labels/`.
+
+| Group | Features | Approx. dim | Source |
+| --- | --- | --- | --- |
+| **G1 voicing** | voiced_fraction, unvoiced_fraction, silence_fraction, voicing_dropout_rate, mean_voiced_segment_length, mean_unvoiced_segment_length, voiced↔unvoiced_transitions_per_sec, low_energy_gap_count | ~10 | A3 labels (free) |
+| **G2 F0 / prosody** | F0_mean[voiced], F0_std[voiced], F0_range[voiced], F0_missingness, pitch_instability_proxy | ~10 | pYIN |
+| **G3 voice quality** | jitter_mean, shimmer_mean, HNR_mean[voiced], harmonicity, spectral_tilt[voiced], CPP if available | ~10 | openSMILE / Praat |
+| **G4 energy / pause / breath** | RMS_mean, RMS_std, low_energy_ratio, energy_slope, RMS[low_energy], RMS[voiced] − RMS[low_energy], RMS[unvoiced] − RMS[low_energy], breath_gap_features | ~10 | RMS + A3 labels |
+| **G5 unvoiced frication / turbulence** | high_freq_energy_ratio[unvoiced], ZCR[unvoiced], spectral_flux[unvoiced], spectral_centroid[unvoiced], noise-like_energy | ~10 | regime-conditioned spectral |
+| **G6 spectral shape** | low-order MFCC stats (μ, σ for MFCC 1–6), spectral_centroid, rolloff, flux, high/low band ratios | ~20 | openSMILE / librosa |
+| **G7 mel-band regime stats** | mel_band_mean[voiced], mel_band_mean[unvoiced], mel_band_mean[low_energy] (40 bands × 3 regimes), Δ_mel = mean[unvoiced] − mean[voiced] | ~160 | log-mel + A3 labels |
+| **G8 OOD** | Mahalanobis distance of A2 pooled vector from non-cold mean (post-hoc fitted) | 1 | A2 cache |
+
+A2 is **not** a group — it stays a fixed anchor with `β_A2 = 1`.
+
+Total candidate dimensionality across all groups ≈ 230 — comfortably under the "≤ 50 features per group" ceiling for everything except G7 (mel bands), where the per-band structure is intrinsic. If G7's per-group probe overfits, fall back to log-mel-band sums over coarser frequency bands (e.g. 8 octaves × 3 regimes = 24 features).
 
 ---
 
