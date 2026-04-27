@@ -29,6 +29,8 @@ from .scalar_g2 import extract_g2, prosody_scalars, G2_NAMES, G2_DIM
 from .opensmile_extract import extract_egemaps, load_egemaps
 from .scalar_g3 import extract_g3, carve_g3, G3_PREFIXES
 from .scalar_g6 import extract_g6, carve_g6, G6_PREFIXES
+from .modulation import extract_modulation, modulation_features
+from .scalar_g5 import extract_g5, G5_NAMES, G5_DIM
 from .head import LayerWeightedPooledHead
 from .head_a3 import MannerAwareHead, MannerStandardiser
 from .cache import CacheManifest, load_pooled, save_pooled
@@ -93,6 +95,11 @@ __all__ = [
     "extract_g6",
     "carve_g6",
     "G6_PREFIXES",
+    "extract_modulation",
+    "modulation_features",
+    "extract_g5",
+    "G5_NAMES",
+    "G5_DIM",
     "LayerWeightedPooledHead",
     "MannerAwareHead",
     "MannerStandardiser",

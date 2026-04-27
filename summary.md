@@ -10,7 +10,8 @@ Binary audio classification: Cold vs Non-Cold on the ComParE 2017 Cold sub-chall
 
 - **A2** — *locked.* Frozen WavLM-Large + layer-weighted pooled-stats probe → **UAR 0.6428 ± 0.0034**
 - **A3** — *null result, rejected.* Manner-aware pooling (pYIN+RMS, 3 cats) → argmax UAR 0.6344 ± 0.0069 (−0.008 vs A2), probe top-1 0.0555 ± 0.0030 (+0.005 vs A2). Both acceptance gates failed. Cache kept for possible reuse as a feature group inside A5.
-- **A5** — *planned (next).* Enriched handcrafted features + honesty-score weighting + learned gating (late fusion, absorbs A9)
+- **A5a** — *honesty audit, complete (G5 row pending one cell run).* Per-group cold + speaker probes for {G1 voicing, G2 prosody, G3 voice quality, G4 energy + gain-invariant slice, G6 spectral shape, G8 OOD Mahalanobis}. G4_energy strongest (lab_gain +0.142) but flagged as gain-confound; G4_gain_invariant retains the lift with halved speaker leak. G8 anti-predictive (rejected, documented). G5 modulation (Huckvale's MOD family) added at end of A5a; cell wired, extraction pending. See `results/A5a_honesty.csv` for the full table.
+- **A5b** — *constrained late fusion, wired up; pending run.* Final classifier `final_logit = logit_A2 + β · mean_g(zscore_g(logit_g))`, hard top-K admission by `subtractive_honesty`. Sweep β ∈ {0.25, 0.5, 1.0}, K ∈ {1, 2, 3} on `train_threshold`; lock once on `devel_test`. Two diagnostic cells (Pearson logit-correlation matrix + fused-vector speaker probe) follow A5b for paper figures, no impact on locked numbers.
 - **A4** — *planned (speculative).* Discrete audio tokens (EnCodec/HuBERT-codes) as auxiliary stream
 - **A5.5** — *planned.* Augmentation — directly attacks training-speaker shortcut
 - **A6** — *planned.* Contrastive pretraining (speaker-masked loss)
@@ -81,26 +82,52 @@ model/
     cache.py              CacheManifest (checkpoint_hash + version compat check)
     standardizer.py       FeatureStandardiser (per-position z-score, registered buffers)
     head.py               LayerWeightedPooledHead
-    train.py              train_head, evaluate, sweep_threshold, evaluate_at_threshold
+    head_a3.py            MannerAwareHead (A3, rejected; kept as documented negative)
+    train.py              train_head, evaluate, sweep_threshold, predict_probs, evaluate_at_threshold
     phoneme.py            wav2vec2-xlsr phoneme CTC → cache/phoneme_labels/ (ABANDONED, see A3)
-    manner.py             pYIN voicing + RMS → cache/manner_labels/ (A3 pivot, pending validation)
+    manner.py             pYIN voicing + RMS → cache/manner_labels/ (A3 pivot, validated)
+    manner_pool.py        per-(layer, manner-cat) pooled stats over WavLM frame cache
+    f0.py                 pYIN F0 contour → cache/f0/{stem}.npy
+    opensmile_extract.py  eGeMAPSv02 functionals → cache/handcrafted/egemaps/
+    modulation.py         Huckvale-style modulation spectrogram → cache/handcrafted/modulation/
+    scalar_g1.py          voicing scalars from manner labels (G1)
+    scalar_g2.py          prosody scalars from F0 + manner labels (G2)
+    scalar_g3.py          voice-quality carve of eGeMAPS (jitter/shimmer/HNR/tilt) (G3)
+    scalar_g4.py          energy / pause / breath from waveform RMS (G4)
+    scalar_g5.py          modulation-spectrogram aggregate (4 acoustic × 8 mod × 2) (G5)
+    scalar_g6.py          spectral-shape carve of eGeMAPS (low-MFCC + flux) (G6)
+    ood_g8.py             Mahalanobis distance on A2-fused vectors (G8)
+  honesty/
+    probe.py              cold_probe + speaker_probe (matched linear LR; the audit instrument)
+    audit.py              audit_group; appends one row per group to A5a_honesty.csv
+    fusion.py             A5b math: fit_cold_probe, predict_logit, fit_zscore, fuse, sweep_tau
   speakers/
     ecapa.py              SpeechBrain ECAPA-TDNN extraction → cache/ecapa-voxceleb/
     cluster.py            KMeans k-sweep over train; writes cache/pseudo_speakers/k{K}_seed{S}.tsv
-    probe.py              SpeakerProbe (2-layer MLP), extract_z, train_probe
-  run.ipynb               orchestration cells — training, calibration, probe
+    probe.py              SpeakerProbe (2-layer MLP, A2 protocol), extract_z, train_probe
+  run.ipynb               orchestration cells — A2/A3 training + A5a audits + A5b sweep + diag
 cache/
   microsoft_wavlm-large/
-    pooled/               pooled stats + per-seed head checkpoints (head_A2_seed{S}.pt)
+    pooled/               pooled stats + per-seed head checkpoints (head_A2_seed{S}.pt, head_A3_seed{S}.pt)
     frames/L{1,4,8,12,16,20,24}/  per-utterance fp16 frames, padding stripped (for A3/A4/A6) — 103 GB
+    manner_pooled/        per-(layer, manner-cat) pooled stats (A3 stream input, kept as candidate group)
   phoneme_labels/         wav2vec2-xlsr argmax IDs (ABANDONED — see A3 status)
-  manner_labels/          pYIN + RMS 3-cat labels aligned to WavLM frames (pending validation)
+  manner_labels/          pYIN + RMS 3-cat labels aligned to WavLM frames (validated)
+  f0/                     pYIN F0 contour per stem (NaN at unvoiced)
+  handcrafted/
+    egemaps/              per-stem eGeMAPSv02 functionals [88] fp32 + _columns.json
+    g4/                   per-stem G4 energy scalars [11] fp32
+    modulation/           per-stem G5 modulation features [64] fp32
   ecapa-voxceleb/         28652 × [192] fp16 speaker embeddings
   pseudo_speakers/        k{100,210,420}_seed42.tsv
   speechbrain/            auto-downloaded ECAPA checkpoint
 results/
   README.md               per-rung ablation table + methodology + per-rung notes
   A2.json                 full A2 distribution (3 seeds) + speaker probe block
+  A3.json                 rejected A3 distribution (3 seeds) + diagnosis block
+  A5a_honesty.csv         per-group honesty rows (G1, G2, G3, G4, G4_gain_invariant, G5, G6, G8)
+  A5b.json                A5b sweep results + locked (β*, K*, τ*) + devel_test (after running)
+  A5b_diag.json           A5b correlation matrix + fused-vector speaker probe (after running)
 ```
 
 ## Key decisions made so far
@@ -286,12 +313,67 @@ Report the full table in the paper. Groups with honesty > 1 pull their weight; g
 ### Success criteria
 
 - A5 head UAR must beat the best of {A2, A3} by ≥ 0.007.
-- Speaker probe top-1 on the A5 representation must not exceed A2's by more than 1σ.
+- Speaker probe top-1 on the A5 representation must not exceed A2's by more than 1σ (≤ 0.0510). For A5b the literal "1-d fused logit" is degenerate as a 210-class probe input — operationalised as the speaker probe on the actual `[logit_A2, z_logit_g, ...]` concat the fusion has access to (see A5b diagnostics below).
 - Honesty table must be reported in the paper with per-group numbers — this is the **novel methodological headline**, bankable regardless of whether A5 beats baseline.
 
 ### Why this defers A4 behind A5
 
 A4 (discrete audio tokens) is more speculative and has no built-in anti-speaker-shortcut mechanism; A5 gives a probe-checkable, paper-reportable de-confounding result on its own. If A5 closes the gap to baseline, A4 may never be necessary.
+
+### A5a — honesty audit results
+
+Per-group rows in `results/A5a_honesty.csv`. Snapshot (pre-G5; G5 pending one cell run):
+
+```text
+group                    dim     UAR   lab_gain   spk_top1   spk_gain    ratio     sub@1
+G4_energy                 11  0.6418    +0.1418     0.0181    +0.0134    +9.87   +0.1284
+G4_gain_invariant          7  0.6318    +0.1318     0.0127    +0.0080   +14.73   +0.1239
+G6_spectral_shape         21  0.6050    +0.1050     0.0340    +0.0292    +3.48   +0.0758
+G1_voicing                 9  0.5831    +0.0831     0.0110    +0.0063   +11.41   +0.0768
+G2_prosody                10  0.5680    +0.0680     0.0194    +0.0146    +4.35   +0.0534
+G3_voice_quality          14  0.5591    +0.0591     0.0233    +0.0186    +3.02   +0.0405
+G8_ood_mahalanobis         1  0.4334    -0.0666     0.0073    +0.0025   -18.86   -0.0692
+G5_modulation             64    pending — cell 39 in run.ipynb (Huckvale MOD family)
+```
+
+Reading: `lab_gain = UAR − 0.5`, `spk_gain = top1 − 1/210`, `sub@1 = lab_gain − 1·spk_gain` (admission key, λ=1). Linear-only probes (matched cold + speaker LR, balanced for cold, multinomial for speakers); StandardScaler fit on `train_fit`, evaluated on `devel_val`.
+
+Highlights:
+
+- **G4_energy** is the strongest single group but raises a recording-gain confound concern. The **G4_gain_invariant** ablation (drop absolute-RMS cols 0-3, keep regime-contrast and pause-shape cols 4-10) loses only 0.010 UAR while halving speaker_gain → admit the gain-invariant slice instead, document G4_energy as the comparison row.
+- **G1_voicing** has the best ratio (11.41) — cleanest signal in the table. Cold-biased (recall_C > recall_NC) — useful complement to A2's NC-bias.
+- **G6_spectral_shape** carries the second-strongest predictive lift but the highest speaker leak (low-MFCCs are by construction speaker-rich — vocal-tract envelope is speaker identity). Passes admission at λ=1 (sub@1 +0.076), would fail at λ=2 — borderline.
+- **G8_ood_mahalanobis** anti-predictive (UAR 0.433, label_gain −0.067). Documented negative result — the original PDF-A5 hypothesis ("OOD distance from healthy manifold predicts cold") doesn't hold on URTIC. Excluded from admission pool.
+- **G5_modulation** added late as Huckvale's MOD family from the 2017 ComParE write-ups: per-mel-band FFT-over-time → modulation spectrum, aggregated to 4 acoustic super-bands × 8 log-spaced modulation bands × {mean, std} = 64-d. Captures syllable-rate (3-8 Hz) and slow-envelope (<2 Hz) dynamics that no other group sees. Cell wired, ~5 min CPU on full corpus, audit row pending.
+
+### A5b — late fusion (wired, pending run)
+
+Final classifier per utterance:
+
+```text
+final_logit = logit_A2 + β · mean_g( zscore_g( logit_g ) )
+```
+
+- `logit_A2` = log-odds from A2 head, β_A2 = 1 (anchor never re-weighted).
+- `logit_g` = `clf.decision_function(scaler.transform(X_g))` from a per-group cold probe matching the A5a recipe (StandardScaler + balanced LR, fixed seed) — so the audited UAR is exactly what fusion sees.
+- `zscore_g` removes per-group scale differences (G4 logits naturally span a wider range than G2). Mean and std fit on `train_fit` predictions.
+- `mean_g` over the **K admitted** groups, picked top-K by `sub@1` (ranked descending, filtered to `label_gain > 0`).
+- `β` and `K` swept on `train_threshold`; `τ` swept in **logit space** (`np.linspace(-4.0, 4.0, 321)`) — the fused quantity is a logit, not a probability.
+- Locked `(β*, K*, τ*)` evaluated **once** on `devel_test`. Three training seeds {42, 123, 7}.
+
+Admission pool is read from `A5a_honesty.csv` at A5b runtime, so adding G5 (or any future group) is one CSV row away from being considered without touching the A5b code.
+
+**Acceptance gate**: A5b mean UAR on `devel_test` ≥ A2 mean + 0.007 (= 2σ at N=3).
+
+### A5b — diagnostics (cells 42-43, no impact on locked numbers)
+
+Two structural checks reported alongside A5b for the paper:
+
+1. **Logit correlations on `devel_val`.** Pearson matrix over `{logit_A2, z_logit_g for g in admission_pool}`, plus per-group **argmax disagreement vs A2** (fraction of utterances where `sign(logit_A2) ≠ sign(z_logit_g)` — survives monotonic nonlinearities that Pearson doesn't). Two purposes: spot redundancy with A2 (a group with high `sub@1` but high A2-correlation contributes less than the table suggests), and spot pairwise redundancy across admitted groups (K=3 over highly-correlated groups is one weighted sum repeated, not three independent voters).
+
+2. **Fused-vector speaker probe on `devel_val`.** plan.md § 5.5 specifies "probe top-1 on A5b representation ≤ A2 + 1σ ≤ 0.0510" — but a 1-d fused logit can't naively support a 210-class probe. The honest version probes the actual concat `[logit_A2, z_logit_g for g in admitted]` that fusion has access to. Reported for both the **full admission pool** (sanity ceiling) and the **locked top-K** set. A spike above the per-group max in `A5a_honesty.csv` would mean combining admitted groups creates a speaker channel none of them carry alone — invalidates admission even if every individual group passed honesty.
+
+Single seed (42) — structural diagnostic, not a multi-seed UAR claim. Output in `results/A5b_diag.json`.
 
 ## Git state
 
