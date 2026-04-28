@@ -113,7 +113,39 @@ URTIC has no speaker IDs in the 4students release. We rebuilt them:
 - **ECAPA-VoxCeleb (192-d)** + **KMeans k=210** as the pseudo-speaker labelling.
 - **HDBSCAN cross-validation**: independently finds **204 clusters**, KMeans-vs-HDBSCAN ARI 0.856 / NMI 0.962 on raw L2-normalised embeddings. 204 ≈ 210 ≈ URTIC's expected ~210 speakers/split — not a self-fulfilling silhouette number, but cross-method agreement.
 - **Negative control**: WavLM-base-plus-sv flags 25 % of points as noise and KMeans-vs-HDBSCAN ARI = 0.093 — the WavLM speaker-tuned encoder cannot recover speaker structure on URTIC. Confirms the architectural-circularity concern empirically and justifies keeping ECAPA.
+- **Independence note**: ECAPA is fed **raw 16 kHz waveforms**, not WavLM features. SpeechBrain's `spkrec-ecapa-voxceleb` runs end-to-end (mel-bank front-end → TDNN → AAM-Softmax x-vector head) on the audio directly. The `cache/microsoft_wavlm-large/pooled/` cache and `cache/ecapa-voxceleb/` cache never touch each other — that architectural independence is what makes the cross-encoder validation credible.
 - Revisit only before A6, where pseudo-speaker labels become *training targets* rather than probe ground truth. Candidate: TitaNet-L or CAM++ (architecturally independent from WavLM).
+
+### 4.5 Methodology TODO — speaker-grouped sub-splits (within-partition leak)
+
+**Status: known leak, not yet patched.** Cross-partition disjointness (train ↔ devel ↔ test) is guaranteed by URTIC construction and validated by A2's val→test gap of −0.001 ± 0.005. **Within-partition sub-splits** (`train_fit`/`train_threshold`, `devel_val`/`devel_test`) are currently per-class random shuffle only — see [`stratified_split`](AI-For-Health/model/data/cached_dataset.py#L186) — so the same speakers appear in both halves of each partition, reading different chunks of the same passage.
+
+Two consequences:
+
+- **Early stopping on `devel_val`** is mildly optimistic: the patience-6 best-epoch decision is informed by speakers also present in `devel_test`.
+- **Threshold τ on `train_threshold`** shares speakers with `train_fit` (the model's training set). Technically fine for τ specifically (τ is selected, not trained) but contributes to the small `calib_delta` we observe (+0.0036, within its own σ).
+
+The more serious issue is `devel_val` ↔ `devel_test` sharing speakers — biases our "honest" devel_test estimate upward by some unmeasured amount.
+
+**The fix** (cheap, scheduled before the next rung):
+
+Replace `stratified_split` with `stratified_grouped_split` using `sklearn.model_selection.StratifiedGroupKFold`: stratify by Cold label, group by pseudo-speaker ID from `cache/pseudo_speakers/k210_seed42.tsv`. Concretely:
+
+- `train_fit` ↔ `train_threshold`: pseudo-speaker groups disjoint, cold-stratified ~90/10.
+- `devel_val` ↔ `devel_test`: pseudo-speaker groups disjoint, cold-stratified ~50/50.
+
+We have pseudo-speaker assignments for both train and devel already (KMeans-on-train, nearest-centroid for devel), so the grouping key exists.
+
+**Verification protocol** (the result is reportable either way):
+
+After re-splitting, re-run the speaker probe — trained on `train_fit` z with pseudo-speaker targets, evaluated on `devel_test` z. Today's number is top-1 ≈ **0.0501 ± 0.0009** (10.5× chance of 1/210).
+
+- If the within-partition leak was dominant: probe top-1 drops further on the new splits.
+- If it was minor: top-1 stays at ≈ 0.05, meaning the cross-partition disjointness was already doing all the load-bearing work and our reported A2 numbers are honest.
+
+Either outcome is paper-reportable. The first is "we found and closed an internal leak"; the second is "we audited a suspected leak and the URTIC construction held."
+
+**Re-runs after the fix**: A2 lock numbers (3 seeds, calibrated + argmax + speaker probe + per-class recall + val→test gap) get re-computed on the new splits. Cost: ~3 min/seed because pooled features are cached; the only thing that changes is the file lists fed into the head.
 
 ---
 

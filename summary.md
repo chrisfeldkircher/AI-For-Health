@@ -54,6 +54,8 @@ Full numbers:
 
 **Speaker-disjointness**: by URTIC construction, train and devel are speaker-disjoint. 4students TSV has no speaker IDs, so direct verification is impossible — the val→test gap of −0.001 ± 0.005 is the structural evidence.
 
+**Within-partition leak — TODO**: `stratified_split` does per-class random shuffle only; `train_fit`/`train_threshold` and `devel_val`/`devel_test` therefore share pseudo-speakers. The leak is mild (val→test gap is centred on zero, so the load-bearing disjointness is the cross-partition one) but real for early stopping on `devel_val` and threshold τ on `train_threshold`. Fix: replace with `stratified_grouped_split` using pseudo-speaker IDs from `cache/pseudo_speakers/k210_seed42.tsv` as the group key. After patching, re-run A2 (3 seeds, ~10 min total — pooled features cached) and re-run the speaker probe on `devel_test`; if top-1 stays at ≈ 0.05 the leak was minor and our reported numbers are honest, if it drops further we found and closed an internal leak. Either outcome is paper-reportable. See [plan.md §4.5](plan.md).
+
 **Seed discipline**:
 
 - Dev seed: `42` (iteration, debugging)
