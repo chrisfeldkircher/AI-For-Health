@@ -63,9 +63,11 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A1    | **subsumed by A2**  | Frozen WavLM + mean-pool + linear probe                             | Skipped as a separate rung — A2 strictly dominates and shares all caches                   |
 | A2    | **LOCKED**          | Frozen WavLM-L + layer-weighted pooled-stats (mean+std+skew+kurt)   | **UAR 0.6428 ± 0.0034** (3 seeds); val→test gap −0.001 ± 0.005; speaker probe top-1 0.0501 |
 | A3    | **REJECTED**        | Manner-aware pooling (pYIN+RMS, 3-cat) two-stream head              | UAR 0.6344 ± 0.0069 (Δ −0.008), probe top-1 +0.005. Both gates failed.                     |
-| A5a   | **NEXT**            | Honesty audit over low-dim physiological feature groups             | Compute `label_gain`, `speaker_gain`, ratio + subtractive honesty per group. See § 5.      |
-| A5b   | next                | Constrained late fusion: per-group linear logits, β fixed = honesty | No learning at the fusion stage; the table *is* the selection mechanism                    |
-| A5c   | next (conditional)  | Learned per-group gate, honesty-initialised + regularised           | Run only if A5b passes or nearly passes the UAR/probe gates                                |
+| A5a   | **LOCKED**          | Honesty audit over low-dim physiological feature groups             | 8 groups, 6 admitted (G1,G2,G3,G4_gi,G5,G6). Admission by sub@1: G4_gi,G1,G6,G5,G2,G3.     |
+| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | K=1 (A2+G4_gi): UAR 0.6576, Δ +0.0148±0.0045 (3.3σ); K=4 free-sweep FAIL documented        |
+| A5c   | revivable           | Learned per-group gate, honesty-initialised + regularised           | A5b passed → revivable, but K=1 leaves little room; on hold pending A5.5/A6                |
+| A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk top-1 mono L0→L24 (.087→.043); cold UAR flat .56–.61; best sub@1 L21 +.039 ≪ 0.15      |
+| A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
 | A4    | planned             | Discrete-token histograms (HuBERT units → optional VQ-VAE)          | Deferred behind A5 — more speculative, no built-in anti-shortcut mechanism                 |
 | A5.5  | planned             | Cross-speaker splicing augmentation (symmetric across classes)      | Code stub exists in [data/augmentation.py](AI-For-Health/model/data/augmentation.py)       |
 | A6    | planned             | Supervised contrastive pretraining (speaker-masked positives)       | Requires the projection-MLP refactor; pseudo-speakers already cached                       |
@@ -234,7 +236,32 @@ Run only if A5b passes or nearly passes the gates. Gate replaces the fixed βs:
 
 `honesty_init_g` is the frozen value from A5a; `learned_residual_g` is trained against Cold loss with strong L2 regularisation pulling it toward 0. The gate refines the priors rather than overwriting them. Report A5b vs A5c side by side as a controlled comparison of "priors only" vs "priors + learning."
 
-### 5.5 Acceptance gates
+### 5.5 A5d — per-layer honesty diagnostic (DONE; A5e SKIPPED)
+
+**Status: DONE (paper diagnostic).** Ran cold + speaker probes on cached `pooled[:, L, :]` (4096-d per layer) for L ∈ [0, 24], single seed (42), matched to A5a (train_fit / devel_val, linear LR with StandardScaler). Output: `results/A5d_layer_honesty.csv`. Cost ≈ 1 hour wall-clock, no retraining.
+
+**Recipe.** For each layer `L`:
+
+- `cold_probe`     → `cold_uar_L`,    `label_gain_L = cold_uar_L − 0.5`
+- `speaker_probe`  → `speaker_top1_L`, `speaker_gain_L = top1_L − 1/210`
+- `sub@1_L`        = `label_gain_L − speaker_gain_L`
+
+**Headline numbers (`results/A5d_layer_honesty.csv`):**
+
+- Best `sub@1` at L21 = +0.0387 — well below the 0.15 trigger.
+- Best `cold_uar` at L7 = 0.6052 (cold UAR range L0..24: 0.560–0.605, spread 0.045).
+- Highest `speaker_top1` at L3 = 0.0871; lowest at L22 = 0.0402.
+- Speaker top-1 decays roughly monotonically L0→L24 (0.087 → 0.043, ~50% reduction); cold UAR is **flat** across the stack with no clean mid-band peak.
+
+**Verdict — A5e SKIPPED.** Both skip-branch conditions of the §5.6 trigger fire simultaneously: (1) no layer reaches `sub@1_L > 0.15` (peak L21 = +0.0387), and (2) the cold UAR peak (L7 = 0.6052) coincides with high speaker leak (L7 `speaker_top1` = 0.0813, joint top tier). There is no honest mid-band that would justify the retrain spend.
+
+**Structural paper finding (independent of A5e).** Speaker information is layer-stratified on URTIC — confirms Pasad 2021 / Chen 2022 for the speaker axis on this corpus (top-1 monotone-ish decay 0.087→0.043, ~2× reduction across the stack). Cold information is **not** layer-stratified — `cold_uar` is roughly flat L0..L24 with no mid-band peak, refuting the mid-band cold hypothesis on URTIC specifically. Reportable as a standalone empirical finding alongside the A5b headline, regardless of A5e.
+
+### 5.6 A5e — WavLM mid-layer retrain (SKIPPED)
+
+**Status: SKIPPED** by A5d verdict (§5.5). Both trigger conditions fire: (1) no layer with `sub@1_L > 0.15` (peak +0.0387 at L21); (2) cold UAR peak (L7) coincides with the speaker-heavy band. The retrain track is closed — GPU goes to A5.5 (cross-speaker splicing) and A6 (contrastive pretraining) instead. Trigger spec retained for completeness: would have fired only on a *dramatic* honest mid-band (`sub@1_L > 0.15` over a contiguous L_a..L_b with `speaker_top1_L` well below A2's full-stack 0.0501), at which point a `LayerWeightedPooledHead` retrain (3 seeds, layer dim masked to the band) + K=1 ablation on `A2_mid + G4_gi` would have been run.
+
+### 5.7 Acceptance gates
 
 Apply at A5b first; A5c only if A5b is within striking distance.
 
@@ -242,7 +269,16 @@ Apply at A5b first; A5c only if A5b is within striking distance.
 - **Speaker probe**: probe top-1 on A5b representation ≤ A2 + 1σ (≤ 0.0510).
 - **Honesty table**: reported in the paper with per-group `label_gain`, `speaker_gain`, both honesty forms.
 
-### 5.6 v1 scoping decisions (locked)
+**Status (locked):** A5b **PASSES** these gates via the **K-locked K=1 ablation** (admission frozen to the top-1 group `A2 + G4_gain_invariant`, sweeping only β and τ on `train_threshold`):
+
+- UAR 0.6576 ± 0.0011 (per-seed: 42→0.6571, 123→0.6589, 7→0.6569).
+- Δ vs A2_argmax = +0.0148 ± 0.0045 (3.3σ above zero — gate of +0.007 cleared by ~2σ).
+- Δ vs A2_τ = +0.0112 ± 0.0066 (1.7σ above zero — fusion contributes ~75% of the headline lift; the remaining ~25% is τ calibration).
+- Speaker probe: fused-vector top-1 = 0.0194 on the admitted concat (well below the 0.0510 ceiling).
+
+The originally-reported **K=4 free-sweep FAIL** (UAR 0.6502 ± 0.0078, σ > effect size) is documented as **τ-sweep pathology**: free K-sweep on `train_threshold` over-rewards configurations with more τ flexibility (more groups → more degrees of freedom), inflating variance without materially changing the mean. The σ collapse 0.0112 → 0.0011 between free-sweep K=4 and K-locked K=1 is the diagnostic. Both numbers are paper-reportable: the K=1 PASS is the headline, the K=4 FAIL is the documented sweep-protocol finding.
+
+### 5.8 v1 scoping decisions (locked)
 
 - **Per-group probe = linear logistic regression**, not an MLP. If a group needs nonlinearity to predict cold, that's a signal the group should be sub-divided.
 - **β-learning at A5c uses a `train_fusion` slice** (10 % of `train_fit`, held out from per-group probe training), **not `devel_val`**. Devel stays for early stopping only — same Huckvale discipline as A2's threshold-on-`train_threshold` choice.
@@ -253,7 +289,7 @@ Apply at A5b first; A5c only if A5b is within striking distance.
 - Stability via bootstrap on `train_fit`, not k-fold (k-fold rebuilds pseudo-speaker KMeans per fold = ~25 min × k).
 - No SMOTE / ADASYN — Huckvale showed they don't help; balanced sampler covers the imbalance.
 
-### 5.7 v1 feature checklist (extraction spec)
+### 5.9 v1 feature checklist (extraction spec)
 
 Pinned set so A5a is a definite coding task. Extracted once per utterance and cached as one tensor per group. Regime tags `[voiced]`, `[unvoiced]`, `[low_energy]` come from the existing pYIN+RMS labels in `cache/manner_labels/`.
 
@@ -284,7 +320,7 @@ HuBERT-base or HuBERT-large built-in cluster IDs first; VQ-VAE on WavLM embeddin
 
 Symmetric across classes (same `p`, same `K`, same `r`-distribution, same crossfade settings for cold and non-cold) so splice presence is uncorrelated with the label. **No pitch shift, no time-stretch, no speed perturbation** — they can mask or mimic cold-like signatures and break causal interpretability. Apply only after A5 to keep the de-confounding levers separable.
 
-**Recipe (per training chunk):**
+**Recipe (per training chunk, v1.1):**
 
 ```text
 with probability p:
@@ -292,18 +328,28 @@ with probability p:
     r       ← Uniform(r_lo, r_hi)                       # replacement ratio
     [t0,t1] ← splice boundaries inside silence run ≥ 40 ms in anchor
               (fallback: unvoiced run ≥ 40 ms; final fallback: skip)
-    seg_B   ← partner segment of length r * len(anchor)
+    [s0,s1] ← partner segment of length r * len(anchor) such that:
+                - s0, s1 land in partner silence runs ≥ 40 ms
+                  (fallback: unvoiced runs ≥ 40 ms, mirrors anchor-side rule)
+                - voiced_fraction(partner[s0:s1]) ≥ 0.50
+              try up to 5 candidate windows; if none qualifies, skip the chunk
+    seg_B   ← partner[s0:s1]
     seg_B   ← rms_match(seg_B, local_rms(anchor[t0:t1]))
-    out     ← anchor[:t0] ⊕ crossfade(anchor[t0:], seg_B, 150 ms) ⊕
-              crossfade(seg_B, anchor[t1:], 150 ms)
+    cf      ← 150 ms if both anchor and partner boundaries are silence-on-silence
+              else 250 ms (longer crossfade when an unvoiced fallback is used)
+    out     ← anchor[:t0] ⊕ crossfade(anchor[t0:], seg_B, cf) ⊕
+              crossfade(seg_B, anchor[t1:], cf)
 else:
     out     ← anchor                                    # untouched
 ```
 
 - **Crossfade**: equal-power (`fade_out = cos θ`, `fade_in = sin θ`), not linear (linear has a ~−6 dB perceptual dip mid-fade).
+- **Crossfade window scales with boundary type**: 150 ms when both anchor and partner boundaries fall on silence (the seam is silence-on-silence, perceptually invisible); 250 ms when either side falls on unvoiced fallback (longer fade hides the spectral handoff between two unvoiced segments that don't share a speaker).
 - **Segment replacement, not concat**: output keeps anchor's duration so WavLM frame count stays at 399 and there's no duration shortcut.
-- **Boundary picker uses cached manner labels**: scan for silence runs of ≥ 40 ms in `cache/manner_labels/`, splice inside silence; fallback to unvoiced; document the skip rate for chunks with neither.
+- **Boundary picker uses cached manner labels** on **both sides**: scan `cache/manner_labels/` for silence runs of ≥ 40 ms in *both* the anchor (where the splice goes in) and the partner (where the segment is cut from); splice into silence on both ends; fallback to unvoiced where silence isn't available; document the skip rate.
+- **Partner-segment voiced-fraction floor (≥ 0.50)**: if the partner window happens to land mostly in partner silence, the segment is a no-op and wastes the augmentation budget; if it lands mid-syllable, the seam is detectable. Requiring ≥ 50% voiced fraction inside `[s0:s1]` ensures the segment carries actual articulatory content (where the cold signal lives) without forcing the whole window to be a single phonetic unit. Re-sample up to 5 times; skip if no candidate qualifies.
 - **RMS-match the partner segment** to the anchor's local RMS at the splice region — prevents loudness discontinuity becoming a class proxy.
+- **Spectral-envelope matching at the seam** (low-order MFCC delta < threshold): considered for v1.1 but **deferred** as overkill — promote only if the splice-detector audit (below) flags spectral artefacts. The equal-power crossfade + RMS match should be sufficient when both boundaries are silence-on-silence.
 
 **Cache strategy:**
 

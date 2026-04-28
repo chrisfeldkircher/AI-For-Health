@@ -1,0 +1,541 @@
+{
+  "rung_id": "A5b",
+  "description": "Late fusion: final_logit = logit_A2 + beta * mean_g(zscore_g(logit_g)). Per-group cold probes (linear, balanced LR). Admission = top-K of subtractive_honesty_lam1 with label_gain > 0; G4_energy excluded in favour of G4_gain_invariant (waveform-overlapping, cleaner honesty). (beta, K, tau) all chosen on train_threshold; one-shot eval on devel_test.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "split_sizes": {
+    "train_fit": 8554,
+    "train_threshold": 951,
+    "devel_val": 4798,
+    "devel_test": 4798
+  },
+  "admission_pool": [
+    "G4_gain_invariant",
+    "G1_voicing",
+    "G6_spectral_shape",
+    "G5_modulation",
+    "G2_prosody",
+    "G3_voice_quality"
+  ],
+  "betas": [
+    0.25,
+    0.5,
+    1.0
+  ],
+  "ks": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "uar_devel_test": {
+    "mean": 0.6501850426138283,
+    "std": 0.007753903023135648,
+    "n": 3
+  },
+  "uar_a2_devel_test": {
+    "mean": 0.6428186398201391,
+    "std": 0.0034490974930043617,
+    "n": 3
+  },
+  "delta_uar_vs_a2": {
+    "mean": 0.007366402793689127,
+    "std": 0.011173113774116825,
+    "n": 3
+  },
+  "gate": {
+    "target_uar": 0.6530106863030402,
+    "achieved_uar": 0.6501850426138283,
+    "passed": false,
+    "rule": "A5b mean UAR on devel_test >= max(A2 devel_test) + 0.007 (2sigma at N=3)"
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "a2_devel_test_argmax": {
+        "uar": 0.6460106863030401,
+        "recall_C": 0.46047430830039526,
+        "recall_NC": 0.831547064305685,
+        "acc": 0.7924135056273447
+      },
+      "locked": {
+        "K": 4,
+        "beta": 0.25,
+        "admitted": [
+          "G4_gain_invariant",
+          "G1_voicing",
+          "G6_spectral_shape",
+          "G5_modulation"
+        ],
+        "tau": 0.25,
+        "uar_train_threshold": 0.896931360003863
+      },
+      "devel_test": {
+        "uar": 0.6439427706294273,
+        "recall_C": 0.43280632411067194,
+        "recall_NC": 0.8550792171481827,
+        "acc": 0.8105460608586911
+      },
+      "devel_val": {
+        "uar": 0.6413016354046306,
+        "recall_C": 0.4316831683168317,
+        "recall_NC": 0.8509201024924296,
+        "acc": 0.8067944977073781
+      },
+      "delta_uar_vs_a2": -0.0020679156736128634,
+      "sweep_train_threshold": [
+        {
+          "K": 4,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": 0.25,
+          "uar_train_threshold": 0.896931360003863
+        },
+        {
+          "K": 2,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": 0.3250000000000002,
+          "uar_train_threshold": 0.8952896013906662
+        },
+        {
+          "K": 4,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.04999999999999982,
+          "uar_train_threshold": 0.8948308747193316
+        },
+        {
+          "K": 3,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.125,
+          "uar_train_threshold": 0.8936599145319781
+        },
+        {
+          "K": 1,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": 0.07500000000000018,
+          "uar_train_threshold": 0.8927183176802916
+        },
+        {
+          "K": 3,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.09999999999999964,
+          "uar_train_threshold": 0.890732514063594
+        },
+        {
+          "K": 2,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.19999999999999973,
+          "uar_train_threshold": 0.8883905936888867
+        },
+        {
+          "K": 1,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.44999999999999973,
+          "uar_train_threshold": 0.8830065911779619
+        },
+        {
+          "K": 4,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": 0.07500000000000018,
+          "uar_train_threshold": 0.8792522755257248
+        },
+        {
+          "K": 3,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.2999999999999998,
+          "uar_train_threshold": 0.8662570317970013
+        },
+        {
+          "K": 1,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": 0.125,
+          "uar_train_threshold": 0.8643738380936286
+        },
+        {
+          "K": 2,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": 0.04999999999999982,
+          "uar_train_threshold": 0.8620319177189213
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "a2_devel_test_argmax": {
+        "uar": 0.6391599961689917,
+        "recall_C": 0.383399209486166,
+        "recall_NC": 0.8949207828518173,
+        "acc": 0.8409754064193414
+      },
+      "locked": {
+        "K": 1,
+        "beta": 0.25,
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "tau": -0.5999999999999996,
+        "uar_train_threshold": 0.9362973514570607
+      },
+      "devel_test": {
+        "uar": 0.6588648243445845,
+        "recall_C": 0.4782608695652174,
+        "recall_NC": 0.8394687791239516,
+        "acc": 0.8013755731554815
+      },
+      "devel_val": {
+        "uar": 0.6527755291252396,
+        "recall_C": 0.4613861386138614,
+        "recall_NC": 0.8441649196366178,
+        "acc": 0.8038766152563568
+      },
+      "delta_uar_vs_a2": 0.019704828175592826,
+      "sweep_train_threshold": [
+        {
+          "K": 1,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.5999999999999996,
+          "uar_train_threshold": 0.9362973514570607
+        },
+        {
+          "K": 4,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.6499999999999999,
+          "uar_train_threshold": 0.9362973514570607
+        },
+        {
+          "K": 4,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.5249999999999999,
+          "uar_train_threshold": 0.9351263912697072
+        },
+        {
+          "K": 2,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.5,
+          "uar_train_threshold": 0.9346555928438639
+        },
+        {
+          "K": 3,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.6999999999999997,
+          "uar_train_threshold": 0.9339554310823535
+        },
+        {
+          "K": 3,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.5749999999999997,
+          "uar_train_threshold": 0.9333699509886767
+        },
+        {
+          "K": 2,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.5749999999999997,
+          "uar_train_threshold": 0.9293862720007726
+        },
+        {
+          "K": 4,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.625,
+          "uar_train_threshold": 0.9275151500519085
+        },
+        {
+          "K": 1,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.6999999999999997,
+          "uar_train_threshold": 0.9252879113450349
+        },
+        {
+          "K": 3,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.6749999999999998,
+          "uar_train_threshold": 0.9251732296772013
+        },
+        {
+          "K": 1,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.17499999999999982,
+          "uar_train_threshold": 0.9157934764238634
+        },
+        {
+          "K": 2,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.6999999999999997,
+          "uar_train_threshold": 0.9148639513266859
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "a2_devel_test_argmax": {
+        "uar": 0.6432852369883855,
+        "recall_C": 0.3932806324110672,
+        "recall_NC": 0.8932898415657037,
+        "acc": 0.8405585660691955
+      },
+      "locked": {
+        "K": 4,
+        "beta": 0.25,
+        "admitted": [
+          "G4_gain_invariant",
+          "G1_voicing",
+          "G6_spectral_shape",
+          "G5_modulation"
+        ],
+        "tau": -0.02499999999999991,
+        "uar_train_threshold": 0.9201212004152683
+      },
+      "devel_test": {
+        "uar": 0.6477475328674729,
+        "recall_C": 0.4150197628458498,
+        "recall_NC": 0.880475302889096,
+        "acc": 0.8313880783659858
+      },
+      "devel_val": {
+        "uar": 0.6535301538539598,
+        "recall_C": 0.4198019801980198,
+        "recall_NC": 0.8872583275098999,
+        "acc": 0.8380575239683201
+      },
+      "delta_uar_vs_a2": 0.004462295879087419,
+      "sweep_train_threshold": [
+        {
+          "K": 4,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.02499999999999991,
+          "uar_train_threshold": 0.9201212004152683
+        },
+        {
+          "K": 2,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.125,
+          "uar_train_threshold": 0.919421038653758
+        },
+        {
+          "K": 3,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.125,
+          "uar_train_threshold": 0.9188355585600811
+        },
+        {
+          "K": 1,
+          "beta": 0.25,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.125,
+          "uar_train_threshold": 0.9176645983727275
+        },
+        {
+          "K": 4,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": -0.19999999999999973,
+          "uar_train_threshold": 0.9169644366112171
+        },
+        {
+          "K": 1,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.2999999999999998,
+          "uar_train_threshold": 0.9145078345686761
+        },
+        {
+          "K": 3,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.17499999999999982,
+          "uar_train_threshold": 0.9123952775296362
+        },
+        {
+          "K": 2,
+          "beta": 0.5,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.25,
+          "uar_train_threshold": 0.9122805958618025
+        },
+        {
+          "K": 4,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape",
+            "G5_modulation"
+          ],
+          "tau": 0.20000000000000018,
+          "uar_train_threshold": 0.9055988797411816
+        },
+        {
+          "K": 2,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "tau": -0.375,
+          "uar_train_threshold": 0.9033837127888167
+        },
+        {
+          "K": 1,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "tau": -0.2749999999999999,
+          "uar_train_threshold": 0.899285352133079
+        },
+        {
+          "K": 3,
+          "beta": 1.0,
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing",
+            "G6_spectral_shape"
+          ],
+          "tau": -0.22499999999999964,
+          "uar_train_threshold": 0.8971727950940389
+        }
+      ]
+    }
+  ]
+}

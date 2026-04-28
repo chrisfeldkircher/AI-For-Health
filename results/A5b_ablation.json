@@ -1,0 +1,729 @@
+{
+  "rung_id": "A5b_ablation",
+  "description": "Per-(seed, config) ablation. Each row hard-codes the admitted set; (beta, tau) swept on train_threshold; one-shot eval on devel_test. Locked A5b numbers (results/A5b.json) are not affected.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "betas": [
+    0.25,
+    0.5,
+    1.0
+  ],
+  "ablations": [
+    {
+      "label": "A2+G4",
+      "admitted": [
+        "G4_gain_invariant"
+      ]
+    },
+    {
+      "label": "A2+G4+G1",
+      "admitted": [
+        "G4_gain_invariant",
+        "G1_voicing"
+      ]
+    },
+    {
+      "label": "A2+G4+G5",
+      "admitted": [
+        "G4_gain_invariant",
+        "G5_modulation"
+      ]
+    },
+    {
+      "label": "A2+G4+G6",
+      "admitted": [
+        "G4_gain_invariant",
+        "G6_spectral_shape"
+      ]
+    }
+  ],
+  "uar_a2_devel_test": {
+    "mean": 0.6428186398201391,
+    "std": 0.0034490974930043617,
+    "n": 3
+  },
+  "uar_a2_tau_devel_test": {
+    "mean": 0.6463891825585978,
+    "std": 0.007464258991488333,
+    "n": 3
+  },
+  "delta_a2_tau_vs_argmax": {
+    "mean": 0.00357054273845873,
+    "std": 0.0109016129002292,
+    "n": 3
+  },
+  "aggregate": [
+    {
+      "label": "A2+G4",
+      "uar_devel_test": {
+        "mean": 0.6575944214624875,
+        "std": 0.001104543661422135,
+        "n": 3
+      },
+      "delta_uar_vs_a2": {
+        "mean": 0.014775781642348348,
+        "std": 0.004452138767510254,
+        "n": 3
+      },
+      "delta_uar_vs_a2_tau": {
+        "mean": 0.011205238903889617,
+        "std": 0.0065784973958914195,
+        "n": 3
+      }
+    },
+    {
+      "label": "A2+G4+G1",
+      "uar_devel_test": {
+        "mean": 0.6531723388919791,
+        "std": 0.005895150811385173,
+        "n": 3
+      },
+      "delta_uar_vs_a2": {
+        "mean": 0.010353699071839991,
+        "std": 0.009139795110439773,
+        "n": 3
+      },
+      "delta_uar_vs_a2_tau": {
+        "mean": 0.006783156333381261,
+        "std": 0.0027104547168531664,
+        "n": 3
+      }
+    },
+    {
+      "label": "A2+G4+G5",
+      "uar_devel_test": {
+        "mean": 0.6512425605379129,
+        "std": 0.004441415849299536,
+        "n": 3
+      },
+      "delta_uar_vs_a2": {
+        "mean": 0.008423920717773759,
+        "std": 0.006905792019429273,
+        "n": 3
+      },
+      "delta_uar_vs_a2_tau": {
+        "mean": 0.004853377979315028,
+        "std": 0.006816661678185865,
+        "n": 3
+      }
+    },
+    {
+      "label": "A2+G4+G6",
+      "uar_devel_test": {
+        "mean": 0.6518784526655591,
+        "std": 0.0038462634184478007,
+        "n": 3
+      },
+      "delta_uar_vs_a2": {
+        "mean": 0.009059812845420012,
+        "std": 0.006009824046018694,
+        "n": 3
+      },
+      "delta_uar_vs_a2_tau": {
+        "mean": 0.005489270106961282,
+        "std": 0.007453488150360919,
+        "n": 3
+      }
+    }
+  ],
+  "runs": [
+    {
+      "seed": 42,
+      "a2_devel_test_argmax": {
+        "uar": 0.6460106863030401,
+        "recall_C": 0.46047430830039526,
+        "recall_NC": 0.831547064305685,
+        "acc": 0.7924135056273447
+      },
+      "a2_devel_test_tau_tuned": {
+        "tau": 0.20000000000000018,
+        "uar_train_threshold": 0.904427919553828,
+        "devel_test": {
+          "uar": 0.6390020591669767,
+          "recall_C": 0.42292490118577075,
+          "recall_NC": 0.8550792171481827,
+          "acc": 0.8095039599833264
+        },
+        "devel_val": {
+          "uar": 0.6387388634041601,
+          "recall_C": 0.42376237623762375,
+          "recall_NC": 0.8537153505706965,
+          "acc": 0.8084618591079616
+        }
+      },
+      "ablations": [
+        {
+          "label": "A2+G4",
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": 0.07500000000000018,
+            "uar_train_threshold": 0.8927183176802916
+          },
+          "devel_test": {
+            "uar": 0.6570570672894511,
+            "recall_C": 0.48023715415019763,
+            "recall_NC": 0.8338769804287046,
+            "acc": 0.7965819091288037
+          },
+          "devel_val": {
+            "uar": 0.6473603125511713,
+            "recall_C": 0.47128712871287126,
+            "recall_NC": 0.8234334963894713,
+            "acc": 0.7863693205502292
+          },
+          "delta_uar_vs_a2": 0.011046380986410975,
+          "delta_uar_vs_a2_tau": 0.018055008122474403,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": 0.07500000000000018,
+              "uar_train_threshold": 0.8927183176802916
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.44999999999999973,
+              "uar_train_threshold": 0.8830065911779619
+            },
+            {
+              "beta": 1.0,
+              "tau": 0.125,
+              "uar_train_threshold": 0.8643738380936286
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G1",
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": 0.3250000000000002,
+            "uar_train_threshold": 0.8952896013906662
+          },
+          "devel_test": {
+            "uar": 0.6465098224843352,
+            "recall_C": 0.4288537549407115,
+            "recall_NC": 0.864165890027959,
+            "acc": 0.8182576073363902
+          },
+          "devel_val": {
+            "uar": 0.6417670488222826,
+            "recall_C": 0.42376237623762375,
+            "recall_NC": 0.8597717214069416,
+            "acc": 0.8138807836598583
+          },
+          "delta_uar_vs_a2": 0.0004991361812950457,
+          "delta_uar_vs_a2_tau": 0.0075077633173584735,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": 0.3250000000000002,
+              "uar_train_threshold": 0.8952896013906662
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.19999999999999973,
+              "uar_train_threshold": 0.8883905936888867
+            },
+            {
+              "beta": 1.0,
+              "tau": 0.04999999999999982,
+              "uar_train_threshold": 0.8620319177189213
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G5",
+          "admitted": [
+            "G4_gain_invariant",
+            "G5_modulation"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": 0.0,
+            "uar_train_threshold": 0.9024421159371303
+          },
+          "devel_test": {
+            "uar": 0.651698260206506,
+            "recall_C": 0.48023715415019763,
+            "recall_NC": 0.8231593662628145,
+            "acc": 0.7869945810754481
+          },
+          "devel_val": {
+            "uar": 0.6534176059115345,
+            "recall_C": 0.4871287128712871,
+            "recall_NC": 0.8197064989517819,
+            "acc": 0.7847019591496457
+          },
+          "delta_uar_vs_a2": 0.005687573903465859,
+          "delta_uar_vs_a2_tau": 0.012696201039529287,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": 0.0,
+              "uar_train_threshold": 0.9024421159371303
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.19999999999999973,
+              "uar_train_threshold": 0.8964726333325286
+            },
+            {
+              "beta": 1.0,
+              "tau": 0.17499999999999982,
+              "uar_train_threshold": 0.8839361162751393
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G6",
+          "admitted": [
+            "G4_gain_invariant",
+            "G6_spectral_shape"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": 0.025000000000000355,
+            "uar_train_threshold": 0.8949455563871653
+          },
+          "devel_test": {
+            "uar": 0.6530962098803178,
+            "recall_C": 0.48023715415019763,
+            "recall_NC": 0.825955265610438,
+            "acc": 0.7894956231763235
+          },
+          "devel_val": {
+            "uar": 0.6516703452315882,
+            "recall_C": 0.48316831683168315,
+            "recall_NC": 0.8201723736314931,
+            "acc": 0.7847019591496457
+          },
+          "delta_uar_vs_a2": 0.007085523577277653,
+          "delta_uar_vs_a2_tau": 0.01409415071334108,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": 0.025000000000000355,
+              "uar_train_threshold": 0.8949455563871653
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.1499999999999999,
+              "uar_train_threshold": 0.8872196335015332
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.04999999999999982,
+              "uar_train_threshold": 0.8670718752263454
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "a2_devel_test_argmax": {
+        "uar": 0.6391599961689917,
+        "recall_C": 0.383399209486166,
+        "recall_NC": 0.8949207828518173,
+        "acc": 0.8409754064193414
+      },
+      "a2_devel_test_tau_tuned": {
+        "tau": -0.625,
+        "uar_train_threshold": 0.9352410729375407,
+        "devel_test": {
+          "uar": 0.6539282570017202,
+          "recall_C": 0.4644268774703557,
+          "recall_NC": 0.8434296365330848,
+          "acc": 0.8034597749062109
+        },
+        "devel_val": {
+          "uar": 0.648407146794344,
+          "recall_C": 0.44752475247524753,
+          "recall_NC": 0.8492895411134405,
+          "acc": 0.807002917882451
+        }
+      },
+      "ablations": [
+        {
+          "label": "A2+G4",
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.5999999999999996,
+            "uar_train_threshold": 0.9362973514570607
+          },
+          "devel_test": {
+            "uar": 0.6588648243445845,
+            "recall_C": 0.4782608695652174,
+            "recall_NC": 0.8394687791239516,
+            "acc": 0.8013755731554815
+          },
+          "devel_val": {
+            "uar": 0.6527755291252396,
+            "recall_C": 0.4613861386138614,
+            "recall_NC": 0.8441649196366178,
+            "acc": 0.8038766152563568
+          },
+          "delta_uar_vs_a2": 0.019704828175592826,
+          "delta_uar_vs_a2_tau": 0.004936567342864295,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.5999999999999996,
+              "uar_train_threshold": 0.9362973514570607
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.6999999999999997,
+              "uar_train_threshold": 0.9252879113450349
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.17499999999999982,
+              "uar_train_threshold": 0.9157934764238634
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G1",
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.5,
+            "uar_train_threshold": 0.9346555928438639
+          },
+          "devel_test": {
+            "uar": 0.6577122986418339,
+            "recall_C": 0.466403162055336,
+            "recall_NC": 0.8490214352283317,
+            "acc": 0.8086702792830346
+          },
+          "devel_val": {
+            "uar": 0.6493970151732155,
+            "recall_C": 0.44554455445544555,
+            "recall_NC": 0.8532494758909853,
+            "acc": 0.8103376406836181
+          },
+          "delta_uar_vs_a2": 0.01855230247284223,
+          "delta_uar_vs_a2_tau": 0.0037840416401137,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.5,
+              "uar_train_threshold": 0.9346555928438639
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.5749999999999997,
+              "uar_train_threshold": 0.9293862720007726
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.6999999999999997,
+              "uar_train_threshold": 0.9148639513266859
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G5",
+          "admitted": [
+            "G4_gain_invariant",
+            "G5_modulation"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.5749999999999997,
+            "uar_train_threshold": 0.9398102320191217
+          },
+          "devel_test": {
+            "uar": 0.6554385583620966,
+            "recall_C": 0.4683794466403162,
+            "recall_NC": 0.842497670083877,
+            "acc": 0.803042934556065
+          },
+          "devel_val": {
+            "uar": 0.6484654964448227,
+            "recall_C": 0.4495049504950495,
+            "recall_NC": 0.8474260423945958,
+            "acc": 0.8055439766569404
+          },
+          "delta_uar_vs_a2": 0.016278562193104973,
+          "delta_uar_vs_a2_tau": 0.0015103013603764426,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.5749999999999997,
+              "uar_train_threshold": 0.9398102320191217
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.3999999999999999,
+              "uar_train_threshold": 0.9352410729375407
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.07499999999999973,
+              "uar_train_threshold": 0.9221190757864748
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G6",
+          "admitted": [
+            "G4_gain_invariant",
+            "G6_spectral_shape"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.5999999999999996,
+            "uar_train_threshold": 0.9368828315507376
+          },
+          "devel_test": {
+            "uar": 0.6549684310179062,
+            "recall_C": 0.4723320158102767,
+            "recall_NC": 0.8376048462255359,
+            "acc": 0.799082951229679
+          },
+          "devel_val": {
+            "uar": 0.6504459250956542,
+            "recall_C": 0.45742574257425744,
+            "recall_NC": 0.843466107617051,
+            "acc": 0.8028345143809921
+          },
+          "delta_uar_vs_a2": 0.015808434848914588,
+          "delta_uar_vs_a2_tau": 0.0010401740161860573,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.5999999999999996,
+              "uar_train_threshold": 0.9368828315507376
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.2999999999999998,
+              "uar_train_threshold": 0.9318428740433135
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.04999999999999982,
+              "uar_train_threshold": 0.9175499167048939
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "a2_devel_test_argmax": {
+        "uar": 0.6432852369883855,
+        "recall_C": 0.3932806324110672,
+        "recall_NC": 0.8932898415657037,
+        "acc": 0.8405585660691955
+      },
+      "a2_devel_test_tau_tuned": {
+        "tau": -0.125,
+        "uar_train_threshold": 0.9252758395905261,
+        "devel_test": {
+          "uar": 0.6462372315070966,
+          "recall_C": 0.41106719367588934,
+          "recall_NC": 0.8814072693383038,
+          "acc": 0.8318049187161317
+        },
+        "devel_val": {
+          "uar": 0.6510840811544467,
+          "recall_C": 0.4158415841584158,
+          "recall_NC": 0.8863265781504776,
+          "acc": 0.8368070029178825
+        }
+      },
+      "ablations": [
+        {
+          "label": "A2+G4",
+          "admitted": [
+            "G4_gain_invariant"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.125,
+            "uar_train_threshold": 0.9176645983727275
+          },
+          "devel_test": {
+            "uar": 0.6568613727534267,
+            "recall_C": 0.44466403162055335,
+            "recall_NC": 0.8690587138863001,
+            "acc": 0.8243017924135057
+          },
+          "devel_val": {
+            "uar": 0.652715565057554,
+            "recall_C": 0.4316831683168317,
+            "recall_NC": 0.8737479617982763,
+            "acc": 0.8272196748645269
+          },
+          "delta_uar_vs_a2": 0.013576135765041242,
+          "delta_uar_vs_a2_tau": 0.010624141246330154,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.125,
+              "uar_train_threshold": 0.9176645983727275
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.2999999999999998,
+              "uar_train_threshold": 0.9145078345686761
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.2749999999999999,
+              "uar_train_threshold": 0.899285352133079
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G1",
+          "admitted": [
+            "G4_gain_invariant",
+            "G1_voicing"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.125,
+            "uar_train_threshold": 0.919421038653758
+          },
+          "devel_test": {
+            "uar": 0.6552948955497682,
+            "recall_C": 0.43873517786561267,
+            "recall_NC": 0.8718546132339235,
+            "acc": 0.8261775739891621
+          },
+          "devel_val": {
+            "uar": 0.6526572154070753,
+            "recall_C": 0.4297029702970297,
+            "recall_NC": 0.8756114605171209,
+            "acc": 0.8286786160900376
+          },
+          "delta_uar_vs_a2": 0.012009658561382697,
+          "delta_uar_vs_a2_tau": 0.00905766404267161,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.125,
+              "uar_train_threshold": 0.919421038653758
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.25,
+              "uar_train_threshold": 0.9122805958618025
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.375,
+              "uar_train_threshold": 0.9033837127888167
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G5",
+          "admitted": [
+            "G4_gain_invariant",
+            "G5_modulation"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": 0.04999999999999982,
+            "uar_train_threshold": 0.921292160602622
+          },
+          "devel_test": {
+            "uar": 0.6465908630451359,
+            "recall_C": 0.40711462450592883,
+            "recall_NC": 0.886067101584343,
+            "acc": 0.8355564818674448
+          },
+          "devel_val": {
+            "uar": 0.6516078442225773,
+            "recall_C": 0.4099009900990099,
+            "recall_NC": 0.8933146983461449,
+            "acc": 0.842434347644852
+          },
+          "delta_uar_vs_a2": 0.0033056260567504436,
+          "delta_uar_vs_a2_tau": 0.0003536315380393562,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": 0.04999999999999982,
+              "uar_train_threshold": 0.921292160602622
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.04999999999999982,
+              "uar_train_threshold": 0.9188355585600811
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.07499999999999973,
+              "uar_train_threshold": 0.9098239938192616
+            }
+          ]
+        },
+        {
+          "label": "A2+G4+G6",
+          "admitted": [
+            "G4_gain_invariant",
+            "G6_spectral_shape"
+          ],
+          "locked": {
+            "beta": 0.25,
+            "tau": -0.02499999999999991,
+            "uar_train_threshold": 0.9189502402279147
+          },
+          "devel_test": {
+            "uar": 0.6475707170984533,
+            "recall_C": 0.41699604743083,
+            "recall_NC": 0.8781453867660765,
+            "acc": 0.8295122967903293
+          },
+          "devel_val": {
+            "uar": 0.6527729921839144,
+            "recall_C": 0.4178217821782178,
+            "recall_NC": 0.887724202189611,
+            "acc": 0.8382659441433931
+          },
+          "delta_uar_vs_a2": 0.004285480110067796,
+          "delta_uar_vs_a2_tau": 0.001333485591356709,
+          "sweep_train_threshold": [
+            {
+              "beta": 0.25,
+              "tau": -0.02499999999999991,
+              "uar_train_threshold": 0.9189502402279147
+            },
+            {
+              "beta": 0.5,
+              "tau": -0.125,
+              "uar_train_threshold": 0.9123952775296362
+            },
+            {
+              "beta": 1.0,
+              "tau": -0.32499999999999973,
+              "uar_train_threshold": 0.9061964315893671
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

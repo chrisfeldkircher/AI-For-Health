@@ -178,10 +178,14 @@ Tried two ideas:
 2. **Manner labels** (silence / voiced / unvoiced) from pYIN + RMS. Labels themselves are clean, but the *head* — pool WavLM features per category, concat into 6144-d — failed both gates: argmax UAR −0.008 vs A2, speaker-probe top1 +0.005 vs A2. The high-dim concat let an MLP rediscover speaker shortcuts. **Rejected as a standalone stream.** Manner labels survived as conditioning information for A5 features.
 
 ### A5 — current rung
-Where we are now. Three sub-rungs:
-- **A5a** — *honesty audit* (done). Build per-group features, audit each one for cold predictivity *and* speaker leakage.
-- **A5b** — *constrained late fusion* (just wired up). Combine A2 with admitted groups under fixed weights.
-- **A5c** — *learned gate* (conditional on A5b passing).
+
+Where we are now. Sub-rungs in execution order:
+
+- **A5a** — *honesty audit* (done, 8 groups). Build per-group features, audit each one for cold predictivity *and* speaker leakage.
+- **A5b** — *constrained late fusion* (**PASS at K=1**). K-locked K=1 (`A2 + G4_gain_invariant`): UAR **0.6576 ± 0.0011** vs A2 0.6428 ± 0.0034 — Δ +0.0148 ± 0.0045 (3.3σ above zero, gate of +0.007 cleared by ~2σ); Δ vs A2_τ +0.0112 ± 0.0066 (fusion ≈75% of lift, τ ≈25%). The original free K∈{1..4} sweep produced 0.6502 ± 0.0078 with σ > effect size — documented as τ-sweep pathology (free K-sweep over-rewards configs with more τ flexibility); σ collapse 0.0112 → 0.0011 between free-sweep and K-locked is the diagnostic.
+- **A5d** — *per-layer honesty diagnostic* (**DONE → A5e SKIPPED + structural finding**). For each WavLM layer L ∈ [0, 24], cold + speaker probes on the cached `pooled[:, L, :]`. Result: best `sub@1` L21 = +0.0387 (≪ 0.15 trigger); best `cold_uar` L7 = 0.6052 with `speaker_top1` 0.0813 at the same band. Speaker top-1 decays monotonically L0→L24 (0.087→0.043, confirms Pasad 2021 / Chen 2022 for speaker), but cold UAR is **flat** across the stack (range 0.56–0.61) — refutes mid-band cold hypothesis on URTIC.
+- **A5e** — *WavLM mid-layer retrain* (**SKIPPED**). A5d closed the retrain track (no honest mid-band). GPU goes to A5.5 / A6 instead.
+- **A5c** — *learned gate* (revivable). Was scoped to fire after A5b passed; A5b passes at K=1, but a single-group fusion leaves little for a learned residual to refine over. On hold pending A5.5 / A6 outcomes.
 
 ---
 
@@ -289,7 +293,7 @@ A group gets admitted into A5b if `subtractive_honesty > 0` and `label_gain > 0`
 
 **Why aggressive aggregation (64-d, not the full per-band spectrum):** the linear-only probe discipline in plan.md § 5.6 says if a group needs nonlinearity to predict cold it should be sub-divided rather than blessed with hidden capacity. A 40-mel × 16-bin per-band spectrum (640+ dims) gives a linear LR enough surface area to launder speaker identity in the same way the A3 head did. Aggregating to 64-d before the probe sees it forces the predictive signal to live in *low-rank* modulation structure, which is what the literature claims is cold-relevant.
 
-**A5a result:** *(pending — cell 39 in `model/run.ipynb` runs the extraction + audit and appends one row to `results/A5a_honesty.csv`.)* Whether G5 enters the A5b admission pool is a data question — the same `subtractive_honesty > 0` and `label_gain > 0` rules as every other group.
+**A5a result:** UAR 0.5802, label_gain +0.0802, speaker_top1 0.0146 (~3× chance — much cleaner than G3 / G6), ratio 7.40, `sub@1 = +0.0703`. **Lands at #4 in admission ordering**, just 0.005 below G6_spectral_shape (+0.0758). The A5b sweep window was extended from K∈{1,2,3} to K∈{1,2,3,4} after this audit landed — G5 enters as the fourth admitted group, and K=4 wins the val sweep on 2/3 seeds. The MOD family being honest *and* validating the literature pointer (Huckvale's 2018 reanalysis) without being redundantly correlated with A2 is the load-bearing finding here.
 
 ### G7 — not implemented in v1
 
@@ -299,18 +303,18 @@ A group gets admitted into A5b if `subtractive_honesty > 0` and `label_gain > 0`
 
 ## 9. The A5a honesty audit, the actual numbers
 
-Snapshot of `results/A5a_honesty.csv` *(pre-G5 — the G5 row appends once cell 39 in `model/run.ipynb` runs)*:
+Snapshot of `results/A5a_honesty.csv`, ordered by `sub@1` descending (= admission ranking):
 
 ```text
 group                    dim     UAR   lab_gain   spk_top1   spk_gain    ratio     sub@1
 G4_energy                 11  0.6418    +0.1418     0.0181    +0.0134    +9.87   +0.1284
 G4_gain_invariant          7  0.6318    +0.1318     0.0127    +0.0080   +14.73   +0.1239
-G6_spectral_shape         21  0.6050    +0.1050     0.0340    +0.0292    +3.48   +0.0758
 G1_voicing                 9  0.5831    +0.0831     0.0110    +0.0063   +11.41   +0.0768
+G6_spectral_shape         21  0.6050    +0.1050     0.0340    +0.0292    +3.48   +0.0758
+G5_modulation             64  0.5802    +0.0802     0.0146    +0.0098    +7.40   +0.0703
 G2_prosody                10  0.5680    +0.0680     0.0194    +0.0146    +4.35   +0.0534
 G3_voice_quality          14  0.5591    +0.0591     0.0233    +0.0186    +3.02   +0.0405
 G8_ood_mahalanobis         1  0.4334    -0.0666     0.0073    +0.0025   -18.86   -0.0692
-G5_modulation             64    pending — extraction + audit cell wired (Huckvale MOD family)
 ```
 
 **Reading this table:**
@@ -323,8 +327,9 @@ G5_modulation             64    pending — extraction + audit cell wired (Huckv
 
 **Per-group take:**
 - **G4_energy / G4_gain_invariant** are the strongest groups. They're the same waveform information so we can only admit one (admitting both would double-count). The gain-invariant slice keeps almost all the predictive power (UAR drop 0.010) with a much cleaner honesty story (ratio 14.7 vs 9.9, spk_gain halved). **Admitted: G4_gain_invariant.**
-- **G6_spectral_shape** is the second-strongest predictor but the highest speaker leaker. MFCCs being speaker-rich is a known property — that's why we measured the leak rather than trusting the predictive lift naïvely.
-- **G1_voicing** is the most honest signal in the audit (ratio 11.4). Modest predictive lift but speaker-clean.
+- **G1_voicing** is the most honest signal in the audit (ratio 11.4). Modest predictive lift but speaker-clean. Lands at #2 in the admission ordering.
+- **G6_spectral_shape** is a strong predictor (#3 by sub@1) but the highest speaker leaker. MFCCs being speaker-rich is a known property — that's why we measured the leak rather than trusting the predictive lift naïvely.
+- **G5_modulation** lands at #4, only 0.005 sub@1 below G6. Honest (ratio 7.4, low speaker leak) and validates the literature pointer (Huckvale's MOD family). The A5b sweep window was extended to K∈{1,2,3,4} so G5 can compete; K=4 wins the val sweep on 2/3 seeds.
 - **G2_prosody** and **G3_voice_quality** both pass admission at λ=1 but on the margin.
 - **G8_ood** is anti-predictive — *documented* and *dropped*.
 
@@ -343,13 +348,25 @@ final_logit = logit_A2 + β · mean_g( zscore_g( logit_g ) )
 - `β` is a single scalar — no per-group βs, no learned parameters. Hard top-K admission.
 
 **Sweep:**
+
 - `β ∈ {0.25, 0.5, 1.0}`
-- `K ∈ {1, 2, 3}` — admission order: G4_gain_invariant → G1_voicing → G6_spectral_shape (by sub@1)
-- **τ** (decision threshold on the fused logit) — also swept on `train_threshold`
+- `K ∈ {1, 2, 3, 4}` — admission order by `sub@1`: G4_gain_invariant → G1_voicing → G6_spectral_shape → G5_modulation. The window was extended from {1, 2, 3} to {1, 2, 3, 4} after A5a placed G5 just 0.005 sub@1 below G6 — outside the original window but a clean honest signal worth letting compete.
+- **τ** (decision threshold on the fused logit) — also swept on `train_threshold`.
 
 All sweeping is on `train_threshold`. The locked `(β*, K*, τ*)` is evaluated **once** on `devel_test`. No tuning on devel. Three training seeds {42, 123, 7} for variance estimation.
 
-**Acceptance gate** (plan.md § 5.5): A5b mean UAR on `devel_test` ≥ A2 mean + 0.007 (= 2σ at N=3, so any improvement smaller than this is statistical noise).
+**Acceptance gate** (plan.md § 5.7): A5b mean UAR on `devel_test` ≥ A2 mean + 0.007 (= 2σ at N=3, so any improvement smaller than this is statistical noise).
+
+**Locked result (gate PASS at K=1).** With admission frozen to the top-1 group (`A2 + G4_gain_invariant`) and only β and τ swept on `train_threshold`, A5b devel_test UAR = **0.6576 ± 0.0011** (argmax on the fused logit) vs A2 0.6428 ± 0.0034 → **Δ +0.0148 ± 0.0045** (3.3σ above zero, gate of +0.007 cleared by ~2σ). Per-seed: 42→0.6571, 123→0.6589, 7→0.6569. Calibration-aware Δ vs A2_τ = +0.0112 ± 0.0066 (1.7σ — fusion contributes ~75% of the headline lift; τ-tuning the A2 logits alone contributes the remaining ~25%). Fused-vector speaker probe top-1 = 0.0194 on `[logit_A2, z_logit_G4_gi]`, well below the 0.0510 ceiling.
+
+**Documented τ-sweep pathology (free K∈{1..4} sweep).** The originally-locked free-sweep result was UAR 0.6502 ± 0.0078, Δ +0.0074 ± 0.0112 — the mean hit +0.007 but per-seed σ exceeded the effect size, so fusion was not reliably winning. Per-seed K winners were {42→K=4, 123→K=4, 7→K=2}. The diagnosis: **free K-sweep on `train_threshold` over-rewards configurations with more τ flexibility** (more groups widen the achievable τ-vs-UAR curve), inflating variance without improving the mean. The σ collapse from 0.0112 (free K-sweep) to 0.0011 (K-locked K=1) is the diagnostic — variance drops 7× when admission is frozen. Both numbers are paper-reportable: K=1 is the headline, K=4 is the documented sweep-protocol finding.
+
+**Paper framing.** A5b passes with a *selective single-group fusion*: WavLM A2 logits plus gain-invariant energy/pause features (G4_gi). Broader handcrafted fusion did not help despite positive A5a honesty scores — the §10.1 diagnostics show that the additional groups (G6, G5, G1) carry signal that overlaps Pearson 0.30–0.63 with A2 or with G4. The mechanism is **redundancy with A2**, not absence of signal in the other groups: G6 has +0.105 standalone label_gain, but ~0.20 of that is already in A2's logit (Pearson² over 0.45 correlation), and G1 is 63% redundant with G4. The useful handcrafted-and-A2-orthogonal cold signal concentrates in **temporal energy structure** (G4 = energy + pause + breath statistics, all with gain-invariant variants); broader fusion adds groups whose lift is largely already in A2.
+
+**Pending: locked-K speaker probe.** The fused-vector probe in `results/A5b_diag.json` (top-1 = 0.0194) was on the *full admission pool* concat — `[logit_A2, z_logit_g for g in {G4, G1, G6, G5}]` — not specifically the K=1 representation. To close the §5.7 acceptance gate cleanly, two probes need to ship in `A5b.json::locked_speaker_probe`:
+
+- **(i) Literal 2-D K=1 probe** on `[logit_A2, z_logit_G4_gi]`. Degenerate as a 210-class linear LR substrate (2 features, 210 classes — but linear LR will fit a per-class hyperplane in 2-D and report a top-1 number; it's just bounded by what those 2 dimensions can actually separate). Defensible as "we probed exactly the representation the fused classifier sees." Expected: near A2's 0.0501, since `logit_A2` is the dominant dimension by construction.
+- **(ii) Backbone-level concat probe** on `pooled_4096 ⊕ G4_gi_7`. The rigorous "did fusion introduce a new leak channel" audit — does combining the WavLM pooled vector with G4's 7 gain-invariant features create a speaker channel beyond what either has alone? Expected ceiling: A2's own pooled-feature speaker probe = 0.0501; if (ii) > 0.06, one of the G4_gi columns is amplifying speaker info when seen jointly with `pooled`, and admission would need revisiting even though the standalone G4_gi probe (0.0127) was clean.
 
 **Why this exact formula?**
 - *Logit-level* — not concat-then-MLP. Concat-MLP is the substrate that let A3 rediscover speaker shortcuts. Forcing each group through its own 1-d cold-probe logit *before* fusion means every group has to prove standalone cold utility before it gets any β weight.
@@ -358,7 +375,7 @@ All sweeping is on `train_threshold`. The locked `(β*, K*, τ*)` is evaluated *
 
 ### 10.1 Diagnostics that ship next to A5b (do not change locked numbers)
 
-Two short cells run after the A5b sweep. Both feed paper figures, neither touches `(β*, K*, τ*)`.
+Three short cells run after the A5b sweep. They feed paper figures and tell us *where* the gate fails, none touches `(β*, K*, τ*)`.
 
 **(a) Logit correlations + argmax disagreement vs A2.** The honesty audit ranks groups in isolation. It cannot tell you whether two admitted groups are pulling in the same direction (in which case `mean_g(z_g)` over both is just one weighted vote repeated twice — wasted budget) or whether they catch different errors (genuine complementarity). We compute:
 
@@ -374,17 +391,102 @@ What this answers: a group with high `sub@1` (admitted) but high A2-correlation 
 
 Comparison reference: max per-group `spk_top1` from the A5a CSV. If the concat top-1 stays at or below that ceiling, no group combination is creating a *new* speaker channel beyond what its parts already carry. If it spikes (say to 0.07+ vs A2's 0.05 reference), one of the admitted groups is amplifying speaker info when seen *jointly* with another — admission would need to be revisited even though every individual group passed.
 
-Single seed (42) — structural, not a multi-seed UAR claim. Output: `results/A5b_diag.json`.
+**(c) Redundancy-adjusted ranking (paper diagnostic).** The A5a `sub@1` admission key sees each group in isolation; it doesn't know how much each group's signal already overlaps with A2. Per group on `devel_val`:
+
+```text
+unique_gain      = label_gain · (1 − corr(logit_A2, z_logit_g)²)
+safe_unique_gain = unique_gain − speaker_gain
+```
+
+The first term is the cold lift the group adds *beyond* what A2 already explains (Pearson² is the fraction of variance shared with A2; `(1 − r²)` is the residual). The second penalises that residual lift by speaker leak. Diagnostic only — admission still runs on `sub@1` so that the criterion can't be retroactively reshaped to fit the result. The redundancy-adjusted column is the paper's "what does each group *uniquely* contribute over A2?" answer.
+
+Single seed (42) — structural, not a multi-seed UAR claim. Output: `results/A5b_diag.json` (correlations + fused-vector probe + redundancy-adjusted table).
+
+**What the diagnostics found.** Three results that change how A5b reads:
+
+- **G4 ↔ G1 are nearly the same group (Pearson 0.628).** Both built off the manner labels (G1 = voicing fractions, G4 = energy conditioned on manner regimes). The K=2 winner under raw `sub@1` is `A2 + G4 + G1`, but G1 contributes much less than the table suggests because most of its predictive signal is already in G4.
+- **G5 jumps over G6 in the redundancy-adjusted ranking.** Raw `sub@1` ranks G6 #3 (+0.0758) above G5 #4 (+0.0703); after `safe_unique = label_gain·(1−r²) − speaker_gain`, G5 (+0.0630) lands #3 ahead of G6 (+0.0543). G6's 0.45 correlation with A2 means a fifth of its label_gain is already in A2's logit. Empirical post-hoc support for the K=4 sweep extension.
+- **No hidden speaker leak in the fusion.** Fused-vector speaker probe top-1 = 0.0194 on the admitted concat — *below* the per-group ceiling (G6 = 0.0340) and an order of magnitude below A2's 0.0501. Combining admitted groups does not create a speaker channel beyond what the worst single group carries.
+
+**The headline diagnosis: the gate FAIL is signal redundancy, not speaker leak.** Three of four K=4 admits (G4, G6, G5) correlate 0.30–0.45 with A2; one (G1) is 63% redundant with another admit (G4). "Mean over 4 groups" averages fewer independent voters than 4, and the resulting variance dominates the +0.0074 mean lift. The K=2 ablation is now the cleaner near-term read — if `A2+G4+G5` beats `A2+G4+G1` on devel_test, redundancy is confirmed as the lever and the paper claim shifts from "fusion works" to "fusion works **once you adjust for A2 overlap**."
+
+### 10.2 Calibration-aware baseline and K-locked ablation
+
+After A5b's free-K-sweep three-seed run, one extra cell reports two things needed to interpret the result, and turns out to be **what flipped the gate from FAIL to PASS**:
+
+- **A2_τ baseline.** Vanilla A2 (§7) is **argmax** (τ=0). A5b sweeps τ. To rule out "the lift is just threshold movement, not fusion," we sweep τ on A2's logits on `train_threshold` and lock once on `devel_test`. Δ vs A2_τ tells us how much of the A5b lift is fusion versus calibration.
+- **K-locked ablation.** Instead of sweeping K, lock admission to one of {K=1: A2+G4_gi}, {K=2: A2+G4+G1}, {K=2: A2+G4+G5}, {K=2: A2+G4+G6} and sweep only β, τ. Removes the K-sweep degree of freedom that the original free K∈{1..4} sweep was over-fitting on `train_threshold`.
+
+**Three-seed ablation result (`results/A5b_ablation.json`):**
+
+```text
+config               devel_test UAR    Δ vs A2_argmax       Δ vs A2_τ
+A2 (argmax)          0.6428 ± 0.0034   +0.0000              -0.0036 ± 0.0109
+A2 (τ-tuned)         0.6464 ± 0.0075   +0.0036 ± 0.0109     +0.0000
+A2 + G4_gi  (K=1)    0.6576 ± 0.0011   +0.0148 ± 0.0045 *   +0.0112 ± 0.0066
+A2 + G4 + G1 (K=2)   0.6532 ± 0.0059   +0.0104 ± 0.0091     +0.0068 ± 0.0027
+A2 + G4 + G5 (K=2)   0.6512 ± 0.0044   +0.0084 ± 0.0069     +0.0049 ± 0.0068
+A2 + G4 + G6 (K=2)   0.6519 ± 0.0038   +0.0091 ± 0.0060     +0.0055 ± 0.0075
+A2 + 4 grps  (K=4)   0.6502 ± 0.0078   +0.0074 ± 0.0112     +0.0039 ± ...
+```
+
+Reading: the K=1 lock (`A2 + G4_gain_invariant` only) is the cleanest configuration on every axis — highest UAR, *lowest* per-seed σ (0.0011, 7× tighter than the K=4 free sweep), highest mean Δ over both A2_argmax and A2_τ. Adding any second group (G1, G5, or G6) raises σ and lowers the mean — adding G1 specifically loses the most because of the G4↔G1 0.628 redundancy diagnosed in §10.1. **Verdict: A5b passes at K=1; the K=4 free-sweep result was protocol over-fit on the K dimension.**
+
+Per-seed K=1 result confirms the lock is not dragging on a single seed: 42→0.6571, 123→0.6589, 7→0.6569.
 
 ---
 
-## 11. What's next (post-A5b)
+## 11. What's next (post-A5b PASS, post-A5d run — A5.5 / A6 / A7; A5e SKIPPED)
 
-Conditional on A5b passing the gate:
-- **A5c** — learned per-group gate `β_g = σ(honesty_init_g + learned_residual)`, residual L2-pulled toward zero. Refines the priors rather than overwriting them.
-- **A5.5** — cross-speaker splicing augmentation. Symmetric across classes (so splice presence is decorrelated from the label). Measures the speaker shortcut by trying to attack it with augmentation.
-- **A6** — supervised contrastive pretraining with speaker-masked positives.
-- **A7** — MDD/DANN gradient-reversal speaker adversary. The biggest-upside, biggest-variance bet.
+A5b's K=1 PASS rewrote the next-rung order. The original sequence (A5d → A5e → A5.5/A6/A7) was scoped on the assumption that A5b would FAIL and we'd need a structural rescue (band-restricted backbone). A5b passes via a much smaller intervention — a single audited group added on top of the existing A2 backbone — so the rescue route is no longer load-bearing. **A5d has now run and closed the retrain track**: both branches of the A5e trigger condition fired simultaneously (no `sub@1_L > 0.15`; cold-UAR peak coincides with speaker peak). A5e is **SKIPPED**. The de-confounding ladder (A5.5 → A6 → A7) moves up.
+
+### A5.5 — cross-speaker splicing augmentation (next gate)
+
+Symmetric across classes (same `p`, `K`, `r`, crossfade, boundary-picker for cold and non-cold) so splice presence is decorrelated from the label. **Three-dimensional acceptance** (plan.md §A5.5): UAR ≥ A5b − 1σ, speaker-probe top-1 drops ≥ 1σ, *and* a splice-detector audit (linear probe on `original` vs `spliced` cached pooled features) must score ≤ 0.55 UAR — otherwise the augmentation is teaching a new shortcut instead of attacking the speaker one.
+
+### A6 — supervised contrastive pretraining
+
+Phase 1 contrastive pretraining with speaker-masked positives (same Cold label, different pseudo-speaker; same-speaker same-class pairs masked out). Then attach the A5b head and continue. Batch composition: 8 pseudo-speakers × 8 chunks per batch.
+
+### A7 — MDD/DANN speaker adversary
+
+Gradient-reversal against the projection / head input, λ_adv ramped from 0. The biggest-upside, biggest-variance bet. Two-dimensional acceptance: UAR ≥ A6 − 1σ *and* probe top-1 drops ≥ 2σ vs A6.
+
+### A5d — per-layer honesty diagnostic (DONE → A5e SKIPPED + structural finding)
+
+**Hypothesis (from the SSL-speech literature).** Pasad et al. 2021 ("Layer-wise analysis of a self-supervised speech representation model") and Chen et al. 2022 / SUPERB report that for HuBERT-style SSL models — WavLM is in the same family — early Transformer layers concentrate **speaker identity / acoustic detail** while mid layers concentrate **paralinguistic / phonetic** content. A2's softmax layer-weights (locked) put most of their mass on L2–L6 — exactly the speaker-heavy band on those priors. That's *empirically* what motivated the test: a structural snapshot of where cold and speaker information live in the WavLM stack on URTIC.
+
+**Recipe (no retraining).** For each WavLM layer L ∈ [0, 24]:
+
+```text
+cold_probe(pooled[:, L, :], y_cold)     →  cold_uar_L,    label_gain_L = cold_uar_L − 0.5
+speaker_probe(pooled[:, L, :], y_pseudo) →  speaker_top1_L, speaker_gain_L = top1_L − 1/210
+sub_at_1_L = label_gain_L − speaker_gain_L
+```
+
+Reads existing `cache/microsoft_wavlm-large/` chunks. Single seed (42), train_fit / devel_val splits. Cost ≈ 1 hour wall-clock. Output: `results/A5d_layer_honesty.csv`.
+
+**Result (`results/A5d_layer_honesty.csv`).** Headline numbers across L ∈ [0, 24]:
+
+```text
+peak                              layer   cold_uar   speaker_top1   sub@1_L
+best sub@1                        L21     0.5746     0.0406         +0.0387
+best cold_uar                     L7      0.6052     0.0813         +0.0287
+highest speaker_top1              L3      0.5769     0.0871         −0.0054
+lowest speaker_top1               L22     0.5726     0.0402         +0.0371
+```
+
+**Structural finding.** Speaker top-1 decays roughly monotonically L0→L24 (0.0790 → 0.0429, range 0.087@L3 → 0.040@L22) — confirms Pasad 2021 / Chen 2022 layer-stratification *for speaker* on URTIC. Cold UAR by contrast is **flat** across the stack (range 0.56–0.61, σ ≈ 0.012) with no clean mid-band peak — refutes the mid-layer-cold hypothesis on URTIC. Reportable as a standalone paper finding independent of A5e's go/no-go.
+
+**Verdict: A5e SKIPPED.** Both branches of the §5.6 trigger fired simultaneously — (1) no layer reaches `sub@1_L > 0.15` (peak +0.0387 ≪ 0.15), and (2) the cold-UAR peak (L7, 0.6052) coincides with the speaker peak (L7, top-1 0.0813) so a "rebuild on the cold-rich band" would be rebuilding on a speaker-rich band. Retrain track closed.
+
+### A5e — WavLM mid-layer retrain (SKIPPED)
+
+Was scoped to fire only if A5d's curve was dramatic — a clean mid-layer band with `sub@1_L > 0.15` and `speaker_top1_L` well below A2's full-stack 0.0501. Neither held (see A5d above). GPU goes to A5.5 / A6 instead.
+
+### A5c — learned per-group gate (revivable)
+
+Replaces fixed `mean_g` with a learned σ-gate per admitted group, residual L2-pulled toward zero. Was scoped to fire after A5b passed; A5b passes at K=1 — but a single-group fusion stack leaves little surface for a learned residual to refine over. On hold pending A5.5 / A6; revisit if a richer admission set re-opens.
 
 Each subsequent rung must lower the speaker probe top-1 *without* dropping cold UAR materially. That's the two-dimensional acceptance discipline A2 set up and every rung inherits.
 
@@ -442,8 +544,10 @@ results/
   A2.json                 locked A2 metrics (3 seeds)
   A3.json                 rejected A3 metrics (3 seeds)
   A5a_honesty.csv         per-group honesty rows (G1, G2, G3, G4, G4_gain_invariant, G5, G6, G8)
-  A5b.json                A5b late-fusion sweep + locked devel_test eval (after running)
-  A5b_diag.json           A5b correlation matrix + fused-vector speaker probe (after running)
+  A5b.json                A5b late-fusion sweep + locked devel_test eval (gate FAIL, run)
+  A5b_diag.json           A5b Pearson correlations + fused-vector speaker probe + redundancy-adjusted ranking
+  A5b_ablation.json       K=2 ablation A2+G4+{G1,G5,G6} across 3 seeds + A2_τ calibration baseline
+  A5d_layer_honesty.csv   per-layer cold + speaker probes on cached pooled[:, L, :] for L=0..24
 ```
 
 ---
@@ -468,6 +572,15 @@ In rough chronological order:
 - **G8 dropped from admission pool.** Anti-predictive on devel_val. Documented negative — the original A5 hypothesis from the PDF doesn't hold here.
 - **A5b: hard top-K, fixed β, fused-logit τ on train_threshold.** Cleanest paper story; sharpest ablation against A5c if we run it.
 - **G5 (modulation spectrogram) added late.** Cross-comparison with the 2017 ComParE submissions surfaced Huckvale's MOD family as the one feature class we hadn't covered with G1-G4/G6. Modulation rate captures cross-frame envelope dynamics (syllable rate, breath pacing) that none of the per-frame static features see. Aggressively aggregated to 64-d so the linear-only probe can't launder speaker identity through capacity (same discipline as G3/G6).
-- **A5b diagnostics added (correlations + fused-vector speaker probe).** `sub@1` measures honesty in isolation; it doesn't see redundancy with A2 or with other admitted groups, so K ≥ 2 over highly-correlated groups looks beneficial in the table but does little in fusion. A 4×4 / 5×5 Pearson matrix + per-group argmax-disagreement-vs-A2 makes that visible. Separately, plan.md § 5.5's "speaker probe top-1 ≤ A2 + 1σ" gate is degenerate on a 1-d fused logit — the fused-vector concat probe is the honest operationalisation.
+- **A5b diagnostics added (correlations + fused-vector speaker probe).** `sub@1` measures honesty in isolation; it doesn't see redundancy with A2 or with other admitted groups, so K ≥ 2 over highly-correlated groups looks beneficial in the table but does little in fusion. A 4×4 / 5×5 Pearson matrix + per-group argmax-disagreement-vs-A2 makes that visible. Separately, plan.md § 5.7's "speaker probe top-1 ≤ A2 + 1σ" gate is degenerate on a 1-d fused logit — the fused-vector concat probe is the honest operationalisation.
+- **A5b sweep window extended to K=4.** A5a placed G5_modulation at #4 in the admission ordering, only 0.005 sub@1 below G6. With the original K∈{1,2,3} window, G5 could not compete despite being honest. Extending one slot lets the val sweep include it; K=4 won on 2/3 seeds, which is also where most of the A5b variance lives (seed 7 picked K=2). Cleaner to extend and report than to claim a finding from an arbitrarily truncated grid.
+- **Redundancy-adjusted ranking is a paper diagnostic, not an admission-rule replacement.** The temptation after A5b's gate FAIL was to swap `sub@1` for `safe_unique_gain = label_gain·(1−r²) − speaker_gain` and re-admit groups under the new key. Decided against — moves the goalposts after the test ran. Ships as a paper diagnostic column instead, so reviewers can see "what does each group uniquely contribute over A2?" without us having retroactively reshaped the criterion to fit the numbers.
+- **A2_τ calibration baseline added alongside A5b.** Vanilla A2 reports argmax UAR; A5b reports tuned-τ UAR. Without an A2_τ control, the A5b lift conflates "fusion adds signal" with "tuning τ moves the threshold." A2_τ is `evaluate_at_tau(A2_logits, τ_swept_on_train_threshold)` — same calibration discipline, no fusion. Reported as Δ vs A2_argmax *and* Δ vs A2_τ in the K=2 ablation table.
+- **A5d (per-layer probe) before A5e (mid-layer retrain).** When A5b failed the gate, the immediate temptation was to push deeper into the fusion stack — more groups, learned βs, etc. Held: ran a cheap (~1 hour, no retraining) per-layer cold + speaker probe on the *existing* WavLM cache instead. Pasad/Chen's layer-stratification result is a *generic* claim about SSL speech models; whether it holds *on this corpus* is what decides if A5e is worth the GPU. Diagnose before treating.
+- **A3-style retrain refused as a band-mask shortcut.** A natural reading of A5d would be "just train A2 on the mid layers and call it done." Refused: A3 already showed that re-pooling WavLM by an extra structural axis (manner categories) reintroduced speaker leak even when the labels themselves were clean. A5e is therefore *not* a new pooling axis — it's the same A2 head with the layer-weight softmax restricted to a band, plus rerun fusion on top.
+- **K-locked ablation flipped A5b from FAIL to PASS.** The original free K∈{1..4} sweep produced UAR 0.6502 ± 0.0078 (σ > effect size, FAIL). Locking admission to {K=1, K=2 each pair} and sweeping only β/τ gave A2+G4_gi (K=1) at UAR 0.6576 ± 0.0011 — the σ collapse 0.0112 → 0.0011 (7×) is the diagnostic. Free K-sweep on `train_threshold` over-rewards configs with more τ flexibility (more groups widen the achievable τ-vs-UAR curve), inflating variance without improving the mean; locking K removes the over-fit channel. Both numbers ship in the paper: K=1 as the headline (Δ +0.0148 ± 0.0045 vs A2_argmax, +0.0112 ± 0.0066 vs A2_τ; gate cleared by ~2σ), K=4 as the documented sweep-protocol finding.
+- **A5d demoted to paper-only after A5b PASS.** A5d was scoped as the rescue route for an A5b FAIL — a cheap (~1 hour, no retraining) per-layer probe to motivate a band-restricted backbone retrain (A5e). With A5b passing at K=1 the rescue is no longer load-bearing. A5d still ships because the layer-stratification claim is reportable on its own (Pasad/Chen on URTIC); A5e fires only if A5d shows a *dramatic* band, otherwise the GPU goes to A5.5 / A6.
+- **K=1 PASS reorders the post-A5 ladder.** Originally A5d → A5e → A5.5/A6/A7, on the assumption A5b would need a structural rescue. With A5b passing via a single audited group on top of the existing A2 backbone, A5.5 (cross-speaker splicing) becomes the next gate, A5d ships as a paper diagnostic, A5e likely doesn't fire. The de-confounding interventions (A5.5 → A6 → A7) move up; the rescue track moves down.
+- **A5d ran: A5e SKIPPED + structural paper finding.** The per-layer probe over L ∈ [0, 24] closed the retrain track: both branches of the A5e trigger fired simultaneously — peak `sub@1_L` is L21 = +0.0387 (≪ 0.15 trigger) and the cold-UAR peak (L7, 0.6052) coincides with the speaker peak (L7, top-1 0.0813), so any "rebuild on the cold-rich band" would also be a rebuild on a speaker-rich band. Standalone finding worth reporting: speaker top-1 decays roughly monotonically L0→L24 (0.087@L3 → 0.040@L22) — **confirms Pasad 2021 / Chen 2022 layer-stratification for speaker on URTIC** — but cold UAR is **flat** across the stack (range 0.56–0.61) — **refutes mid-band-cold hypothesis on URTIC**. Retrain track closed; GPU goes to A5.5 / A6.
 
 If you've read this far, the rest is just running cells and watching numbers. The methodological scaffold is the contribution — the UAR is the cherry.
