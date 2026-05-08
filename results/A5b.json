@@ -537,5 +537,174 @@
         }
       ]
     }
-  ]
+  ],
+  "locked_speaker_probe": {
+    "description": "Two speaker probes on the K=1 (A2 + G4_gain_invariant) lock, across 3 seeds {42, 123, 7}. Probe (i) literal 2-D [logit_A2, z_logit_G4_gi] is what fusion sees; probe (ii) backbone [A2_layer_weighted_pooled_4096, G4_gi_7] is the leak-channel audit. Trained on train_fit, evaluated on devel_val. plan.md \u00a75.7 ceiling: probe top1 <= 0.0510 (A2 + 1sigma).",
+    "training_seeds": [
+      42,
+      123,
+      7
+    ],
+    "locked_admitted": [
+      "G4_gain_invariant"
+    ],
+    "literal_2d": {
+      "per_seed": [
+        {
+          "seed": 42,
+          "top1": 0.010212588578574405,
+          "nmi": 0.19488110543346807,
+          "dim": 2
+        },
+        {
+          "seed": 123,
+          "top1": 0.012505210504376824,
+          "nmi": 0.19867732492494647,
+          "dim": 2
+        },
+        {
+          "seed": 7,
+          "top1": 0.013130471029595666,
+          "nmi": 0.19414347459335676,
+          "dim": 2
+        }
+      ],
+      "aggregate": {
+        "top1": {
+          "mean": 0.011949423370848965,
+          "std": 0.0015362890362300955,
+          "n": 3
+        },
+        "nmi": {
+          "mean": 0.19590063498392377,
+          "std": 0.002432802927798165,
+          "n": 3
+        }
+      }
+    },
+    "backbone_concat": {
+      "per_seed": [
+        {
+          "seed": 42,
+          "top1": 0.06711129637348895,
+          "nmi": 0.4721621426176876,
+          "dim": 4103
+        },
+        {
+          "seed": 123,
+          "top1": 0.06711129637348895,
+          "nmi": 0.47263089538780634,
+          "dim": 4103
+        },
+        {
+          "seed": 7,
+          "top1": 0.06815339724885369,
+          "nmi": 0.470766591433164,
+          "dim": 4103
+        }
+      ],
+      "aggregate": {
+        "top1": {
+          "mean": 0.06745866333194386,
+          "std": 0.0006016572209145791,
+          "n": 3
+        },
+        "nmi": {
+          "mean": 0.471853209812886,
+          "std": 0.0009697870473643615,
+          "n": 3
+        }
+      }
+    },
+    "reference": {
+      "a2_speaker_probe_top1": 0.0501,
+      "ceiling_a2_plus_1sigma": 0.051,
+      "chance_top1": 0.004761904761904762
+    },
+    "gate_passed": {
+      "literal_2d": true,
+      "backbone_concat": false
+    }
+  },
+  "locked_speaker_probe_controls": {
+    "description": "Capacity / reproduce controls for the K=1 locked-speaker probe. Probe (a) runs the speaker probe on pooled_4096 alone (reproduce of A2's 0.0501 in this codepath). Probe (b) replaces G4_gi_7 with 7 independent N(0,1) draws per seed (capacity ablation for probe (ii) backbone+G4_gi). If (a) ~ 0.0501 and (b) ~ (a), the +0.017 lift in (ii) over (a) is real G4-x-pooled interaction information, not probe-capacity expansion.",
+    "training_seeds": [
+      42,
+      123,
+      7
+    ],
+    "noise_dims": 7,
+    "pooled_only": {
+      "per_seed": [
+        {
+          "seed": 42,
+          "top1": 0.06669445602334306,
+          "nmi": 0.47135695704963815,
+          "dim": 4096
+        },
+        {
+          "seed": 123,
+          "top1": 0.06752813672363485,
+          "nmi": 0.472957189970624,
+          "dim": 4096
+        },
+        {
+          "seed": 7,
+          "top1": 0.06794497707378074,
+          "nmi": 0.47186919915106396,
+          "dim": 4096
+        }
+      ],
+      "aggregate": {
+        "top1": {
+          "mean": 0.06738918994025288,
+          "std": 0.0006367341524184809,
+          "n": 3
+        },
+        "nmi": {
+          "mean": 0.47206111539044204,
+          "std": 0.0008171965691034925,
+          "n": 3
+        }
+      }
+    },
+    "pooled_plus_noise": {
+      "per_seed": [
+        {
+          "seed": 42,
+          "top1": 0.06356815339724885,
+          "nmi": 0.4715285923328662,
+          "dim": 4103
+        },
+        {
+          "seed": 123,
+          "top1": 0.06836181742392664,
+          "nmi": 0.4718108774041159,
+          "dim": 4103
+        },
+        {
+          "seed": 7,
+          "top1": 0.06752813672363485,
+          "nmi": 0.4729174370211943,
+          "dim": 4103
+        }
+      ],
+      "aggregate": {
+        "top1": {
+          "mean": 0.0664860358482701,
+          "std": 0.002561109989046379,
+          "n": 3
+        },
+        "nmi": {
+          "mean": 0.4720856355860588,
+          "std": 0.0007340581965912023,
+          "n": 3
+        }
+      }
+    },
+    "reference": {
+      "a2_speaker_probe_top1": 0.0501,
+      "ceiling_a2_plus_1sigma": 0.051
+    }
+  }
 }

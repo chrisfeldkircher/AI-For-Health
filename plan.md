@@ -266,7 +266,7 @@ Run only if A5b passes or nearly passes the gates. Gate replaces the fixed βs:
 Apply at A5b first; A5c only if A5b is within striking distance.
 
 - **UAR**: A5b head UAR ≥ best of {A2, A3} + 0.007 (2σ at N=3).
-- **Speaker probe**: probe top-1 on A5b representation ≤ A2 + 1σ (≤ 0.0510).
+- **Speaker probe**: probe top-1 on the A5b representation ≤ A2 + 1σ, **measured under the audit's probe substrate** (`honesty.speaker_probe`, multinomial LR — same code path A5a/A5b use for every group). On A2's layer-weighted-fused 4096-d vector this gives **0.0674 ± 0.0006** ⇒ ceiling **0.0680**. The historical 0.0501 ± 0.0009 in `results/A2.json::speaker_probe` came from the deeper MLP probe in `speakers/probe.py` (different architecture, ~30 epochs of training) and is **not** directly comparable to the audit's LR probe. The `honesty.speaker_probe` reading (0.0674) is the apples-to-apples reference for everything A5a/A5b/A5d.
 - **Honesty table**: reported in the paper with per-group `label_gain`, `speaker_gain`, both honesty forms.
 
 **Status (locked):** A5b **PASSES** these gates via the **K-locked K=1 ablation** (admission frozen to the top-1 group `A2 + G4_gain_invariant`, sweeping only β and τ on `train_threshold`):
@@ -274,7 +274,9 @@ Apply at A5b first; A5c only if A5b is within striking distance.
 - UAR 0.6576 ± 0.0011 (per-seed: 42→0.6571, 123→0.6589, 7→0.6569).
 - Δ vs A2_argmax = +0.0148 ± 0.0045 (3.3σ above zero — gate of +0.007 cleared by ~2σ).
 - Δ vs A2_τ = +0.0112 ± 0.0066 (1.7σ above zero — fusion contributes ~75% of the headline lift; the remaining ~25% is τ calibration).
-- Speaker probe: fused-vector top-1 = 0.0194 on the admitted concat (well below the 0.0510 ceiling).
+- **Locked-K speaker probe** (`results/A5b.json::locked_speaker_probe`, 3 seeds): probe (i) literal 2-D `[logit_A2, z_logit_G4_gi]` top-1 = **0.0119 ± 0.0015** — what fusion sees; probe (ii) backbone-level concat `pooled_4096 ⊕ G4_gi_7` top-1 = **0.0675 ± 0.0006** — the leak-channel audit. **Both PASS** against the codepath-consistent ceiling 0.0680.
+- **Probe controls** (`results/A5b.json::locked_speaker_probe_controls`, 3 seeds): pooled-only top-1 = **0.0674 ± 0.0006** (the apples-to-apples A2 reference under `honesty.speaker_probe`); pooled + 7-d Gaussian-noise top-1 = 0.0665 ± 0.0026 (LR regularises noise out as expected). **G4_gi contributes +0.0001 to speaker recoverability above pooled-alone — essentially zero, no leak channel.** The (ii)-(a) gap above pooled-alone is +0.0001, not +0.0017; the apparent earlier "+0.017 lift" was a probe-substrate mismatch against the historical 0.0501 MLP-probe number.
+- **Architectural reading.** Probe (i) 0.0119 vs probe (ii) 0.0675 = ~5.5 pp speaker-info drop. The per-channel cold probe is doing exactly what the late-fusion design intends: it strips speaker-side variance when compressing each channel to a 1-d cold logit, so the fusion classifier never sees the speaker information present in the upstream pooled vector.
 
 The originally-reported **K=4 free-sweep FAIL** (UAR 0.6502 ± 0.0078, σ > effect size) is documented as **τ-sweep pathology**: free K-sweep on `train_threshold` over-rewards configurations with more τ flexibility (more groups → more degrees of freedom), inflating variance without materially changing the mean. The σ collapse 0.0112 → 0.0011 between free-sweep K=4 and K-locked K=1 is the diagnostic. Both numbers are paper-reportable: the K=1 PASS is the headline, the K=4 FAIL is the documented sweep-protocol finding.
 
