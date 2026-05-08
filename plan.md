@@ -64,9 +64,9 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A2    | **LOCKED**          | Frozen WavLM-L + layer-weighted pooled-stats (mean+std+skew+kurt)   | **UAR 0.6428 ± 0.0034** (3 seeds); val→test gap −0.001 ± 0.005; speaker probe top-1 0.0501 |
 | A3    | **REJECTED**        | Manner-aware pooling (pYIN+RMS, 3-cat) two-stream head              | UAR 0.6344 ± 0.0069 (Δ −0.008), probe top-1 +0.005. Both gates failed.                     |
 | A5a   | **LOCKED**          | Honesty audit over low-dim physiological feature groups             | 8 groups, 6 admitted (G1,G2,G3,G4_gi,G5,G6). Admission by sub@1: G4_gi,G1,G6,G5,G2,G3.     |
-| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | K=1 (A2+G4_gi): UAR 0.6576, Δ +0.0148±0.0045 (3.3σ); K=4 free-sweep FAIL documented        |
+| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | Rand: Δ +.015±.005 (3.3σ); Grp: Δ +.023±.006 (3.8σ); both PASS A2+G4_gi K=1              |
 | A5c   | revivable           | Learned per-group gate, honesty-initialised + regularised           | A5b passed → revivable, but K=1 leaves little room; on hold pending A5.5/A6                |
-| A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk top-1 mono L0→L24 (.087→.043); cold UAR flat .56–.61; best sub@1 L21 +.039 ≪ 0.15      |
+| A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk mono L0→L24 (.087→.043 R, .072→.042 G); cold UAR flat; sub@1 ≪ 0.15 on both           |
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
 | A4    | planned             | Discrete-token histograms (HuBERT units → optional VQ-VAE)          | Deferred behind A5 — more speculative, no built-in anti-shortcut mechanism                 |
 | A5.5  | planned             | Cross-speaker splicing augmentation (symmetric across classes)      | Code stub exists in [data/augmentation.py](AI-For-Health/model/data/augmentation.py)       |
@@ -147,7 +147,7 @@ speaker_probe LR  top-1 (not in A2.json)        0.0760 ± 0.0020           new c
 
 **Verdict.** Argmax UAR was mildly inflated by within-partition leak (~1pp shift). Calibrated UAR essentially unchanged. The val-test gap is now negative (-0.013) — the expected signature of fixing the leak: under random splits devel_val and devel_test shared speakers so were ~equal; under grouped splits they are speaker-disjoint and devel_test is genuinely harder. The MLP speaker probe moved by ≪1σ — confirms the cross-partition disjointness was already doing all the load-bearing work for the speaker-probe interpretation in the paper, and the historical 0.0501 reference holds. The LR probe is slightly higher under grouped (0.0760 vs random's 0.0674 from the A5b controls cell) — partly because the grouped devel_val has fewer distinct true-speaker classes (~103 vs ~206 random). 0.0760 ± 0.0020 is the new apples-to-apples LR-substrate ceiling for §5.7 / A5b / A5d audits.
 
-**Downstream consequence (deferred):** A5b/A5d/A5b_diag/A5b_ablation/locked-K all use the `head_A2_seed{seed}.pt` checkpoints trained on random splits and the random-split file lists. The K=1 PASS structurally survives — A5b's K=1 gain over A2_argmax was +0.0148 vs the random-split baseline; even subtracting the -0.0067 baseline shift, the gain remains comfortably above the +0.007 minimum-detectable threshold. But for full methodological consistency, A5b should be re-run on grouped splits using `head_A2grouped_seed{seed}.pt` as the anchor. Tracked as the immediate next followup; not load-bearing for the paper headline.
+**Downstream consequence (DONE).** A5b K=1 lock + locked-K speaker probes re-run on grouped splits using `head_A2grouped_seed{seed}.pt` as the anchor (`results/A5b_grouped.json`). A5d per-layer diagnostic also re-run on grouped splits (`results/A5d_grouped_layer_honesty.csv`). **K=1 PASS holds and is strengthened**: K=1 fused UAR 0.6588 ± 0.0059 (was 0.6576 ± 0.0011 on random); Δ vs A2_argmax = +0.0227 ± 0.0059 (was +0.0148 ± 0.0045 — went from 3.3σ to 3.8σ above zero). Fusion lift got *larger* under grouped splits because A2's argmax baseline was the part of the random-split number that was inflated. Speaker probes both PASS against the new LR ceiling 0.0780: probe (i) literal 2-D = 0.0153 ± 0.0032 (~5× margin); probe (ii) backbone-concat = 0.0733 ± 0.0002 (by 0.0047). A5d structural finding survives: speaker top-1 still monotone L0→L24 (0.072→0.042, ~similar shape to random's 0.087→0.043 — confirms Pasad 2021 / Chen 2022 for speaker on URTIC), cold UAR still flat (0.56–0.61). Best `sub@1` layer shifts L21 → L0 (the cold-rich early layers are now ranked highest because they're speaker-rich early too — but absolute sub@1 stays small at +0.040), best `cold_uar` shifts L7 → L6, both A5e trigger conditions still fire — A5e SKIPPED holds. A5b_diag / A5b_ablation (K=2 ablations) not re-run on grouped splits — they ship as paper diagnostics about the K-sweep pathology, which is split-independent.
 
 ---
 
@@ -246,16 +246,23 @@ Run only if A5b passes or nearly passes the gates. Gate replaces the fixed βs:
 - `speaker_probe`  → `speaker_top1_L`, `speaker_gain_L = top1_L − 1/210`
 - `sub@1_L`        = `label_gain_L − speaker_gain_L`
 
-**Headline numbers (`results/A5d_layer_honesty.csv`):**
+**Headline numbers, random splits (`results/A5d_layer_honesty.csv`):**
 
 - Best `sub@1` at L21 = +0.0387 — well below the 0.15 trigger.
 - Best `cold_uar` at L7 = 0.6052 (cold UAR range L0..24: 0.560–0.605, spread 0.045).
 - Highest `speaker_top1` at L3 = 0.0871; lowest at L22 = 0.0402.
 - Speaker top-1 decays roughly monotonically L0→L24 (0.087 → 0.043, ~50% reduction); cold UAR is **flat** across the stack with no clean mid-band peak.
 
-**Verdict — A5e SKIPPED.** Both skip-branch conditions of the §5.6 trigger fire simultaneously: (1) no layer reaches `sub@1_L > 0.15` (peak L21 = +0.0387), and (2) the cold UAR peak (L7 = 0.6052) coincides with high speaker leak (L7 `speaker_top1` = 0.0813, joint top tier). There is no honest mid-band that would justify the retrain spend.
+**Headline numbers, grouped splits (`results/A5d_grouped_layer_honesty.csv`):**
 
-**Structural paper finding (independent of A5e).** Speaker information is layer-stratified on URTIC — confirms Pasad 2021 / Chen 2022 for the speaker axis on this corpus (top-1 monotone-ish decay 0.087→0.043, ~2× reduction across the stack). Cold information is **not** layer-stratified — `cold_uar` is roughly flat L0..L24 with no mid-band peak, refuting the mid-band cold hypothesis on URTIC specifically. Reportable as a standalone empirical finding alongside the A5b headline, regardless of A5e.
+- Best `sub@1` at **L0 = +0.0401** — peak shifted from late (L21 random) to early (L0 grouped); still ≪ 0.15 trigger.
+- Best `cold_uar` at L6 = 0.6090 (range 0.557–0.609, spread 0.052 — same shape as random).
+- Highest `speaker_top1` at L3 = 0.0956; lowest at L24 = 0.0417.
+- Speaker top-1 still monotone-ish L0→L24 (0.072 → 0.042, similar shape — Pasad 2021 / Chen 2022 layer-stratification confirmed under both splits). Cold UAR still flat across the stack.
+
+**Verdict — A5e SKIPPED holds under both splits.** Both skip-branch conditions of the §5.6 trigger fire simultaneously, on either split: (1) no layer reaches `sub@1_L > 0.15` (peak +0.040 grouped, +0.039 random — both ≪ 0.15), and (2) the cold-UAR peak (L7 random / L6 grouped) coincides with high speaker leak (`speaker_top1` 0.081 / 0.087 at the cold peak, joint top-tier on both splits). No honest mid-band on either split.
+
+**Structural paper finding (independent of A5e, holds on both splits).** Speaker information is layer-stratified on URTIC — confirms Pasad 2021 / Chen 2022 for the speaker axis under both random and grouped splits. Cold information is **not** layer-stratified — `cold_uar` flat L0..L24 with no mid-band peak, refuting the mid-band cold hypothesis on URTIC specifically. Reportable as a standalone empirical finding. The L21→L0 shift in best-`sub@1` between splits reflects that under grouped splits the cold-rich early layers (which are also speaker-rich) get re-ranked above the late layers; absolute sub@1 stays small (~+0.040) on both splits, so the structural verdict (no honest mid-band) is identical.
 
 ### 5.6 A5e — WavLM mid-layer retrain (SKIPPED)
 
@@ -274,14 +281,26 @@ Apply at A5b first; A5c only if A5b is within striking distance.
   The locked-K probes pass against either LR ceiling: probe (i) literal 2-D 0.0119 ≪ 0.068 / 0.078 by ~6× margin; probe (ii) backbone concat 0.0675 ≤ 0.068 (random) / 0.078 (grouped) by 0.0005 / 0.0105.
 - **Honesty table**: reported in the paper with per-group `label_gain`, `speaker_gain`, both honesty forms.
 
-**Status (locked):** A5b **PASSES** these gates via the **K-locked K=1 ablation** (admission frozen to the top-1 group `A2 + G4_gain_invariant`, sweeping only β and τ on `train_threshold`):
+**Status (locked, two splits reported):** A5b **PASSES** these gates via the **K-locked K=1 ablation** (admission frozen to the top-1 group `A2 + G4_gain_invariant`, sweeping only β and τ on `train_threshold`).
+
+**(a) Random splits — historical lock** (`results/A5b_ablation.json`, 3 seeds {42, 123, 7}, `head_A2_seed{seed}.pt`):
 
 - UAR 0.6576 ± 0.0011 (per-seed: 42→0.6571, 123→0.6589, 7→0.6569).
 - Δ vs A2_argmax = +0.0148 ± 0.0045 (3.3σ above zero — gate of +0.007 cleared by ~2σ).
-- Δ vs A2_τ = +0.0112 ± 0.0066 (1.7σ above zero — fusion contributes ~75% of the headline lift; the remaining ~25% is τ calibration).
-- **Locked-K speaker probe** (`results/A5b.json::locked_speaker_probe`, 3 seeds): probe (i) literal 2-D `[logit_A2, z_logit_G4_gi]` top-1 = **0.0119 ± 0.0015** — what fusion sees; probe (ii) backbone-level concat `pooled_4096 ⊕ G4_gi_7` top-1 = **0.0675 ± 0.0006** — the leak-channel audit. **Both PASS** against the codepath-consistent ceiling 0.0680.
-- **Probe controls** (`results/A5b.json::locked_speaker_probe_controls`, 3 seeds): pooled-only top-1 = **0.0674 ± 0.0006** (the apples-to-apples A2 reference under `honesty.speaker_probe`); pooled + 7-d Gaussian-noise top-1 = 0.0665 ± 0.0026 (LR regularises noise out as expected). **G4_gi contributes +0.0001 to speaker recoverability above pooled-alone — essentially zero, no leak channel.** The (ii)-(a) gap above pooled-alone is +0.0001, not +0.0017; the apparent earlier "+0.017 lift" was a probe-substrate mismatch against the historical 0.0501 MLP-probe number.
-- **Architectural reading.** Probe (i) 0.0119 vs probe (ii) 0.0675 = ~5.5 pp speaker-info drop. The per-channel cold probe is doing exactly what the late-fusion design intends: it strips speaker-side variance when compressing each channel to a 1-d cold logit, so the fusion classifier never sees the speaker information present in the upstream pooled vector.
+- Δ vs A2_τ = +0.0112 ± 0.0066 (1.7σ above zero).
+- **Locked-K speaker probe** (`results/A5b.json::locked_speaker_probe`, 3 seeds): probe (i) literal 2-D = **0.0119 ± 0.0015**; probe (ii) backbone-concat = **0.0675 ± 0.0006**. Both PASS against the random-split LR ceiling 0.0680.
+- **Probe controls** (`results/A5b.json::locked_speaker_probe_controls`): pooled-only top-1 = **0.0674 ± 0.0006**; pooled+7-d Gaussian-noise = 0.0665 ± 0.0026. G4_gi contributes +0.0001 to speaker recoverability above pooled-alone — essentially zero, no leak channel.
+
+**(b) Grouped splits — leak-corrected lock** (`results/A5b_grouped.json`, 3 seeds, `head_A2grouped_seed{seed}.pt`):
+
+- UAR 0.6588 ± 0.0059 (per-seed: 42→0.6565, 123→0.6656, 7→0.6544).
+- Δ vs A2_argmax = **+0.0227 ± 0.0059** (3.8σ above zero — gate cleared by ~3.5σ; **stronger than the random-split lift**).
+- Δ vs A2_τ = +0.0206 ± 0.0198 (calibration noisy on grouped splits; calibration-aware lift is also positive).
+- **Locked-K speaker probe** (3 seeds): probe (i) literal 2-D = **0.0153 ± 0.0032**; probe (ii) backbone-concat = **0.0733 ± 0.0002**. Both PASS against the grouped-split LR ceiling 0.0780 — probe (i) by ~5×, probe (ii) by 0.0047.
+
+**Reading the two splits together.** The fusion lift got *larger* under grouped splits because A2's argmax baseline was the inflated part of the random number (-0.0067 baseline shift) while K=1 fused UAR is essentially unchanged (+0.0012). Cleanest possible methodology-fix outcome: the audit made the headline stronger, not weaker. Probe (i)/(ii) numbers nudge up slightly because the grouped-split A2 features are slightly more speaker-coded (LR ceiling 0.0760 vs 0.0674 random) — but both still PASS comfortably.
+
+- **Architectural reading.** Probe (i) ≪ probe (ii) on both splits (gap ~5.5pp on random, ~5.8pp on grouped). The per-channel cold-probe compression strips speaker-side variance from each channel before fusion sees it — clean architectural validation of choosing logit-level fusion over A3's concat-MLP, on both splits.
 
 The originally-reported **K=4 free-sweep FAIL** (UAR 0.6502 ± 0.0078, σ > effect size) is documented as **τ-sweep pathology**: free K-sweep on `train_threshold` over-rewards configurations with more τ flexibility (more groups → more degrees of freedom), inflating variance without materially changing the mean. The σ collapse 0.0112 → 0.0011 between free-sweep K=4 and K-locked K=1 is the diagnostic. Both numbers are paper-reportable: the K=1 PASS is the headline, the K=4 FAIL is the documented sweep-protocol finding.
 

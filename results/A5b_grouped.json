@@ -1,0 +1,285 @@
+{
+  "rung_id": "A5b_grouped",
+  "description": "A5b K=1 lock (A2 + G4_gain_invariant) re-run on GROUPED splits (stratified_grouped_split, sklearn StratifiedGroupKFold keyed on k=210 pseudo-speakers). A2 anchor is head_A2grouped_seed{seed}.pt (results/A2_grouped.json). Sweeps beta x tau on grouped train_threshold; one-shot eval on grouped devel_test. Includes locked-K speaker probes (i) literal 2-D and (ii) backbone concat in the same pass. Companion file results/A5b_ablation.json holds the random-split numbers.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "split_sizes": {
+    "train_fit": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "betas": [
+    0.25,
+    0.5,
+    1.0
+  ],
+  "admitted": [
+    "G4_gain_invariant"
+  ],
+  "lr_ceiling_grouped": 0.078,
+  "aggregate": {
+    "uar_devel_test": {
+      "mean": 0.658830026983177,
+      "std": 0.005922863951570377,
+      "n": 3
+    },
+    "delta_uar_vs_a2_argmax": {
+      "mean": 0.022694757210079037,
+      "std": 0.00585759161478239,
+      "n": 3
+    },
+    "delta_uar_vs_a2_tau": {
+      "mean": 0.02057119846932694,
+      "std": 0.019793818168190633,
+      "n": 3
+    },
+    "uar_a2_grouped_argmax": {
+      "mean": 0.636135269773098,
+      "std": 0.0018796241090245213,
+      "n": 3
+    },
+    "uar_a2_grouped_tau": {
+      "mean": 0.6382588285138501,
+      "std": 0.022747139869301394,
+      "n": 3
+    },
+    "locked_speaker_probe": {
+      "literal_2d": {
+        "top1": {
+          "mean": 0.015274595570367283,
+          "std": 0.0031611615462979127,
+          "n": 3
+        }
+      },
+      "backbone_concat": {
+        "top1": {
+          "mean": 0.07331805873776297,
+          "std": 0.00020828993959591535,
+          "n": 3
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "a2_grouped_argmax": {
+        "uar": 0.6339896316416506,
+        "recall_C": 0.37375745526838966,
+        "recall_NC": 0.8942218080149115,
+        "acc": 0.8396246089676747
+      },
+      "a2_grouped_tau_tuned": {
+        "tau": -1.4,
+        "uar_train_threshold": 0.5485096371759729,
+        "devel_test": {
+          "uar": 0.6527866815880115,
+          "recall_C": 0.5467196819085487,
+          "recall_NC": 0.7588536812674743,
+          "acc": 0.7366006256517206
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -3.9,
+        "uar_train_threshold": 0.6147180073816667
+      },
+      "devel_test": {
+        "uar": 0.6565129261708407,
+        "recall_C": 0.8489065606361829,
+        "recall_NC": 0.4641192917054986,
+        "acc": 0.5044838373305527
+      },
+      "devel_val": {
+        "uar": 0.6013921674360936,
+        "recall_C": 0.7578740157480315,
+        "recall_NC": 0.44491031912415563,
+        "acc": 0.4780254113726307
+      },
+      "delta_uar_vs_a2_argmax": 0.022523294529190108,
+      "delta_uar_vs_a2_tau": 0.003726244582829219,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -3.9,
+          "uar_train_threshold": 0.6147180073816667
+        },
+        {
+          "beta": 0.5,
+          "tau": -3.85,
+          "uar_train_threshold": 0.5750253609894023
+        },
+        {
+          "beta": 0.25,
+          "tau": -3.9,
+          "uar_train_threshold": 0.5575424661673609
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.01583003540928973,
+          "nmi": 0.15562867430632624,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07352634867735888,
+          "nmi": 0.4401181139499514,
+          "dim": 4103
+        }
+      }
+    },
+    {
+      "seed": 123,
+      "a2_grouped_argmax": {
+        "uar": 0.6369249553934547,
+        "recall_C": 0.3856858846918489,
+        "recall_NC": 0.8881640260950606,
+        "acc": 0.8354535974973931
+      },
+      "a2_grouped_tau_tuned": {
+        "tau": -1.6999999999999997,
+        "uar_train_threshold": 0.5088547624700525,
+        "devel_test": {
+          "uar": 0.6499458514523299,
+          "recall_C": 0.49304174950298213,
+          "recall_NC": 0.8068499534016775,
+          "acc": 0.7739311783107403
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -2.45,
+        "uar_train_threshold": 0.5086551121279489
+      },
+      "devel_test": {
+        "uar": 0.6655611531185672,
+        "recall_C": 0.5864811133200796,
+        "recall_NC": 0.744641192917055,
+        "acc": 0.7280500521376434
+      },
+      "devel_val": {
+        "uar": 0.6195140505235588,
+        "recall_C": 0.4940944881889764,
+        "recall_NC": 0.7449336128581412,
+        "acc": 0.7183920016663196
+      },
+      "delta_uar_vs_a2_argmax": 0.0286361977251125,
+      "delta_uar_vs_a2_tau": 0.015615301666237369,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -2.45,
+          "uar_train_threshold": 0.5086551121279489
+        },
+        {
+          "beta": 0.25,
+          "tau": -1.8249999999999997,
+          "uar_train_threshold": 0.5030810904146252
+        },
+        {
+          "beta": 0.5,
+          "tau": -3.0,
+          "uar_train_threshold": 0.5023580324188988
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.011872526556967298,
+          "nmi": 0.15267991335655529,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07310976879816705,
+          "nmi": 0.44084253718756333,
+          "dim": 4103
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "a2_grouped_argmax": {
+        "uar": 0.6374912222841886,
+        "recall_C": 0.40755467196819084,
+        "recall_NC": 0.8674277726001864,
+        "acc": 0.819186652763295
+      },
+      "a2_grouped_tau_tuned": {
+        "tau": -3.95,
+        "uar_train_threshold": 0.5792288100839611,
+        "devel_test": {
+          "uar": 0.6120439525012089,
+          "recall_C": 0.805168986083499,
+          "recall_NC": 0.4189189189189189,
+          "acc": 0.459436913451512
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -3.85,
+        "uar_train_threshold": 0.638136452914895
+      },
+      "devel_test": {
+        "uar": 0.6544160016601231,
+        "recall_C": 0.8489065606361829,
+        "recall_NC": 0.4599254426840634,
+        "acc": 0.5007299270072992
+      },
+      "devel_val": {
+        "uar": 0.5902111751230258,
+        "recall_C": 0.7578740157480315,
+        "recall_NC": 0.42254833449802004,
+        "acc": 0.4580295771714226
+      },
+      "delta_uar_vs_a2_argmax": 0.016924779375934507,
+      "delta_uar_vs_a2_tau": 0.04237204915891424,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -3.85,
+          "uar_train_threshold": 0.638136452914895
+        },
+        {
+          "beta": 0.5,
+          "tau": -3.4,
+          "uar_train_threshold": 0.600537437137122
+        },
+        {
+          "beta": 0.25,
+          "tau": -3.55,
+          "uar_train_threshold": 0.5907221946428957
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.018121224744844823,
+          "nmi": 0.15814535788573048,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07331805873776297,
+          "nmi": 0.43934929655322325,
+          "dim": 4103
+        }
+      }
+    }
+  ],
+  "gates_passed": {
+    "uar": true,
+    "literal_2d": true,
+    "backbone_concat": true
+  }
+}
