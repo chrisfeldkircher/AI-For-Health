@@ -57,7 +57,7 @@ Full numbers:
 
 **Speaker-disjointness**: by URTIC construction, train and devel are speaker-disjoint. 4students TSV has no speaker IDs, so direct verification is impossible — the val→test gap of −0.001 ± 0.005 is the structural evidence.
 
-**Within-partition leak — TODO**: `stratified_split` does per-class random shuffle only; `train_fit`/`train_threshold` and `devel_val`/`devel_test` therefore share pseudo-speakers. The leak is mild (val→test gap is centred on zero, so the load-bearing disjointness is the cross-partition one) but real for early stopping on `devel_val` and threshold τ on `train_threshold`. Fix: replace with `stratified_grouped_split` using pseudo-speaker IDs from `cache/pseudo_speakers/k210_seed42.tsv` as the group key. After patching, re-run A2 (3 seeds, ~10 min total — pooled features cached) and re-run the speaker probe on `devel_test`; if top-1 stays at ≈ 0.05 the leak was minor and our reported numbers are honest, if it drops further we found and closed an internal leak. Either outcome is paper-reportable. See [plan.md §4.5](plan.md).
+**Within-partition leak — DONE (audit report).** `stratified_split` did per-class random shuffle only, so `train_fit`/`train_threshold` and `devel_val`/`devel_test` shared 198/210 and 198/206 pseudo-speakers respectively (massive within-partition overlap). New [`stratified_grouped_split`](AI-For-Health/model/data/cached_dataset.py) uses `sklearn.StratifiedGroupKFold` keyed on `cache/pseudo_speakers/k210_seed42.tsv` → 0/0 overlap. A2 retrained on grouped splits (3 seeds, `results/A2_grouped.json`): argmax UAR 0.6428 ± 0.0034 → **0.6361 ± 0.0019** (Δ -0.0067, ~2σ — argmax was mildly inflated by leak); calibrated UAR 0.6464 → 0.6498 (within σ); val-test gap -0.0009 → -0.0133 (correctly reveals devel_val/devel_test speaker disjointness). MLP speaker probe top-1 0.0501 → 0.0498 (unchanged — speaker-probe interpretation in the paper holds). LR speaker probe top-1 0.0760 ± 0.0020 (codepath-consistent ceiling for A5b/A5d audits, partly higher because grouped devel_val has fewer distinct true-speaker classes). A5b/A5d locked numbers are still anchored on random splits; K=1 PASS structurally survives a baseline shift of ~0.007, but a future re-run on grouped splits is the immediate methodological followup. See [plan.md §4.5](plan.md).
 
 **Seed discipline**:
 
@@ -128,7 +128,8 @@ cache/
   speechbrain/            auto-downloaded ECAPA checkpoint
 results/
   README.md               per-rung ablation table + methodology + per-rung notes
-  A2.json                 full A2 distribution (3 seeds) + speaker probe block
+  A2.json                 full A2 distribution (3 seeds) + MLP speaker probe block (random splits, locked)
+  A2_grouped.json         A2 retrained on grouped splits (3 seeds) + MLP probe + LR probe (audit)
   A3.json                 rejected A3 distribution (3 seeds) + diagnosis block
   A5a_honesty.csv         per-group honesty rows (G1, G2, G3, G4, G4_gain_invariant, G5, G6, G8)
   A5b.json                A5b sweep results + locked (β*, K*, τ*) + devel_test (gate FAIL, run)

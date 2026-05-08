@@ -210,3 +210,35 @@ def stratified_split(
     train_out.sort()
     val_out.sort()
     return train_out, val_out
+
+
+def stratified_grouped_split(
+    files: list[str],
+    labels: dict[str, int],
+    groups: dict[str, int],
+    val_frac: float = 0.10,
+    seed: int = 42,
+) -> tuple[list[str], list[str]]:
+    """Speaker-grouped, Cold-stratified split via sklearn.StratifiedGroupKFold.
+
+    `files` may include the .wav extension as in URTIC's TSVs.
+    `labels` keys must match the form of entries in `files`.
+    `groups` keys are bare stems (no .wav), as in cache/pseudo_speakers/k*.tsv.
+
+    Returns (train, val) such that Cold class proportions are preserved in each
+    side AND no group ID appears in both sides. Use to close the within-
+    partition leak in train_fit/train_threshold and devel_val/devel_test.
+    """
+    from sklearn.model_selection import StratifiedGroupKFold
+
+    files_sorted = sorted(files)
+    y = [labels[f] for f in files_sorted]
+    g = [groups[f[:-4] if f.endswith(".wav") else f] for f in files_sorted]
+
+    n_splits = max(2, int(round(1.0 / val_frac)))
+    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    train_idx, val_idx = next(sgkf.split(files_sorted, y, g))
+
+    train_out = sorted(files_sorted[i] for i in train_idx)
+    val_out = sorted(files_sorted[i] for i in val_idx)
+    return train_out, val_out

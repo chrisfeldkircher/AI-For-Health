@@ -118,36 +118,36 @@ URTIC has no speaker IDs in the 4students release. We rebuilt them:
 - **Independence note**: ECAPA is fed **raw 16 kHz waveforms**, not WavLM features. SpeechBrain's `spkrec-ecapa-voxceleb` runs end-to-end (mel-bank front-end → TDNN → AAM-Softmax x-vector head) on the audio directly. The `cache/microsoft_wavlm-large/pooled/` cache and `cache/ecapa-voxceleb/` cache never touch each other — that architectural independence is what makes the cross-encoder validation credible.
 - Revisit only before A6, where pseudo-speaker labels become *training targets* rather than probe ground truth. Candidate: TitaNet-L or CAM++ (architecturally independent from WavLM).
 
-### 4.5 Methodology TODO — speaker-grouped sub-splits (within-partition leak)
+### 4.5 Methodology — speaker-grouped sub-splits (within-partition leak fix, DONE)
 
-**Status: known leak, not yet patched.** Cross-partition disjointness (train ↔ devel ↔ test) is guaranteed by URTIC construction and validated by A2's val→test gap of −0.001 ± 0.005. **Within-partition sub-splits** (`train_fit`/`train_threshold`, `devel_val`/`devel_test`) are currently per-class random shuffle only — see [`stratified_split`](AI-For-Health/model/data/cached_dataset.py#L186) — so the same speakers appear in both halves of each partition, reading different chunks of the same passage.
+**Status: DONE.** Cross-partition disjointness (train ↔ devel ↔ test) is guaranteed by URTIC construction. **Within-partition sub-splits** (`train_fit`/`train_threshold`, `devel_val`/`devel_test`) were per-class random shuffle only ([`stratified_split`](AI-For-Health/model/data/cached_dataset.py#L186)), so the same pseudo-speakers appeared in both halves of each partition, reading different chunks of the same passage. New [`stratified_grouped_split`](AI-For-Health/model/data/cached_dataset.py) uses `sklearn.model_selection.StratifiedGroupKFold` to stratify by Cold label and disjoin by pseudo-speaker ID from `cache/pseudo_speakers/k210_seed42.tsv`.
 
-Two consequences:
+**Within-partition speaker-overlap diagnostic** (random vs grouped, k=210 pseudo-speakers):
 
-- **Early stopping on `devel_val`** is mildly optimistic: the patience-6 best-epoch decision is informed by speakers also present in `devel_test`.
-- **Threshold τ on `train_threshold`** shares speakers with `train_fit` (the model's training set). Technically fine for τ specifically (τ is selected, not trained) but contributes to the small `calib_delta` we observe (+0.0036, within its own σ).
+```text
+                            random   grouped
+train_fit / train_threshold  198/210     0/210
+devel_val / devel_test       198/206     0/206
+```
 
-The more serious issue is `devel_val` ↔ `devel_test` sharing speakers — biases our "honest" devel_test estimate upward by some unmeasured amount.
+Massive within-partition leak under random splits — almost every pseudo-speaker is in *both* halves of each partition. Grouped splits give clean disjointness.
 
-**The fix** (cheap, scheduled before the next rung):
+**A2 retrain on grouped splits** (3 seeds {42, 123, 7}, splits derived with `stratified_grouped_split(seed=42)`, head architecture and training recipe unchanged, output `results/A2_grouped.json`):
 
-Replace `stratified_split` with `stratified_grouped_split` using `sklearn.model_selection.StratifiedGroupKFold`: stratify by Cold label, group by pseudo-speaker ID from `cache/pseudo_speakers/k210_seed42.tsv`. Concretely:
+```text
+metric                  RANDOM (A2.json)        GROUPED (A2_grouped.json)
+uar_argmax              0.6428 ± 0.0034         0.6361 ± 0.0019           Δ -0.0067 (~2σ)
+uar_calibrated          0.6464 ± 0.0082         0.6498 ± 0.0028           Δ +0.0034 (within σ)
+recall_C @ τ            0.4321 ± 0.0284         0.5533 ± 0.0628           more cold-biased after calib
+recall_NC @ τ           0.8607 ± 0.0192         0.7462 ± 0.0664
+val_test_gap            -0.0009 ± 0.0047        -0.0133 ± 0.0019          reveals real speaker-disjointness
+speaker_probe MLP top-1 0.0501 ± 0.0009         0.0498 ± 0.0031           unchanged
+speaker_probe LR  top-1 (not in A2.json)        0.0760 ± 0.0020           new codepath-consistent ceiling
+```
 
-- `train_fit` ↔ `train_threshold`: pseudo-speaker groups disjoint, cold-stratified ~90/10.
-- `devel_val` ↔ `devel_test`: pseudo-speaker groups disjoint, cold-stratified ~50/50.
+**Verdict.** Argmax UAR was mildly inflated by within-partition leak (~1pp shift). Calibrated UAR essentially unchanged. The val-test gap is now negative (-0.013) — the expected signature of fixing the leak: under random splits devel_val and devel_test shared speakers so were ~equal; under grouped splits they are speaker-disjoint and devel_test is genuinely harder. The MLP speaker probe moved by ≪1σ — confirms the cross-partition disjointness was already doing all the load-bearing work for the speaker-probe interpretation in the paper, and the historical 0.0501 reference holds. The LR probe is slightly higher under grouped (0.0760 vs random's 0.0674 from the A5b controls cell) — partly because the grouped devel_val has fewer distinct true-speaker classes (~103 vs ~206 random). 0.0760 ± 0.0020 is the new apples-to-apples LR-substrate ceiling for §5.7 / A5b / A5d audits.
 
-We have pseudo-speaker assignments for both train and devel already (KMeans-on-train, nearest-centroid for devel), so the grouping key exists.
-
-**Verification protocol** (the result is reportable either way):
-
-After re-splitting, re-run the speaker probe — trained on `train_fit` z with pseudo-speaker targets, evaluated on `devel_test` z. Today's number is top-1 ≈ **0.0501 ± 0.0009** (10.5× chance of 1/210).
-
-- If the within-partition leak was dominant: probe top-1 drops further on the new splits.
-- If it was minor: top-1 stays at ≈ 0.05, meaning the cross-partition disjointness was already doing all the load-bearing work and our reported A2 numbers are honest.
-
-Either outcome is paper-reportable. The first is "we found and closed an internal leak"; the second is "we audited a suspected leak and the URTIC construction held."
-
-**Re-runs after the fix**: A2 lock numbers (3 seeds, calibrated + argmax + speaker probe + per-class recall + val→test gap) get re-computed on the new splits. Cost: ~3 min/seed because pooled features are cached; the only thing that changes is the file lists fed into the head.
+**Downstream consequence (deferred):** A5b/A5d/A5b_diag/A5b_ablation/locked-K all use the `head_A2_seed{seed}.pt` checkpoints trained on random splits and the random-split file lists. The K=1 PASS structurally survives — A5b's K=1 gain over A2_argmax was +0.0148 vs the random-split baseline; even subtracting the -0.0067 baseline shift, the gain remains comfortably above the +0.007 minimum-detectable threshold. But for full methodological consistency, A5b should be re-run on grouped splits using `head_A2grouped_seed{seed}.pt` as the anchor. Tracked as the immediate next followup; not load-bearing for the paper headline.
 
 ---
 
@@ -266,7 +266,12 @@ Run only if A5b passes or nearly passes the gates. Gate replaces the fixed βs:
 Apply at A5b first; A5c only if A5b is within striking distance.
 
 - **UAR**: A5b head UAR ≥ best of {A2, A3} + 0.007 (2σ at N=3).
-- **Speaker probe**: probe top-1 on the A5b representation ≤ A2 + 1σ, **measured under the audit's probe substrate** (`honesty.speaker_probe`, multinomial LR — same code path A5a/A5b use for every group). On A2's layer-weighted-fused 4096-d vector this gives **0.0674 ± 0.0006** ⇒ ceiling **0.0680**. The historical 0.0501 ± 0.0009 in `results/A2.json::speaker_probe` came from the deeper MLP probe in `speakers/probe.py` (different architecture, ~30 epochs of training) and is **not** directly comparable to the audit's LR probe. The `honesty.speaker_probe` reading (0.0674) is the apples-to-apples reference for everything A5a/A5b/A5d.
+- **Speaker probe**: probe top-1 on the A5b representation ≤ A2 + 1σ, **measured under the audit's probe substrate** (`honesty.speaker_probe`, multinomial LR — same code path A5a/A5b use for every group). The historical 0.0501 ± 0.0009 in `results/A2.json::speaker_probe` came from the deeper MLP probe in `speakers/probe.py` (different architecture, ~30 epochs of training) and is **not** directly comparable to the audit's LR probe. Three apples-to-apples references under `honesty.speaker_probe` exist:
+  - **Random splits** (A5b controls cell, the substrate A5b/A5d were locked under): **0.0674 ± 0.0006** ⇒ ceiling **0.0680**.
+  - **Grouped splits** (`results/A2_grouped.json::speaker_probe_lr`, the leak-corrected baseline): **0.0760 ± 0.0020** ⇒ ceiling **0.0780**.
+  - **MLP-substrate** (historical, both splits): 0.0501 ± 0.0009 → **NOT comparable** to LR-substrate audit numbers; cited only for paper continuity with prior reports.
+
+  The locked-K probes pass against either LR ceiling: probe (i) literal 2-D 0.0119 ≪ 0.068 / 0.078 by ~6× margin; probe (ii) backbone concat 0.0675 ≤ 0.068 (random) / 0.078 (grouped) by 0.0005 / 0.0105.
 - **Honesty table**: reported in the paper with per-group `label_gain`, `speaker_gain`, both honesty forms.
 
 **Status (locked):** A5b **PASSES** these gates via the **K-locked K=1 ablation** (admission frozen to the top-1 group `A2 + G4_gain_invariant`, sweeping only β and τ on `train_threshold`):

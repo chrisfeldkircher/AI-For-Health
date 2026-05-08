@@ -125,16 +125,21 @@ This protocol is what gives our A2 number (0.6428) credibility — it survives t
 ## 5. The split layout (read this once, refer back forever)
 
 ```text
-train (9505)  ──┬─ train_fit       (90%, 8554)   ←  fit heads + per-group probes
-                └─ train_threshold (10%,  951)   ←  pick τ; pick (β, K) for A5b
+train (9505)  ──┬─ train_fit       (~90%, 8532–8554)   ←  fit heads + per-group probes
+                └─ train_threshold (~10%,  951–973)    ←  pick τ; pick (β, K) for A5b
 
-devel (9596)  ──┬─ devel_val       (50%, 4798)   ←  early stopping; honesty audit eval
-                └─ devel_test      (50%, 4798)   ←  one-shot honest UAR per rung
+devel (9596)  ──┬─ devel_val       (~50%, 4798–4801)   ←  early stopping; honesty audit eval
+                └─ devel_test      (~50%, 4795–4798)   ←  one-shot honest UAR per rung
 
-test  (9551)                                     ←  withheld; not used
+test  (9551)                                            ←  withheld; not used
 ```
 
-The `stratified_split` is per-class, so the cold rate stays ~9.5% in every slice. `split_seed=42` is locked across every rung — same files in every partition, every time.
+Two split functions live in [model/data/cached_dataset.py](model/data/cached_dataset.py):
+
+- **`stratified_split`** (historical) — per-class random shuffle. Cold rate stays ~9.5% in every slice but pseudo-speakers can appear in both halves of each partition (~198/210 train, 198/206 devel under `split_seed=42`). Used to lock A2/A3/A5a/A5b/A5d.
+- **`stratified_grouped_split`** (current methodology, plan §4.5) — `sklearn.StratifiedGroupKFold` keyed on the k=210 pseudo-speakers. 0/0 within-partition pseudo-speaker overlap. Used for A2_grouped (the leak-corrected baseline in `results/A2_grouped.json`).
+
+`split_seed=42` is locked across every rung — same files in every partition, every time. Counts shift by a few files between random and grouped because grouped splits respect speaker boundaries (a speaker's chunks all go to one side).
 
 ---
 
@@ -554,7 +559,8 @@ cache/
     k210_seed42.tsv       pseudo-speaker assignments
 
 results/
-  A2.json                 locked A2 metrics (3 seeds)
+  A2.json                 locked A2 metrics, random splits (3 seeds) + MLP probe
+  A2_grouped.json         A2 retrained on grouped splits (3 seeds) + MLP probe + LR probe (audit)
   A3.json                 rejected A3 metrics (3 seeds)
   A5a_honesty.csv         per-group honesty rows (G1, G2, G3, G4, G4_gain_invariant, G5, G6, G8)
   A5b.json                A5b late-fusion sweep + locked devel_test eval (gate FAIL, run)
@@ -596,5 +602,6 @@ In rough chronological order:
 - **K=1 PASS reorders the post-A5 ladder.** Originally A5d → A5e → A5.5/A6/A7, on the assumption A5b would need a structural rescue. With A5b passing via a single audited group on top of the existing A2 backbone, A5.5 (cross-speaker splicing) becomes the next gate, A5d ships as a paper diagnostic, A5e likely doesn't fire. The de-confounding interventions (A5.5 → A6 → A7) move up; the rescue track moves down.
 - **A5d ran: A5e SKIPPED + structural paper finding.** The per-layer probe over L ∈ [0, 24] closed the retrain track: both branches of the A5e trigger fired simultaneously — peak `sub@1_L` is L21 = +0.0387 (≪ 0.15 trigger) and the cold-UAR peak (L7, 0.6052) coincides with the speaker peak (L7, top-1 0.0813), so any "rebuild on the cold-rich band" would also be a rebuild on a speaker-rich band. Standalone finding worth reporting: speaker top-1 decays roughly monotonically L0→L24 (0.087@L3 → 0.040@L22) — **confirms Pasad 2021 / Chen 2022 layer-stratification for speaker on URTIC** — but cold UAR is **flat** across the stack (range 0.56–0.61) — **refutes mid-band-cold hypothesis on URTIC**. Retrain track closed; GPU goes to A5.5 / A6.
 - **Locked-K speaker probe + capacity controls flipped (ii) FAIL → PASS via probe-substrate correction.** First read of the locked-K cell looked like probe (ii) backbone-concat FAIL: top-1 0.0675 > 0.0510 ceiling. Capacity controls run after to disambiguate "real G4↔pooled interaction info" from "probe got 7 more dims to play with" came back saying the (a) pooled-alone probe under the *same code path* (`honesty.speaker_probe`, multinomial LR) lands at 0.0674 ± 0.0006 — i.e. the 0.0510 ceiling was anchored on a different probe substrate (`speakers/probe.py`'s deeper MLP, the historical 0.0501 number from `A2.json`). Apples-to-apples ceiling under the LR substrate is 0.0680; both gates PASS (probe (i) 0.0119 by ~6×, probe (ii) 0.0675 by 0.0005). G4_gi adds +0.0001 to speaker recoverability above pooled-alone — essentially zero. The (i)–(ii) gap (0.0119 vs 0.0675, ~5.5 pp drop) is the per-channel cold probe acting as a speaker-information bottleneck *by design* — clean architectural validation of choosing logit-level fusion over A3's concat-MLP. Lesson: when comparing probe top-1 values, always confirm the substrate matches; same features under MLP vs LR can read 0.0501 vs 0.0674.
+- **Within-partition leak audit closed (plan §4.5 DONE).** `stratified_split` was per-class random shuffle, so train_fit/train_threshold and devel_val/devel_test shared 198/210 + 198/206 pseudo-speakers under `split_seed=42`. New `stratified_grouped_split` (sklearn `StratifiedGroupKFold` keyed on the k=210 pseudo-speakers) gives 0/0 overlap. A2 retrained on grouped splits (3 seeds, `results/A2_grouped.json`): argmax UAR drops -0.0067 (~2σ — argmax was mildly inflated by leak); calibrated UAR essentially unchanged (+0.0034); val-test gap moves from -0.0009 (random) to -0.0133 (grouped) — correctly revealing speaker-disjointness instead of hiding it. MLP speaker probe top-1 0.0501 → 0.0498 (unchanged — confirms the cross-partition disjointness was the load-bearing one for speaker-probe interpretation). LR speaker probe top-1 0.0760 ± 0.0020 (codepath-consistent ceiling for A5b/A5d audits, partly higher because grouped devel_val has fewer distinct true-speaker classes ~103 vs ~206 random). A5b's K=1 PASS structurally survives a 0.007 baseline shift; full re-run on grouped splits is the immediate methodological followup. The honest framing for the paper: "we audited a suspected within-partition leak, found and quantified it, and report both the historical and leak-corrected baselines" — the audit itself is the contribution, not a discovered crisis.
 
 If you've read this far, the rest is just running cells and watching numbers. The methodological scaffold is the contribution — the UAR is the cherry.
