@@ -458,9 +458,9 @@ self-splice extraction summary:
 
 **Decision: pivot to Plan B (embedding mixup, §4.8.5).** Audio-level splicing is dead on this corpus + this backbone.
 
-#### 4.8.5 Plan B — embedding mixup (ACTIVE, replacing audio splicing)
+#### 4.8.5 Plan B — embedding mixup (Phase 2 + audit DONE; Phase 4 PARTIAL PASS pending α-sweep follow-up)
 
-**Status: ACTIVE pivot, Phase 2-equivalent build queued.** With Phase 3.5's branch-C verdict (splicer broken, §4.8.4), audio-level splicing is dead on this corpus. Embedding mixup operates on the cached WavLM pooled stats directly — no audio operation, no WavLM forward, no crossfade artifacts.
+**Status: Phase 2 + audit DONE (both PASS); Phase 4 PARTIAL PASS (UAR floor PASS, speaker probe drop FAIL); α ∈ [0.5, 0.7] sweep queued (§4.8.8).** With Phase 3.5's branch-C verdict (splicer broken, §4.8.4), audio-level splicing is dead on this corpus. Embedding mixup operates on the cached WavLM pooled stats directly — no audio operation, no WavLM forward, no crossfade artifacts.
 
 **Recipe.** For each grouped train_fit chunk × K=3:
 
@@ -495,20 +495,169 @@ The same gate framing applies to audio splicing in retrospect — Phase 3's UAR 
 
 **Trade-offs vs the original audio-splicing design.** Loses the temporal-mixing aspect (mixup operates per-chunk on global summaries, not within-chunk acoustic content); changes the project's three-mechanism story slightly (two of three rungs are now representation-level: A5.5 mixup + A6 contrastive; only A7 is gradient-level). Either reframe as "two representation-level interventions + one gradient-level" or keep three by counting A5.5 explicitly as "input-level mixing of frozen-FM representations" (different from A6's representation-level contrastive on the trained projection).
 
-#### 4.8.6 Phase 4 — A5.5 head training on mixed embeddings (queued)
+##### 4.8.5.a Plan B Phase 2-equiv (mixup cache build) — DONE
 
-Subject to Plan B audit PASS (mix-bit-as-cold-predictor ≤ 0.52, the actual gate). Design:
+`results/A5_5_planB_phase2_mixup.json`. K=3 mixed pooled-stats variants per grouped train_fit chunk, α ∼ Uniform(0.70, 0.85). Pure CPU tensor op on cached pooled stats; no WavLM forward needed.
 
-- **Sampling**: per-epoch random sampling across `{original, mix_0, mix_1, mix_2}` per chunk. Each chunk has 4 versions in the cache; one is shown per epoch. Preserves ~9.5k epoch size.
-- **Anchor**: warm start from A2.5 checkpoint (`head_A2grouped_honestprior_seed{seed}.pt`). Tests "does input-level mixing on frozen-FM representations refine A2.5's honesty-prior representation toward speaker-invariance?"
-- **Pseudo-speaker labels for mixed chunks**: anchor's label. The speaker probe should have a *harder* time learning anchor speaker from mixed chunks where partner's pooled stats are blended in — that's the de-confounding mechanism. Probe top-1 should DROP on devel after training.
-- **Devel set unaugmented**: evaluation only on original devel_val and devel_test (PooledCacheDataset with original cache path).
-- **Training recipe**: identical to A2.5 (`head_A2grouped_honestprior_seed{seed}.pt` continuation, lr×0.1, 25 epochs, patience 6, AdamW, cosine schedule).
-- **3 seeds**: {42, 123, 7}. Output: `head_A55_mixup_seed{seed}.pt`, `results/A5_5_phase4_mixup.json`.
-- **Acceptance gates** (3-D, refined):
-  - **UAR ≥ A2.5 - 1σ** (no material drop from augmentation noise).
-  - **LR speaker probe top-1 drops by ≥ 1σ vs A2.5** (augmentation must measurably attack the shortcut to count).
-  - **Mix-bit-as-cold-predictor ≤ 0.52** (replaces the original "splice-detector ≤ 0.55"; the new gate tests the actual shortcut concern — does mix presence predict cold? Should be ~0.5 by class-balance design).
+```text
+                                       k=0      k=1      k=2
+successful mixes / total          8532/8532  8532/8532  8532/8532   (100%)
+fallback to original                       0          0          0
+α distribution (mean ± std)        0.775 ± 0.043   0.775 ± 0.043   0.775 ± 0.043
+α range                            [0.700, 0.850]  [0.700, 0.850]  [0.700, 0.850]
+partner-class balance              cold partners 10.1% (corpus rate ~9.5% — symmetric ✓)
+partner reuse top user             ~7 trials = 0.1% of total (diverse partners)
+elapsed                            0.30 min       0.30 min       0.30 min
+total: 1.13 min CPU
+```
+
+100% successful mixes (no fallback) — pooled stats are always cached, so unlike audio splicing's 19.5% skip rate, mixup never has to fall back. α distribution exactly matches the design U(0.70, 0.85). **Partner-class balance critical for gate B**: cold-partner usage rate 10.1% matches corpus cold rate 9.5% (within sampling noise) — confirms `build_partner_pool` enforces same-Cold + different-pseudo-speaker symmetrically across both classes.
+
+##### 4.8.5.b Plan B Audit — DONE (BOTH gates PASS)
+
+`results/A5_5_planB_audit.json`. Two-tier audit per the revised gate framing.
+
+**Audit (A) Detector UAR (descriptive, NOT a hard gate):** Binary LR probe distinguishes original vs mixed pooled features. Substrates: per-layer L=0/4/7/12/18/24, layer-averaged 4096-d (headline), per-k breakdown.
+
+```text
+substrate                    UAR     recall_orig   recall_mixed   vs Phase 3 (audio splicing)
+layer L0                     0.5048  0.2239        0.7857
+layer L4                     0.5010  0.2222        0.7798
+layer L7                     0.5053  0.2456        0.7649
+layer L12                    0.5037  0.2333        0.7741
+layer L18                    0.5020  0.2011        0.8029
+layer L24                    0.5048  0.2286        0.7810
+layer-averaged (headline)    0.5034  0.2198        0.7870          Δ vs splicing -0.4947
+per-k k=0                    0.4997
+per-k k=1                    0.5018
+per-k k=2                    0.5023
+```
+
+Detector UAR is essentially CHANCE (0.5034 layer-averaged, all per-layer values within [0.501, 0.505], all per-k within [0.500, 0.502]). **Δ -0.4947 vs Phase 3 audio splicing (0.998 → 0.503)** — the smooth tensor-blend completely sidesteps the artifactual signal that crossfaded audio left across every WavLM layer. Mixed pooled vectors are statistically indistinguishable from natural ones at the linear-probe level. The recall imbalance (recall_orig ~0.22, recall_mixed ~0.78) shows the probe defaults to predicting "mixed" because of the 1:3 class ratio (1 orig per 3 mixed); UAR averages this out to chance.
+
+**Audit (B) Mix-bit-as-cold-predictor (HARD GATE ≤ 0.52):** 1-d LR (`mix_present ∈ {0, 1}` → `cold ∈ {0, 1}`).
+
+```text
+mix-bit → cold UAR              0.5000   recall_NC=1.0000  recall_C=0.0000   PASS
+cold rate among original chunks 0.1017
+cold rate among mixed chunks    0.1017   Δ exactly +0.0000
+```
+
+**Trivial PASS by class-balanced augmentation construction.** Mix-bit predicts cold at exactly 0.5 UAR (the trivial classifier predicts "always non-cold" — recall_C = 0, recall_NC = 1). Δ cold rate (mixed - orig) = 0.0000 exactly: every chunk gets K=3 mixed variants regardless of its cold label, partner-pool enforces same-Cold symmetrically, so mix presence is uncorrelated with cold by construction. **The actual shortcut concern is structurally mitigated.**
+
+**Verdict: PASS — proceed to Plan B Phase 4 training.** Augmentation cannot create a cold-prediction shortcut (per gate B). Detector UAR (0.503) is descriptive of augmentation-class baseline detectability — by construction, mixed pooled vectors are slightly distinguishable from natural ones, but this can't be exploited as a cold shortcut.
+
+#### 4.8.6 Phase 4 — A5.5 head training on mixed embeddings (DONE; PARTIAL PASS, α-sweep follow-up queued)
+
+**Status: DONE. Verdict: PARTIAL PASS — UAR floor PASS but speaker probe drop FAIL on the strict 3-D gate.** α ∈ [0.5, 0.7] sweep queued in §4.8.8 to test whether more aggressive mixing activates the de-confounding mechanism.
+
+Output: `results/A5_5_planB_phase4_mixup.json`, `cache/microsoft_wavlm-large/head_A55mixup_seed{seed}.pt` (3 seeds).
+
+**Recipe used:**
+
+- Sampling: per-epoch random sampling across {original, mix_0, mix_1, mix_2} per chunk (uniform; one of 4 versions per epoch); preserves ~9.5k epoch size.
+- Anchor: warm-start from A2.5 (`head_A2grouped_honestprior_seed{seed}.pt`).
+- Pseudo-speaker labels for mixed chunks: anchor's label.
+- Devel unaugmented (original PooledCacheDataset for devel_val + devel_test).
+- Training recipe: identical to A2.5 (lr×0.1, 25 epochs, patience 6, AdamW, cosine, balanced sampler with `train_ds.get_labels()` returning anchor-side cold labels).
+- 3 seeds {42, 123, 7}.
+
+**Per-seed details:**
+
+```text
+seed 42:   best_epoch=3   best_val_uar=0.6317   tau=+0.225   cos(init_A2.5, final)=0.9999   max/min 8.49x → 8.50x
+seed 123:  best_epoch=1   best_val_uar=0.6327   tau=+0.605   cos(init_A2.5, final)=1.0000   max/min 8.51x → 8.51x
+seed 7:    best_epoch=5   best_val_uar=0.6356   tau=+0.080   cos(init_A2.5, final)=0.9997   max/min 8.49x → 8.50x
+
+Per-seed devel_test argmax UAR:  0.6631 / 0.6590 / 0.6651
+Per-seed val_test_gap:           -0.0315 / -0.0263 / -0.0296   (all pessimistic)
+Per-seed top-5 final layers:     [0, 2, 5, 22, 6]  (unchanged from A2.5 init)
+```
+
+**Aggregate (3 seeds, side-by-side vs A2.5 baseline):**
+
+```text
+metric                  A2.5 baseline                A5.5 Plan B (mixup, α∈[0.70, 0.85])    Δ
+uar_argmax              0.6564 ± 0.0038              0.6624 ± 0.0031                       +0.0060 (~1.6σ above zero)
+uar_calibrated          0.6576 ± 0.0165              0.6636 ± 0.0145                       +0.0060
+recall_C @ τ            ~0.43                        0.4738 ± 0.0882                       +0.04   (more cold-balanced)
+recall_NC @ τ           ~0.87                        0.8534 ± 0.0610                       -0.02
+val_test_gap            -0.0202 ± 0.0054             -0.0291 ± 0.0026                      more pessimistic, tighter σ
+spk MLP top1            0.0501 ± 0.0045              0.0506 ± 0.0019                       +0.0005 (essentially unchanged)
+spk LR  top1            0.0725 ± 0.0002              0.0759 ± 0.0030                       +0.0034 (slightly UP)
+```
+
+**3-D acceptance gate evaluation:**
+
+```text
+gate (1) UAR ≥ A2.5 - 1σ (= 0.6525)            : 0.6624   Δ +0.010  PASS
+gate (2a) MLP probe drops ≥ 1σ (≤ 0.0456)      : 0.0506   Δ +0.005  FAIL  (probe slightly UP)
+gate (2b) LR  probe drops ≥ 1σ (≤ 0.0723)      : 0.0759   Δ +0.004  FAIL  (probe slightly UP)
+gate (3)  mix-bit-as-cold-predictor ≤ 0.52     : 0.5000   PASS (verified pre-training)
+
+OVERALL VERDICT: FAIL on the strict 3-D gate
+                 (UAR floor PASS but speaker probe DID NOT DROP)
+```
+
+**Diagnostic interpretation:**
+
+- **The +0.006 UAR is real but small.** ~1.6σ above zero on N=3 seeds. Comparable to noise. Compared to A2.5's +0.020 over uniform-init A2 and A5b's +0.035 over A2.5, A5.5's contribution is the smallest of the rungs locked so far.
+- **cos(init_A2.5, final) = 0.9999, 1.0000, 0.9997** across all 3 seeds — the optimizer DID NOT MOVE the layer weights from A2.5's converged state. Best epochs are early (3, 1, 5) with training plateauing or worsening after epoch 5. **The +0.006 UAR comes entirely from MLP/classifier-level adjustments to the augmented training distribution, NOT from any layer-weight refinement.** Consistent with M5 (layer-weight subspace has weak gradient signal at default lr; the standard recipe can't move from any starting point).
+- **Recall pattern is meaningfully more cold-balanced.** A2.5's recC ≈ 0.43, recNC ≈ 0.87 (heavily NC-biased); A5.5 mixup gives recC ≈ 0.47, recNC ≈ 0.85. Net UAR shift +0.006, but recC moves +0.04 and recNC moves -0.02 — a real operating-point change. For a minority-class problem (cold rate ~9.5%), recovering more cold examples is practically valuable beyond what the UAR scalar captures. Worth reporting both numbers.
+- **Speaker probe did NOT drop — augmentation didn't activate the de-confounding mechanism at α ∈ [0.70, 0.85].** Three plausible reasons: (1) α=0.775 mean = 22.5% partner contribution is too gentle — anchor's speaker characteristics still dominate the mixed pooled vector; (2) the audit detector at UAR=0.503 confirms mixed pooled vectors are statistically indistinguishable from natural ones, so the model has nothing to "learn invariance to" — there's no augmentation signal strong enough to push it toward speaker-invariant features; (3) class-balancing inadvertently introduces partner-distribution drift that shows up as +0.003 LR-probe inflation (small, within noise).
+- **Val-test gap widened** (-0.020 → -0.029, more pessimistic). Not concerning — pessimistic gap is the safe direction. Indicates training on noisier data converges earlier (best_epoch 1-5 vs A2.5's 1-3), so devel performance benefits from the early stop.
+
+**Verdict reading (three interpretations, all defensible):**
+
+1. **Strict gate read:** A5.5 FAILS on the 3-D acceptance gate (gates 2a/2b FAIL on probe drop). Augmentation lifts UAR slightly but doesn't reduce speaker leakage, which was the primary purpose. Modest result.
+2. **Substantive criteria read:** A5.5 PASSES on UAR floor + no probe inflation beyond noise + clean shortcut gate. The +0.006 UAR with more balanced recall pattern is a real contribution; per the plan §6 spirit, augmentation didn't make things worse and added a small lift.
+3. **Mechanism read (paper-relevant):** A5.5's de-confounding mechanism activated weakly. The +0.006 UAR comes from generic regularization (more effective training-data variation), NOT from speaker-invariant feature learning. The paper claim should be honest: *"Embedding mixup at α ∈ [0.70, 0.85] gave a small UAR lift over A2.5 (+0.006, within σ) without measurably reducing the speaker probe; the de-confounding mechanism didn't activate at this conservative mixing strength."*
+
+**Decision: try α ∈ [0.5, 0.7] before locking** (§4.8.8 sweep). 35-50% partner contribution should activate the de-confounding mechanism if it's accessible at all. Three possible outcomes:
+
+- **Lower probe + same UAR** → A5.5 PASSes the strict 3-D gate properly with the new α range. Lock the aggressive variant as canonical A5.5.
+- **Lower probe + lower UAR** → trade-off documented (de-confounding works but at UAR cost). Lock with explicit Pareto framing or pick the UAR-preserving α.
+- **No probe drop even at aggressive α** → confirmed limitation: per-chunk pooled-stat mixing is fundamentally too gentle to break the speaker shortcut on URTIC's WavLM representation. Lock A5.5 as "modest UAR / null on probe" and move to A6 (contrastive, with stronger built-in de-confounding via speaker-masked positives).
+
+#### 4.8.8 α-sweep clarifying experiment (queued; α ∈ [0.5, 0.7])
+
+**Status: queued.** Tests whether more aggressive embedding mixup (35-50% partner contribution per mix) activates the de-confounding mechanism that the safe α ∈ [0.70, 0.85] variant didn't reach (§4.8.6 PARTIAL PASS verdict).
+
+**Recipe.** Mirror Plan B Phase 2-equiv + Phase 4 with `ALPHA_RANGE = (0.50, 0.70)` instead of `(0.70, 0.85)`. New cache subdir `cache/microsoft_wavlm-large/pooled_mixup_aggro_k{0,1,2}/` (preserves the conservative-α cache for comparison). New checkpoints `head_A55mixup_aggro_seed{seed}.pt`. Output: `results/A5_5_planB_phase2_mixup_aggro.json` + `results/A5_5_planB_phase4_mixup_aggro.json`.
+
+**No re-audit needed for gate B.** The mix-bit-as-cold-predictor gate (§4.8.5.b) passes by class-balanced-augmentation construction — it's independent of α magnitude (partner pool design is unchanged). Detector UAR (gate A descriptive) will likely RISE at lower α (more partner contribution = more distributional shift), but that's expected and was always descriptive, not a hard gate.
+
+**Acceptance criteria (3-D gate, identical to §4.8.6):**
+
+1. UAR ≥ A2.5 - 1σ (= 0.6525) — no material UAR drop from more aggressive mixing.
+2. LR speaker probe top-1 drops ≥ 1σ vs A2.5 (= ≤ 0.0723) — augmentation must measurably reduce speaker leakage.
+3. Mix-bit-as-cold-predictor ≤ 0.52 — confirmed pre-training.
+
+**Three possible outcomes (decision tree):**
+
+```text
+(a) UAR holds (≥ 0.6525) AND probe drops (≤ 0.0723):
+    → A5.5 PASSES strict 3-D gate at α ∈ [0.5, 0.7]
+    → Lock aggressive variant as canonical A5.5
+    → Safe-α version becomes ablation row
+    → A5.5 is a real de-confounding rung
+
+(b) UAR holds AND probe doesn't drop:
+    → Embedding mixup is fundamentally too gentle for speaker-shortcut attack
+       on URTIC's WavLM representation, regardless of α
+    → Lock conservative-α A5.5 as "modest UAR / null on probe"
+    → Move to A6 (contrastive, stronger built-in de-confounding)
+
+(c) UAR drops (< 0.6525) at lower α:
+    → Aggressive mixing degrades cold prediction (label noise from partner-dominant mix)
+    → Document the Pareto trade-off
+    → Either pick a middle α (e.g., U(0.6, 0.8)) or accept conservative-α as the right operating point
+    → Move to A6
+```
+
+**Cost.** ~30 min on GPU total: ~1-2 min cache build (CPU, 25.6k mixed variants) + ~25 min Phase 4 retrain (3 seeds, warm-start from A2.5, same recipe).
+
+**This is a clarifying experiment, not a new rung.** Either outcome lets us lock A5.5 with a defensible verdict. (a) gives the strongest A5.5 result; (b) and (c) give weaker results but still publishable as "audio splicing failed → embedding mixup pivoted → modest UAR contribution + null/Pareto on probe → A6 takes the de-confounding load."
 
 #### 4.8.7 Time-budget reality check
 

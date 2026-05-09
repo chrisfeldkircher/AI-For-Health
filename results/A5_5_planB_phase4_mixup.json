@@ -1,0 +1,223 @@
+{
+  "rung_id": "A5_5_planB_phase4_mixup",
+  "description": "A5.5 Plan B Phase 4: head training on embedding-mixup augmented cache (per-epoch random sampling from {original, mix_0, mix_1, mix_2}), warm-start from A2.5 (head_A2grouped_honestprior_seed{seed}.pt), 3 seeds. Devel set unaugmented. Cold label = anchor's; pseudo-speaker label = anchor's. 3-D acceptance gate vs A2.5: (1) UAR \u2265 A2.5 - 1\u03c3, (2) speaker probe drops \u2265 1\u03c3, (3) mix-bit-as-cold \u2264 0.52 (confirmed pre-training).",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "anchor": "A2.5 (head_A2grouped_honestprior_seed{seed}.pt)",
+  "k_variants": 3,
+  "sampling_strategy": "per __getitem__ uniform random from {original, mix_0..K-1}",
+  "split_sizes": {
+    "train_fit_augmented": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "distribution": {
+    "uar_argmax": {
+      "mean": 0.6624235636198342,
+      "std": 0.0031102005888728173,
+      "n": 3
+    },
+    "uar_calibrated": {
+      "mean": 0.663597168156022,
+      "std": 0.014545241623497891,
+      "n": 3
+    },
+    "recall_C": {
+      "mean": 0.4738237243207422,
+      "std": 0.08822499266079584,
+      "n": 3
+    },
+    "recall_NC": {
+      "mean": 0.8533706119913016,
+      "std": 0.06104750764800906,
+      "n": 3
+    },
+    "val_test_gap": {
+      "mean": -0.029115006626914686,
+      "std": 0.002588221739390895,
+      "n": 3
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "best_epoch": 3,
+      "best_val_uar": 0.6316834216477657,
+      "tau": 0.22499999999999998,
+      "uar_train_threshold_at_tau": 0.5373615937493255,
+      "devel_test_argmax": {
+        "uar": 0.6631355853694236,
+        "recall_C": 0.415506958250497,
+        "recall_NC": 0.9107642124883504
+      },
+      "devel_test_calibrated": {
+        "uar": 0.6706123927451136,
+        "recall_C": 0.4870775347912525,
+        "recall_NC": 0.8541472506989748
+      },
+      "val_test_gap": -0.03145216372165793,
+      "cos_init_final": 0.9998526788607193
+    },
+    {
+      "seed": 123,
+      "best_epoch": 1,
+      "best_val_uar": 0.6326857858700576,
+      "tau": 0.605,
+      "uar_train_threshold_at_tau": 0.5399246724655198,
+      "devel_test_argmax": {
+        "uar": 0.6590190914160887,
+        "recall_C": 0.4254473161033797,
+        "recall_NC": 0.8925908667287977
+      },
+      "devel_test_calibrated": {
+        "uar": 0.6468738825203486,
+        "recall_C": 0.3797216699801193,
+        "recall_NC": 0.9140260950605779
+      },
+      "val_test_gap": -0.026333305546031083,
+      "cos_init_final": 0.9999794878134289
+    },
+    {
+      "seed": 7,
+      "best_epoch": 5,
+      "best_val_uar": 0.6355564634609353,
+      "tau": 0.08,
+      "uar_train_threshold_at_tau": 0.5148442727331592,
+      "devel_test_argmax": {
+        "uar": 0.6651160140739903,
+        "recall_C": 0.415506958250497,
+        "recall_NC": 0.9147250698974837
+      },
+      "devel_test_calibrated": {
+        "uar": 0.6733052292026036,
+        "recall_C": 0.5546719681908548,
+        "recall_NC": 0.7919384902143523
+      },
+      "val_test_gap": -0.02955955061305504,
+      "cos_init_final": 0.9997393492118363
+    }
+  ],
+  "speaker_probe_mlp": {
+    "substrate": "speakers.probe.train_probe (MLP on z = 128-d projection)",
+    "top1": {
+      "mean": 0.05057662849624952,
+      "std": 0.0018997499545302008,
+      "n": 3
+    },
+    "nmi": {
+      "mean": 0.37545315226587417,
+      "std": 0.003682990743677384,
+      "n": 3
+    },
+    "runs": [
+      {
+        "seed": 42,
+        "top1": 0.05262609198689461,
+        "nmi": 0.3795886319936645,
+        "train_top1": 0.9462025316455697,
+        "best_epoch": 27
+      },
+      {
+        "seed": 123,
+        "top1": 0.04887453094124794,
+        "nmi": 0.3742443515056351,
+        "train_top1": 0.9310829817158931,
+        "best_epoch": 47
+      },
+      {
+        "seed": 7,
+        "top1": 0.050229262560606,
+        "nmi": 0.37252647329832284,
+        "train_top1": 0.9422175339896859,
+        "best_epoch": 38
+      }
+    ]
+  },
+  "speaker_probe_lr": {
+    "substrate": "honesty.speaker_probe (multinomial LR on layer-weighted-fused 4096-d)",
+    "top1": {
+      "mean": 0.07588696799277929,
+      "std": 0.0030064063173798395,
+      "n": 3
+    },
+    "nmi": {
+      "mean": 0.4526227060426601,
+      "std": 0.0021717788724145773,
+      "n": 3
+    },
+    "runs": [
+      {
+        "seed": 42,
+        "top1": 0.07415121849614664,
+        "nmi": 0.4501530206882949
+      },
+      {
+        "seed": 123,
+        "top1": 0.07415121849614664,
+        "nmi": 0.45348056840405426
+      },
+      {
+        "seed": 7,
+        "top1": 0.07935846698604457,
+        "nmi": 0.45423452903563105
+      }
+    ]
+  },
+  "comparison_to_a2_5": {
+    "uar_argmax_a25": {
+      "mean": 0.656362925275313,
+      "std": 0.0038451175966046033,
+      "n": 3
+    },
+    "uar_argmax_a55": {
+      "mean": 0.6624235636198342,
+      "std": 0.0031102005888728173,
+      "n": 3
+    },
+    "delta_uar_argmax": 0.006060638344521196,
+    "mlp_top1_a25": {
+      "mean": 0.050125050048033394,
+      "std": 0.004484666249950113,
+      "n": 3
+    },
+    "mlp_top1_a55": {
+      "mean": 0.05057662849624952,
+      "std": 0.0018997499545302006
+    },
+    "delta_mlp_top1": 0.00045157844821612503,
+    "lr_top1_a25": {
+      "mean": 0.07248489897937929,
+      "std": 0.00020828993959591535,
+      "n": 3
+    },
+    "lr_top1_a55": {
+      "mean": 0.07588696799277929,
+      "std": 0.0030064063173798395
+    },
+    "delta_lr_top1": 0.003402069013399997
+  },
+  "gates": {
+    "gate1_uar_floor": {
+      "target": 0.6525178076787085,
+      "achieved": 0.6624235636198342,
+      "passed": true
+    },
+    "gate2a_mlp_drop": {
+      "target": 0.04564038379808328,
+      "achieved": 0.05057662849624952,
+      "passed": false
+    },
+    "gate2b_lr_drop": {
+      "target": 0.07227660903978338,
+      "achieved": 0.07588696799277929,
+      "passed": false
+    },
+    "overall_passed": false
+  },
+  "elapsed_minutes": 4.861407816410065
+}
