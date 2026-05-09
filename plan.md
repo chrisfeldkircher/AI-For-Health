@@ -179,7 +179,119 @@ spk LR  top1            0.0760 ± 0.0020         0.0725 ± 0.0002            -0.
 
 **Paper paragraph (draft).** *"We use the per-layer honesty audit (§5.5) to derive an initialisation prior over WavLM layer-weight softmax logits. Compared to uniform initialisation, this gives +0.020 UAR (4.7σ) without measurable speaker probe inflation, demonstrating that A2's layer weights collapse to uniform from random init not due to absence of differential signal, but due to absence of gradient pressure to specialise — a finding with direct implications for how foundation-model layer weighting should be initialised in low-data settings."*
 
-**Locked decision.** A2_grouped_honestprior is the **new canonical A2** for downstream rungs (A5.5, A6, A7). The earlier two A2 variants (random splits, grouped uniform) become methodology-section reference points, not active baselines. **A5b K=1 will be re-run on the new anchor** (`head_A2grouped_honestprior_seed{seed}.pt`) before its verdict is locked — most likely outcome (subjective, ~60%) is that K=1 still adds a smaller marginal lift (G4_gi is waveform-domain pause/RMS stats, partially orthogonal to the per-layer WavLM signal the prior tunes); 35% chance the prior absorbs the same signal and K=1 marginal lift falls below the +0.007 gate; 5% chance fusion conflicts with the prior. **Pending re-run.**
+**Locked decision.** A2_grouped_honestprior is the **new canonical A2** for downstream rungs (A5.5, A6, A7). The earlier two A2 variants (random splits, grouped uniform) become methodology-section reference points, not active baselines. **A5b K=1 was re-run on the new anchor** (`head_A2grouped_honestprior_seed{seed}.pt`) — see §4.7 for the verdict and the calibration audit it required.
+
+#### 4.6.1 Mechanism revision (lr stress test, single seed)
+
+**Status: DONE (paper-narrative-correcting control).** The "flat loss landscape" claim above was tested by re-training A2.5 with the layer-weights learning rate boosted across `lr_factor ∈ {0.1, 1.0, 10.0, 100.0}` × `base_lr` (default A2 recipe is 0.1× → layer_lr = 1e-4). Single seed (42), `head_A2grouped_lrstress_lr*_seed42.pt` checkpoints. Output: `results/A2_grouped_honestprior_lr_stress.json`.
+
+```text
+lr_factor  layer_lr  cos(init,final)  L2(delta)  final/init max/min   final top-5            devel_test UAR
+   0.1     1e-4      0.9999           0.0025     8.50× (= init)       [0, 2, 5, 22, 24]      0.6382
+   1.0     1e-3      0.9953           0.0239     8.84× (1.04× init)   [0, 2, 5, 22, 6]       0.6511
+  10.0     1e-2      0.8302           0.2099     44.08× (5.21× init)  [0, 5, 2, 6, 7]        0.6599 ← peak
+ 100.0     1e-1      0.2083           0.7675     20120× (2376× init)  [4, 5, 2, 6, 0]        0.6443 ← degenerate
+```
+
+**The "flat landscape" claim is contradicted.** At lr×100 the optimizer moves the layer weights dramatically (cos drops 0.9999 → 0.21) — there IS gradient signal in the layer-weight subspace, just weak relative to the standard 0.1× lr factor. The original A2.5 finding "cos(init, final) = 0.9998" was an artifact of low lr × short training horizon (25 epochs, patience 6), not landscape geometry.
+
+**The Goldilocks pattern.** UAR is non-monotonic in lr: lr×0.1 → 0.638, lr×1 → 0.651, lr×10 → 0.660 (peak), lr×100 → 0.644 (drops). lr×10 is the sweet spot; lr×100 overshoots into a degenerate solution where L4 alone gets 85% of the weight (final max/min ratio 20120×). The optimizer at lr×100 collapses onto a low-sub@1 layer (L4 has cold UAR 0.581 / speaker top-1 0.075 / sub@1 ~0.012 per A5d) — independent cross-validation that A5d's audit signal points away from optimization-bad attractors.
+
+**Revised mechanism for A2.5.** Not "flat landscape; optimizer cannot specialise." The honest reading:
+
+> *At default optimization settings (layer_weights lr = base_lr × 0.1 = 1e-4, the s3prl convention, with 25-epoch / patience-6 training), the layer-weight subspace shows weak gradient signal that fails to drive specialisation from uniform init within the standard horizon. The honesty prior provides a useful starting point that the optimizer accepts (cos(init, final) = 0.9998 at default lr). At higher layer-weight lr, the optimizer DOES discover non-uniform configurations from any starting point — different layer mixes, similar UAR — but this requires hyperparameter changes that the standard recipe doesn't make.*
+
+The corrected paper claim: *"Data-derived layer-weight init produces +0.020 UAR over uniform init at the standard low-lr regime, where the optimizer is constrained from moving regardless of starting point. The prior is practically useful within standard optimization settings rather than fundamentally necessary across all settings."* Narrower but defensible.
+
+**Two open questions raised by the lr stress test** (to be settled by §4.6.2 controls below before locking the canonical A2.5):
+
+1. **Does prior init + lr×{3, 5, 10} dominate prior init + lr×0.1?** Single-seed lr×10 hit UAR 0.6599 (within A2.5's 3-seed σ); 3-seed replicate needed.
+2. **Does uniform init + lr×{3, 5, 10} reach competitive UAR?** If yes (likely), the prior contribution shrinks from "uniquely optimal" to "useful at standard lr." If no, the prior remains genuinely informative across lr regimes.
+
+**Val-test gap pattern under lr stress** (worth tracking):
+
+```text
+lr_factor   val_test_gap
+0.1         -0.0138
+1.0         -0.0206
+10.0        -0.0261
+100.0       -0.0240
+```
+
+Gap widens (more pessimistic) as lr increases — higher-lr models harder to model-select cleanly on devel_val. The canonical A2.5 should balance UAR mean and val-test gap stability; if lr×10 gives 0.66 UAR with -0.03 gap vs lr×1 giving 0.65 UAR with -0.02 gap, the lr×1 version is the more honest baseline despite slightly lower UAR. Decision deferred to §4.6.2 controls.
+
+#### 4.6.2 Pending controls (lr × init grid + extended β-sweep)
+
+Two control runs queued before the canonical A2.5 is locked:
+
+- **A2 lr × init grid** — (uniform init, honesty-prior init) × (lr×3, lr×5, lr×10), 3 seeds each = 18 retrains (~36 min on cached features). Output: `results/A2_lr_init_grid.json`. Settles whether the prior contribution survives at higher lr.
+- **A5b extended β-sweep + G4-alone baseline** — see §4.7. Settles the boundary-pegged β*=2.0 result.
+
+After both run, the canonical A2.5 is locked at whichever (init, lr) combination jointly maximises UAR mean and minimises val-test gap drift, and A5b's K=1 verdict re-evaluates against that anchor.
+
+### 4.7 A5b K=1 re-audit on A2.5 anchor (β=1.00 FAIL → β-sweep PASS, boundary-pegged)
+
+**Context.** The original A5b K=1 PASS was locked on the uniform-A2 anchor with β=1.00. After A2.5 became the new canonical baseline (§4.6), the K=1 verdict needed re-evaluation. β=1.00 was implicitly conditioned on the uniform-A2 anchor; under A2.5's more-confident logits it doesn't necessarily transfer.
+
+#### 4.7.1 Protocol-strict β=1.00 re-run (FAIL — calibration failure)
+
+**Status: DONE.** Mirror of the A5b grouped cell with `head_A2grouped_honestprior_seed{seed}.pt` as anchor, β fixed at 1.00 per the original protocol. 3 seeds. Output: `results/A5b_grouped_honestprior.json`.
+
+```text
+                                 uniform A2_grouped (PASS)   A2.5 honest-prior (FAIL)
+A2 anchor argmax UAR             0.6361 ± 0.0019             0.6564 ± 0.0038
+K=1 fused UAR (β=1.00)            0.6588 ± 0.0059             0.6346 ± 0.0168
+Δ vs anchor argmax                +0.0227 ± 0.0059 (3.8σ)    -0.0218 ± 0.0143 (FAIL)
+probe (i) literal 2-D            0.0153 ± 0.0032            0.0156 ± 0.0026   PASS
+probe (ii) backbone+G4_gi        0.0733 ± 0.0002            0.0733 ± 0.0002   PASS
+```
+
+**Calibration-failure smoking gun.** All 3 seeds locked τ at -3.925 to -3.975 — the floor of `np.linspace(-4.0, 4.0, 321)`. β was forced to 1.00 (the original protocol). Both knobs at search edge → textbook search pathology, NOT a genuine signal absence. The fusion at β=1.00 over-weights G4_gi relative to the more-confident A2.5 logits, creating a fused logit distribution where no operating point in the τ search range generalises from train_threshold to devel_test.
+
+**Decision.** The β=1.00 forced FAIL is a *calibration failure* under the wrong-for-new-anchor hyperparameter. Not a signal-absence verdict. The honest re-audit requires re-tuning β under the new anchor (§4.7.2).
+
+#### 4.7.2 β-sweep on A2.5 anchor (PASS at β*=2.0, boundary-pegged)
+
+**Status: DONE (verdict caveated, follow-up pending).** β grid `[0.0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0]` swept jointly with τ on `train_threshold`; (β*, τ*) locked per seed by argmax thr_UAR; one-shot eval on devel_test. Output: `results/A5b_grouped_honestprior_betasweep.json`.
+
+```text
+LOCKED CONFIG (3 seeds):
+  per-seed β*       = [2.0, 2.0, 2.0]   (all at upper edge of sweep grid)
+  per-seed τ*       = [-3.825, -2.275, -3.550]
+  K=1 fused UAR     = 0.6755 ± 0.0208
+  Δ vs A2.5_argmax  = +0.0192 ± 0.0175   (PASS the +0.007 gate by mean)
+  Δ vs A2.5_τ       = +0.0187 ± 0.0085   (cleaner statistic, 2.2σ)
+```
+
+**β=0 sanity passes cleanly.** All 3 seeds reproduce A2.5_τ exactly at β=0 (devel_test UAR 0.6417 / 0.6751 / 0.6536 = A2.5_τ values). Fusion code is correct.
+
+**Per-β trend** (3-seed mean):
+
+```text
+β=0.00 → 0.6568   (sanity == A2.5_τ ✓)
+β=0.05 → 0.6592   (tiny lift)
+β=0.10 → 0.6408   (dip — middle-β interference)
+β=0.50 → 0.6396
+β=1.00 → 0.6346   (the original FAIL point, lowest)
+β=1.50 → 0.6550
+β=2.00 → 0.6755   (best, but at search edge)
+```
+
+Non-monotonic and bumpy. Middle β values create unfavorable τ-operating-point interference; low and high β both give lift. Recall pattern explains it: as β grows, the model becomes more cold-biased (recC: 0.45 → 0.83, recNC: 0.86 → 0.43); the τ sweep finds different balance points, landing well at low β or high β but poorly at mid β.
+
+**Caveat: β* pegged at search boundary.** Same diagnostic that flagged the K-sweep pathology and the β=1.00 fail. We don't know if the true optimum is β=2.0 (just outside the grid) or β=4, β=8, β=16 (G4_gi-dominant regime). **Per-seed: 1 of 3 seeds gives Δ ≈ 0 (seed 42 = -0.0006), 2 of 3 give Δ +0.025 to +0.032.** Mean PASSES the gate but only ~0.7σ above the gate threshold; per-seed reliability is mixed.
+
+**Recall-asymmetry observation.** At β*=2.0, recC ≈ 0.82, recNC ≈ 0.53 — heavily cold-biased. A2.5 alone has recC ≈ 0.45, recNC ≈ 0.86 (balanced). UAR is invariant to the asymmetry by construction, but the operating point at β*=2.0 is qualitatively different from A2.5's. This is consistent with the fusion at high β being driven primarily by G4_gi-induced shifts rather than refining A2.5's decision boundary — the underlying mechanism may be more "switch from A2.5-driven decisions to G4_gi-driven decisions" than "stack A2.5 with a G4_gi adjustment."
+
+**G4_gi-alone reference (from A5a).** G4_gi standalone label_gain = +0.132 → UAR ~0.632 on devel_val. Materially weaker than A2.5 (0.6564). β→∞ baseline on devel_test would land near ~0.63, well below the 0.6755 K=1 number. So fusion is NOT being dominated by G4_gi (the "G4_gi alone is better than A2.5" possibility is empirically ruled out by A5a). But "G4_gi has more weight than A2.5 in the locked fusion" remains an open mechanism question.
+
+**Pending follow-ups before locking the verdict** (§4.6.2 + extended sweep):
+
+1. **Extended β grid** to `{2.5, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0}`. Find where the per-β UAR plateaus. If it plateaus at β=4 with UAR ≈ 0.69, that's the locked β*. If it keeps climbing past β=8, the fusion is approaching the G4-alone limit.
+2. **G4-alone baseline on devel_test** under the same protocol. Confirms the prior-evidence number from A5a (~0.63) replicates on the same split, settles "is G4_gi dominating?" with direct evidence.
+3. **Robust β diagnostic** — smallest β within 1σ of per-β-UAR peak, alongside argmax-locked β*. Less sensitive to grid resolution.
+
+**Provisional verdict.** K=1 fusion lift survives on A2.5 anchor with proper β tuning (Δ +0.019 above gate by mean), but with weaker statistical support than the original uniform-A2 result (3.3σ → ~1σ above gate). Pending the extended sweep + G4-alone baseline before final lock. **The two-stackable-contributions paper framing is tentatively supported but caveated.**
 
 ---
 

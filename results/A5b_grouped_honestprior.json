@@ -1,0 +1,307 @@
+{
+  "rung_id": "A5b_grouped_honestprior",
+  "description": "A5b K=1 lock (A2 + G4_gain_invariant) re-run on grouped splits with the A2.5 (honesty-prior) anchor \u2014 head_A2grouped_honestprior_seed{seed}.pt from results/A2_grouped_honestprior.json. Settles whether K=1 fusion still adds marginal lift on top of the honesty-prior baseline. Gates: UAR delta vs A2.5_argmax >= 0.007; probe (i)/(ii) <= 0.0780.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "split_sizes": {
+    "train_fit": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "betas": [
+    0.25,
+    0.5,
+    1.0
+  ],
+  "admitted": [
+    "G4_gain_invariant"
+  ],
+  "lr_ceiling_grouped": 0.078,
+  "aggregate": {
+    "uar_devel_test": {
+      "mean": 0.6345655486157303,
+      "std": 0.016774863324786587,
+      "n": 3
+    },
+    "delta_uar_vs_a2hp_argmax": {
+      "mean": -0.0217973766595827,
+      "std": 0.014301704883754894,
+      "n": 3
+    },
+    "delta_uar_vs_a2hp_tau": {
+      "mean": -0.02222645796547214,
+      "std": 0.011977311130103637,
+      "n": 3
+    },
+    "uar_a2hp_argmax": {
+      "mean": 0.656362925275313,
+      "std": 0.0038451175966046033,
+      "n": 3
+    },
+    "uar_a2hp_tau": {
+      "mean": 0.6567920065812024,
+      "std": 0.016934188703483736,
+      "n": 3
+    },
+    "locked_speaker_probe": {
+      "literal_2d": {
+        "top1": {
+          "mean": 0.015552315489828508,
+          "std": 0.002604318452198995,
+          "n": 3
+        }
+      },
+      "backbone_concat": {
+        "top1": {
+          "mean": 0.07331805873776297,
+          "std": 0.00020828993959591535,
+          "n": 3
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "a2hp_argmax": {
+        "uar": 0.6530854481683988,
+        "recall_C": 0.4294234592445328,
+        "recall_NC": 0.8767474370922647,
+        "acc": 0.829822732012513
+      },
+      "a2hp_tau_tuned": {
+        "tau": 0.5250000000000004,
+        "uar_train_threshold": 0.5246433273618095,
+        "devel_test": {
+          "uar": 0.6416630691155953,
+          "recall_C": 0.3658051689860835,
+          "recall_NC": 0.9175209692451072,
+          "acc": 0.8596454640250261
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -3.975,
+        "uar_train_threshold": 0.5745721007532754
+      },
+      "devel_test": {
+        "uar": 0.6152113414573139,
+        "recall_C": 0.8469184890656064,
+        "recall_NC": 0.38350419384902146,
+        "acc": 0.4321167883211679
+      },
+      "devel_val": {
+        "uar": 0.5959743108631337,
+        "recall_C": 0.8385826771653543,
+        "recall_NC": 0.35336594456091314,
+        "acc": 0.40470735263486773
+      },
+      "delta_uar_vs_a2hp_argmax": -0.03787410671108482,
+      "delta_uar_vs_a2hp_tau": -0.02645172765828141,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -3.975,
+          "uar_train_threshold": 0.5745721007532754
+        },
+        {
+          "beta": 0.5,
+          "tau": -1.75,
+          "uar_train_threshold": 0.5511050916233191
+        },
+        {
+          "beta": 0.25,
+          "tau": -1.85,
+          "uar_train_threshold": 0.5324135028382724
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.013747136013330555,
+          "nmi": 0.1627170310225621,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07352634867735888,
+          "nmi": 0.4500582155983265,
+          "dim": 4103
+        }
+      }
+    },
+    {
+      "seed": 123,
+      "a2hp_argmax": {
+        "uar": 0.6605956062321319,
+        "recall_C": 0.4274353876739563,
+        "recall_NC": 0.8937558247903076,
+        "acc": 0.8448383733055266
+      },
+      "a2hp_tau_tuned": {
+        "tau": -0.6499999999999999,
+        "uar_train_threshold": 0.5123729252552287,
+        "devel_test": {
+          "uar": 0.6750850905749103,
+          "recall_C": 0.510934393638171,
+          "recall_NC": 0.8392357875116496,
+          "acc": 0.8047966631908238
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -3.925,
+        "uar_train_threshold": 0.5706762211046599
+      },
+      "devel_test": {
+        "uar": 0.6435666059560623,
+        "recall_C": 0.8409542743538767,
+        "recall_NC": 0.4461789375582479,
+        "acc": 0.48759124087591244
+      },
+      "devel_val": {
+        "uar": 0.5974274180088076,
+        "recall_C": 0.7795275590551181,
+        "recall_NC": 0.4153272769624971,
+        "acc": 0.45386377837950426
+      },
+      "delta_uar_vs_a2hp_argmax": -0.017029000276069572,
+      "delta_uar_vs_a2hp_tau": -0.031518484618847986,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -3.925,
+          "uar_train_threshold": 0.5706762211046599
+        },
+        {
+          "beta": 0.5,
+          "tau": -3.55,
+          "uar_train_threshold": 0.5476732641212148
+        },
+        {
+          "beta": 0.25,
+          "tau": -3.825,
+          "uar_train_threshold": 0.5298288403013101
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.01853780462403666,
+          "nmi": 0.15786662107381508,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07310976879816705,
+          "nmi": 0.4493293899266618,
+          "dim": 4103
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "a2hp_argmax": {
+        "uar": 0.6554077214254084,
+        "recall_C": 0.4254473161033797,
+        "recall_NC": 0.8853681267474371,
+        "acc": 0.8371220020855057
+      },
+      "a2hp_tau_tuned": {
+        "tau": -0.625,
+        "uar_train_threshold": 0.5181465973106559,
+        "devel_test": {
+          "uar": 0.6536278600531017,
+          "recall_C": 0.4691848906560636,
+          "recall_NC": 0.8380708294501398,
+          "acc": 0.7993743482794577
+        }
+      },
+      "locked_K1": {
+        "admitted": [
+          "G4_gain_invariant"
+        ],
+        "beta": 1.0,
+        "tau": -3.925,
+        "uar_train_threshold": 0.6035861518205953
+      },
+      "devel_test": {
+        "uar": 0.6449186984338147,
+        "recall_C": 0.8170974155069582,
+        "recall_NC": 0.472739981360671,
+        "acc": 0.5088633993743483
+      },
+      "devel_val": {
+        "uar": 0.6079029495002852,
+        "recall_C": 0.7618110236220472,
+        "recall_NC": 0.4539948753785232,
+        "acc": 0.4865652988960633
+      },
+      "delta_uar_vs_a2hp_argmax": -0.01048902299159371,
+      "delta_uar_vs_a2hp_tau": -0.008709161619287031,
+      "sweep_train_threshold": [
+        {
+          "beta": 1.0,
+          "tau": -3.925,
+          "uar_train_threshold": 0.6035861518205953
+        },
+        {
+          "beta": 0.5,
+          "tau": -4.0,
+          "uar_train_threshold": 0.5581198333729036
+        },
+        {
+          "beta": 0.25,
+          "tau": -1.4749999999999996,
+          "uar_train_threshold": 0.5275085795687553
+        }
+      ],
+      "locked_speaker_probe": {
+        "literal_2d": {
+          "top1": 0.014372005832118308,
+          "nmi": 0.16243174520141282,
+          "dim": 2
+        },
+        "backbone_concat": {
+          "top1": 0.07331805873776297,
+          "nmi": 0.4524397376212187,
+          "dim": 4103
+        }
+      }
+    }
+  ],
+  "gates_passed": {
+    "uar": false,
+    "literal_2d": true,
+    "backbone_concat": true
+  },
+  "comparison_to_uniform_a2_grouped": {
+    "uar_uniform": {
+      "mean": 0.658830026983177,
+      "std": 0.005922863951570377,
+      "n": 3
+    },
+    "uar_a2hp": {
+      "mean": 0.6345655486157303,
+      "std": 0.016774863324786587,
+      "n": 3
+    },
+    "delta_uniform": {
+      "mean": 0.022694757210079037,
+      "std": 0.00585759161478239,
+      "n": 3
+    },
+    "delta_a2hp": {
+      "mean": -0.0217973766595827,
+      "std": 0.014301704883754894,
+      "n": 3
+    }
+  }
+}
