@@ -1,0 +1,80 @@
+{
+  "rung_id": "A5_5_phase3p5_selfsplice_control",
+  "description": "A5.5 Phase 3.5 self-splice control. Splices N=1000 train_fit anchors with same-pseudo-speaker partners (no cross-speaker mixing) and runs the same Phase 3 splice-detector audit. Distinguishes 'splicer broken' from 'cross-speaker mixing is the desired loud signal.'",
+  "split_seed": 42,
+  "base_seed": 42,
+  "probe_seed": 42,
+  "n_anchors": 1000,
+  "n_successful_self_splices": 788,
+  "n_fallback_to_original": 212,
+  "boundary_kinds": {
+    "unvoiced": 768,
+    "silence": 20
+  },
+  "skip_reasons": {
+    "no_valid_partner_window": 23,
+    "no_valid_anchor_boundaries": 189
+  },
+  "audit_val_frac": 0.2,
+  "probe_train_n_orig": 800,
+  "probe_train_n_spliced": 631,
+  "probe_eval_n_orig": 200,
+  "probe_eval_n_spliced": 157,
+  "layer_averaged": {
+    "uar": 0.99,
+    "recall_original": 0.98,
+    "recall_self_spliced": 1.0,
+    "gate_passed": false
+  },
+  "per_layer": [
+    {
+      "layer": 0,
+      "uar": 0.98,
+      "recall_original": 0.96,
+      "recall_self_spliced": 1.0,
+      "gate_passed": false
+    },
+    {
+      "layer": 4,
+      "uar": 0.9843152866242038,
+      "recall_original": 0.975,
+      "recall_self_spliced": 0.9936305732484076,
+      "gate_passed": false
+    },
+    {
+      "layer": 7,
+      "uar": 0.9893152866242039,
+      "recall_original": 0.985,
+      "recall_self_spliced": 0.9936305732484076,
+      "gate_passed": false
+    },
+    {
+      "layer": 12,
+      "uar": 0.99,
+      "recall_original": 0.98,
+      "recall_self_spliced": 1.0,
+      "gate_passed": false
+    },
+    {
+      "layer": 18,
+      "uar": 0.9924999999999999,
+      "recall_original": 0.985,
+      "recall_self_spliced": 1.0,
+      "gate_passed": false
+    },
+    {
+      "layer": 24,
+      "uar": 0.9654458598726114,
+      "recall_original": 0.95,
+      "recall_self_spliced": 0.9808917197452229,
+      "gate_passed": false
+    }
+  ],
+  "phase3_cross_splice_layer_avg_uar": 0.9981010988811304,
+  "verdict": {
+    "self_splice_layer_avg_uar": 0.99,
+    "branch": "branch_C_splicer_broken",
+    "decision": "FAIL \u2014 splicer is fundamentally artifact-laden (self-splice UAR 0.9900"
+  },
+  "elapsed_minutes": 0.5872376958529154
+}

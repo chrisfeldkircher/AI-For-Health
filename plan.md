@@ -428,36 +428,87 @@ per-k breakdown (k=0/1/2)            0.997-0.999  ALL FAIL
 
 **Decision: don't proceed to Phase 4 yet.** Run the diagnostic in §4.8.4 first to settle which interpretation is correct.
 
-#### 4.8.4 Phase 3.5 — self-splice control (diagnostic, queued)
+#### 4.8.4 Phase 3.5 — self-splice control (DONE; verdict: branch C — splicer broken)
 
-The reflection's recommended diagnostic: splice each anchor with a partner from the **same pseudo-speaker cluster** (instead of the cross-speaker partner pool used in Phase 2). Run the same Phase 3 splice-detector audit on (original, self-spliced). The result distinguishes:
+**Status: DONE. Verdict: FAIL → pivot to Plan B (embedding mixup).** Output: `results/A5_5_phase3p5_selfsplice_control.json`.
 
-- **Self-splice UAR < 0.60** → splicer technique is clean. The 0.998 cross-splice UAR IS the cross-speaker mixing signal, which is the desired augmentation. The original 0.55 gate was miscalibrated for cross-speaker splicing — redefine the gate; symmetric-across-classes is the actual safeguard. Proceed to Phase 4.
-- **Self-splice UAR 0.60–0.85** → splicer leaves moderate signature (likely crossfade artifacts + within-speaker session mismatches). Try splicer fixes (longer crossfade window, RMS-noise-floor matching, tighter low-energy boundary selection, smaller r) and re-audit. If fixes can't drive self-splice UAR < 0.6, pivot to embedding mixup.
-- **Self-splice UAR > 0.85** → splicer is fundamentally artefact-laden independent of cross-speaker mixing. Cross-speaker mixing on top adds the additional ~0.99 detection. Pivot to embedding mixup (Plan B below) — splicer fixes won't recover from this regime.
+```text
+substrate                          self-splice UAR    cross-splice UAR (Phase 3)    Δ
+layer L0                           0.9800             0.9917                        -0.012
+layer L4                           0.9843             0.9965                        -0.012
+layer L7                           0.9893             0.9982                        -0.009
+layer L12                          0.9900             0.9979                        -0.008
+layer L18                          0.9925             0.9975                        -0.005
+layer L24                          0.9654             0.9954                        -0.030
+layer-averaged (4096-d, headline)  0.9900             0.9981                        -0.008
 
-**Implementation.** N=1000 train_fit anchors, sample one same-pseudo-speaker partner per anchor (excluding self), apply `splice_chunk` with the same recipe as Phase 2, run WavLM forward, save to `cache/microsoft_wavlm-large/pooled_selfsplice_k0/`. Run the same Phase 3 detector logic (chunk-disjoint 80/20, layer-averaged + per-layer + per-k probes). Cost: ~3 min on GPU. Output: `results/A5_5_phase3p5_selfsplice_control.json`.
+self-splice extraction summary:
+  successful self-splices: 788 / 1000 (78.8%)  ← consistent with Phase 2's 80.5% cross-splice
+  fallback to original   : 212
+  boundary kinds         : 768 unvoiced + 20 silence
+```
 
-**Caveat.** Same-pseudo-speaker partner is a proxy for same-speaker — pseudo-speaker clusters (k=210) are pure-ish (kNN cohesion @ k=10 = 0.957 per the validation), so this is a reasonable proxy. URTIC speakers may have been recorded across multiple sessions with slightly different mic/room acoustics; even self-splices CAN cross sessions. So a moderate self-splice UAR (~0.7-0.8) might partly reflect session-mismatch noise rather than splicer technique itself.
+**The clean diagnosis.** Self-splice UAR 0.9900 ≈ cross-splice UAR 0.9981 (Δ layer-averaged = -0.008). Cross-speaker mixing accounts for **less than 1%** of the detectability; the splicer operation itself accounts for ~99% of the signal. **The artifacts are coming from the splice OPERATION, not the cross-speaker MIXING.** Even concatenating audio from the SAME speaker via our crossfade pipeline produces an acoustic signature that's effectively perfectly detectable from WavLM pooled stats.
 
-#### 4.8.5 Plan B — embedding mixup (pivot if Phase 3.5 says "splicer broken")
+**This rules out an entire class of fixes.** No partner-selection refinement (same-session, same-speaker, RMS-matched) will help — the splicing operation produces a signature regardless of who you splice with. Splicer-internal fixes (longer crossfade 250→400ms, tighter low-energy boundary selection, smaller r, spectral envelope matching at the seam) might shave 5-10 UAR points but won't drop 0.99 → 0.55 (a 40+ point gap). The fundamental issue is that **WavLM's CNN feature-extractor + transformer attention are sensitive to splice-induced spectral discontinuities at every layer (L0 = 0.98, L24 = 0.965 — uniform across the stack)**. Crossfade is already 250ms; longer doesn't help much because attention windows span much wider time scales.
 
-If self-splice UAR > 0.85 and splicer fixes can't recover, pivot to **embedding-level mixup**: extract WavLM pooled stats per chunk (already cached); for each anchor, find a partner from a different pseudo-speaker with the same cold label; mix the *embeddings* (e.g., 0.7·anchor_pooled + 0.3·partner_pooled) instead of the audio. Sidesteps every audio-level artifact. Audit the same way (binary detector on mixed vs natural pooled vectors) — embedding mixup typically gets UAR ≈ 0.7-0.85 on the detector (a much smoother operation than audio splicing).
+**Generalisable methodological warning (paper-worthy).** "Audio-level cross-speaker splicing on URTIC WavLM representations is detectable at >99% UAR even when the operation is performed within a single speaker. This indicates the splicing operation itself, not the cross-speaker mixing, is the source of the artifactual signal. Anyone doing audio-level cross-speaker augmentation for foundation-model-based health classification should run a self-splice control before proceeding to training." Transferable beyond URTIC — the artifact is a property of how WavLM (and likely HuBERT, Whisper, etc.) represent splice discontinuities at every layer.
 
-**Trade-offs:** loses the temporal-mixing aspect (mixup operates per-chunk, not within-chunk); changes the architectural framing from "audio-level cross-speaker augmentation" to "embedding-level cross-speaker mixing." Different paper story but defensible — this is the standard mixup family applied to upstream embeddings, well-precedented for cross-speaker emotion/accent classification work.
+**Caveat (acknowledged but doesn't change verdict).** Same-pseudo-speaker partner is a proxy for same-speaker (k=210 clusters with kNN cohesion @ k=10 = 0.957). URTIC speakers may have been recorded across multiple sessions with slightly different mic/room acoustics; even self-splices CAN cross sessions. So *some* of the 0.99 self-splice UAR could be session-mismatch rather than pure splicer technique. But even if half of it were session-mismatch (which would be high), splicer-only artifacts would still account for ~0.74 UAR — still well above the 0.55 gate and well into branch C territory. Pivot to Plan B is the right call regardless of the session-mismatch decomposition.
 
-#### 4.8.6 Phase 4 — A5.5 head training (pending Phase 3.5 outcome)
+**Decision: pivot to Plan B (embedding mixup, §4.8.5).** Audio-level splicing is dead on this corpus + this backbone.
 
-Subject to Phase 3.5 verdict. Design when Phase 3.5 PASSes:
+#### 4.8.5 Plan B — embedding mixup (ACTIVE, replacing audio splicing)
 
-- **Sampling**: per-epoch random sampling across `{original, k=0, k=1, k=2}` per chunk (Option B from plan §6).
-- **Anchor**: warm start from A2.5 checkpoint (`head_A2grouped_honestprior_seed{seed}.pt`) — tests "does augmentation refine the honesty-prior representation toward speaker-invariance?" Same training recipe as A2.5.
-- **Pseudo-speaker labels for augmented chunks**: anchor's label (the speaker probe should have a *harder* time learning anchor speaker from augmented chunks where partner's voice is mixed in — that's the de-confounding mechanism).
-- **Devel set unaugmented**: only train_fit was augmented in Phase 2; devel_val and devel_test stay clean.
-- **Acceptance gates** (3-D, per plan §6):
-  - UAR ≥ A2.5 − 1σ (no material drop).
-  - LR speaker probe top-1 drops by ≥ 1σ vs A2.5.
-  - **Splice-bit-as-cold-predictor ≤ 0.52** (replaces the original "splice-detector ≤ 0.55" gate which we're redefining; the new gate tests the actual shortcut concern — does splice presence predict cold? Should be ~0.5 by symmetric-across-classes design).
+**Status: ACTIVE pivot, Phase 2-equivalent build queued.** With Phase 3.5's branch-C verdict (splicer broken, §4.8.4), audio-level splicing is dead on this corpus. Embedding mixup operates on the cached WavLM pooled stats directly — no audio operation, no WavLM forward, no crossfade artifacts.
+
+**Recipe.** For each grouped train_fit chunk × K=3:
+
+```text
+1. Sample partner from same Cold + different pseudo-speaker (reuse build_partner_pool from data/splice.py)
+2. α ~ Uniform(0.70, 0.85)   # anchor stays dominant; preserves cold label validity
+3. mixed_pooled = α · anchor_pooled + (1 - α) · partner_pooled        # both are [25, 4096] fp16
+4. Save to cache/microsoft_wavlm-large/pooled_mixup_k{0,1,2}/{stem}.pt + sidecar JSON
+```
+
+Cost: ~1-2 min CPU (no WavLM forward, just tensor mixing on cached pooled stats; 25,596 mixed variants total).
+
+**Design choices made explicit:**
+
+- **α ∼ Uniform(0.70, 0.85)** rather than Beta(0.4, 0.4) (standard mixup). Beta puts mass near 0 and 1 — heavy mixing or near-no-mixing — which doesn't fit our use case. Uniform(0.70, 0.85) gives consistent moderate mixing (15-30% partner contribution) where anchor stays dominant for label validity. Parallel to the original audio-splicing `r ∼ Uniform(0.20, 0.30)`.
+- **Mix pooled stats `[25, 4096]` directly, before standardisation.** Pooled stats are stored fp16 raw; downstream consumers (A2.5 head) apply standardisation themselves via `head.scaler`. Mixing before standardisation is the natural place — preserves the architecture's existing data flow.
+- **What stays unmixed:** devel_val and devel_test (always evaluation-only, never augmented); G4_gain_invariant handcrafted features (computed from raw audio, mixing them at the pooled-stats level is meaningless); pseudo-speaker labels for augmented chunks inherit anchor's label (per-chunk anchor pseudo-speaker, the de-confounding mechanism reduces speaker-decodability of augmented chunks).
+- **Partner pool: same Cold label, different pseudo-speaker** (same as the audio-splicing partner pool, reused via `build_partner_pool` from `model/data/splice.py`).
+
+**Naming and architectural framing for the paper.** Embedding mixup is technically operating on cached upstream features (WavLM pooled stats) — that's "input-level for the head" but "representation-level for WavLM." A more honest framing than reframing as pure "representation-level": **"input-level mixing of frozen-foundation-model representations."** Distinguishes it from A6 (contrastive loss on the trained head's projection) without overclaiming the audio-level intervention we couldn't get clean. Worth a sentence in the methodology section.
+
+**Revised gate framing — for ALL cross-speaker augmentations going forward.** The original splice-detector hard threshold (≤ 0.55) was *always* wrong as a gate for ANY cross-speaker augmentation that injects partner information. By construction, augmented chunks contain partner content, which is detectable. The new two-tier audit:
+
+- **(1) Detector UAR (orig vs mixed)** — descriptive diagnostic. Expected non-zero by augmentation construction. Report as "augmentation-class baseline detectability." For embedding mixup with α ∼ U(0.70, 0.85), expected ~0.65-0.85 (smoother than audio splicing's 0.998; the mixed pooled vector is a 70/30 weighted average of two natural pooled vectors, distributionally distinguishable but much less artifactual than crossfaded audio).
+- **(2) Mix-bit-as-cold-predictor ≤ 0.52** — the actual shortcut gate. Should be ~0.5 by class-balanced augmentation design (every chunk regardless of cold label gets K=3 mixed variants; partner pool enforces same Cold; mix presence is uncorrelated with cold). If above 0.52, partner-pool symmetry is broken or the augmentation is inducing class-confounded shifts.
+
+The same gate framing applies to audio splicing in retrospect — Phase 3's UAR 0.998 was descriptive (telling us audio splicing produces strong artifacts), but its hard threshold should never have been treated as the actual shortcut gate. The audit served its diagnostic purpose (caught the splicer-artifact problem via Phase 3.5) but the gate framing was over-strict from the start.
+
+**Paper framing — option 2 (audit-and-pivot as methodological contribution).** Don't bury the audio-splicing failure; lead with it. Draft methodology paragraph:
+
+> *"We initially attempted audio-level cross-speaker splicing as the data-level de-confounding intervention (plan §6, A5.5 v1). Pre-extracted K=3 spliced variants per training chunk, applied an equal-power crossfade at unvoiced boundaries with RMS-matched partner segments. The splice-detector audit (binary LR probe on (original, spliced) WavLM pooled stats, 80/20 chunk-disjoint split) found UAR 0.998 — perfect detection across every layer. A self-splice control (splicing within the same pseudo-speaker cluster) gave UAR 0.990, revealing that the splicing operation itself, not the cross-speaker mixing, was the source of the artifactual signal. We pivoted to embedding mixup: a less aggressive but more reliable de-confounding mechanism that mixes WavLM pooled stats per chunk (α ∼ U(0.70, 0.85) anchor weight) instead of audio. This sidesteps every audio-level artifact while preserving the de-confounding hypothesis: training on mixed-speaker representations should reduce the model's reliance on speaker-specific features for cold prediction. The audit-and-pivot itself is a transferable methodological warning — anyone doing audio-level cross-speaker augmentation on foundation-model representations should run a self-splice control."*
+
+**Trade-offs vs the original audio-splicing design.** Loses the temporal-mixing aspect (mixup operates per-chunk on global summaries, not within-chunk acoustic content); changes the project's three-mechanism story slightly (two of three rungs are now representation-level: A5.5 mixup + A6 contrastive; only A7 is gradient-level). Either reframe as "two representation-level interventions + one gradient-level" or keep three by counting A5.5 explicitly as "input-level mixing of frozen-FM representations" (different from A6's representation-level contrastive on the trained projection).
+
+#### 4.8.6 Phase 4 — A5.5 head training on mixed embeddings (queued)
+
+Subject to Plan B audit PASS (mix-bit-as-cold-predictor ≤ 0.52, the actual gate). Design:
+
+- **Sampling**: per-epoch random sampling across `{original, mix_0, mix_1, mix_2}` per chunk. Each chunk has 4 versions in the cache; one is shown per epoch. Preserves ~9.5k epoch size.
+- **Anchor**: warm start from A2.5 checkpoint (`head_A2grouped_honestprior_seed{seed}.pt`). Tests "does input-level mixing on frozen-FM representations refine A2.5's honesty-prior representation toward speaker-invariance?"
+- **Pseudo-speaker labels for mixed chunks**: anchor's label. The speaker probe should have a *harder* time learning anchor speaker from mixed chunks where partner's pooled stats are blended in — that's the de-confounding mechanism. Probe top-1 should DROP on devel after training.
+- **Devel set unaugmented**: evaluation only on original devel_val and devel_test (PooledCacheDataset with original cache path).
+- **Training recipe**: identical to A2.5 (`head_A2grouped_honestprior_seed{seed}.pt` continuation, lr×0.1, 25 epochs, patience 6, AdamW, cosine schedule).
+- **3 seeds**: {42, 123, 7}. Output: `head_A55_mixup_seed{seed}.pt`, `results/A5_5_phase4_mixup.json`.
+- **Acceptance gates** (3-D, refined):
+  - **UAR ≥ A2.5 - 1σ** (no material drop from augmentation noise).
+  - **LR speaker probe top-1 drops by ≥ 1σ vs A2.5** (augmentation must measurably attack the shortcut to count).
+  - **Mix-bit-as-cold-predictor ≤ 0.52** (replaces the original "splice-detector ≤ 0.55"; the new gate tests the actual shortcut concern — does mix presence predict cold? Should be ~0.5 by class-balance design).
 
 #### 4.8.7 Time-budget reality check
 
