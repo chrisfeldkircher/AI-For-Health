@@ -1,0 +1,768 @@
+{
+  "rung_id": "A2_lr_init_grid",
+  "description": "lr \u00d7 init grid for A2 retrain on grouped splits. Two inits (uniform vs honesty-prior from A5d sub@1) crossed with three lr factors for layer_weights (3, 5, 10 \u00d7 base_lr). 3 seeds. Settles whether the A2.5 prior contribution survives at higher lr or whether uniform + lr\u00d7high catches up. Companion to results/A2_grouped_honestprior_lr_stress.json (single-seed lr range).",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "lr_factors": [
+    3.0,
+    5.0,
+    10.0
+  ],
+  "inits": [
+    "uniform",
+    "honest_prior"
+  ],
+  "T_INV": 50.0,
+  "split_sizes": {
+    "train_fit": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "aggregate": {
+    "uniform_lr3.0": {
+      "argmax_uar": {
+        "mean": 0.6447327220275736,
+        "std": 0.007341206650390136,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.6467023426387929,
+        "std": 0.00570733305334041,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.020379184284082214,
+        "std": 0.013831509064052267,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.0807470665833507,
+        "std": 0.0014178003094259632,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.8439588745677877,
+        "std": 0.01798545847896545,
+        "n": 3
+      }
+    },
+    "uniform_lr5.0": {
+      "argmax_uar": {
+        "mean": 0.6465903244713144,
+        "std": 0.009911915055931664,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.6404492430320222,
+        "std": 0.012585937067154475,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.02208187728297813,
+        "std": 0.011018232448709439,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.08498229535513435,
+        "std": 0.003957508852322434,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.8020711756604597,
+        "std": 0.018666091708091834,
+        "n": 3
+      }
+    },
+    "uniform_lr10.0": {
+      "argmax_uar": {
+        "mean": 0.6447432213182539,
+        "std": 0.007038046551130262,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.650595109059838,
+        "std": 0.005203459101995624,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.01768193984496491,
+        "std": 0.005331385600310383,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.08171908630146497,
+        "std": 0.0025110242755016503,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.6509441658640495,
+        "std": 0.041124643156882426,
+        "n": 3
+      }
+    },
+    "honest_prior_lr3.0": {
+      "argmax_uar": {
+        "mean": 0.6571513756850015,
+        "std": 0.004136005360165897,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.6461283556813824,
+        "std": 0.02487400331152058,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.02238803024014931,
+        "std": 0.00631907990017202,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.08026105672429355,
+        "std": 0.005925595582406961,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.9513250621373374,
+        "std": 0.03243105363032109,
+        "n": 3
+      }
+    },
+    "honest_prior_lr5.0": {
+      "argmax_uar": {
+        "mean": 0.657804802128515,
+        "std": 0.005778884325610505,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.6510525230104307,
+        "std": 0.01672086149460921,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.024023721653860835,
+        "std": 0.004195830891234938,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.08998125390543636,
+        "std": 0.00036076875808558587,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.8893685826106305,
+        "std": 0.012343496499510121,
+        "n": 3
+      }
+    },
+    "honest_prior_lr10.0": {
+      "argmax_uar": {
+        "mean": 0.6638320897849931,
+        "std": 0.00338535688648497,
+        "n": 3
+      },
+      "calibrated_uar": {
+        "mean": 0.6313386379455482,
+        "std": 0.02279593764456989,
+        "n": 3
+      },
+      "val_test_gap": {
+        "mean": -0.022438665954586063,
+        "std": 0.0025729139015861356,
+        "n": 3
+      },
+      "speaker_probe_lr": {
+        "mean": 0.0879677844893425,
+        "std": 0.0014178003094259609,
+        "n": 3
+      },
+      "cos_init_final": {
+        "mean": 0.8443911545513509,
+        "std": 0.03525122119295594,
+        "n": 3
+      }
+    }
+  },
+  "runs": [
+    {
+      "init": "uniform",
+      "lr_factor": 3.0,
+      "seed": 42,
+      "best_epoch": 3,
+      "best_val_uar": 0.6174742439165755,
+      "tau": 0.6,
+      "uar_devel_test_argmax": 0.6528839544281375,
+      "uar_devel_test_calibrated": 0.6464623257658152,
+      "recall_C": 0.37773359840954274,
+      "recall_NC": 0.9151910531220876,
+      "val_test_gap": -0.035409710511562054,
+      "cos_init_final": 0.8600016637478305,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 5.520617059823969,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        5,
+        6,
+        1,
+        3
+      ],
+      "speaker_probe_lr_top1": 0.07915017704644865,
+      "speaker_probe_lr_nmi": 0.45907462083938516
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 3.0,
+      "seed": 123,
+      "best_epoch": 4,
+      "best_val_uar": 0.625131600426257,
+      "tau": 0.295,
+      "uar_devel_test_argmax": 0.6426723906329035,
+      "uar_devel_test_calibrated": 0.6525258977356736,
+      "recall_C": 0.441351888667992,
+      "recall_NC": 0.8636999068033551,
+      "val_test_gap": -0.01754079020664645,
+      "cos_init_final": 0.8473588810823646,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 6.120745829836111,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        3,
+        1,
+        5,
+        6
+      ],
+      "speaker_probe_lr_top1": 0.08123307644240783,
+      "speaker_probe_lr_nmi": 0.456580966857839
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 3.0,
+      "seed": 7,
+      "best_epoch": 4,
+      "best_val_uar": 0.6304547688876416,
+      "tau": 0.4499999999999999,
+      "uar_devel_test_argmax": 0.6386418210216798,
+      "uar_devel_test_calibrated": 0.64111880441489,
+      "recall_C": 0.3856858846918489,
+      "recall_NC": 0.896551724137931,
+      "val_test_gap": -0.008187052134038142,
+      "cos_init_final": 0.8245160788731681,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 7.369943822406273,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        3,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08185794626119558,
+      "speaker_probe_lr_nmi": 0.46269883715245946
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 5.0,
+      "seed": 42,
+      "best_epoch": 3,
+      "best_val_uar": 0.6275726278449995,
+      "tau": 0.38999999999999996,
+      "uar_devel_test_argmax": 0.6475719309492532,
+      "uar_devel_test_calibrated": 0.6529918809602775,
+      "recall_C": 0.441351888667992,
+      "recall_NC": 0.8646318732525629,
+      "val_test_gap": -0.019999303104253796,
+      "cos_init_final": 0.784853114246181,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 9.686222509739714,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        6,
+        3,
+        5,
+        2
+      ],
+      "speaker_probe_lr_top1": 0.08935638408664862,
+      "speaker_probe_lr_nmi": 0.46459664998767836
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 5.0,
+      "seed": 123,
+      "best_epoch": 3,
+      "best_val_uar": 0.6239705820315438,
+      "tau": 0.6,
+      "uar_devel_test_argmax": 0.6362241277405465,
+      "uar_devel_test_calibrated": 0.6405353989761339,
+      "recall_C": 0.415506958250497,
+      "recall_NC": 0.8655638397017708,
+      "val_test_gap": -0.012253545709002722,
+      "cos_init_final": 0.799451815988498,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 9.359805078319019,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        1,
+        2,
+        3,
+        6
+      ],
+      "speaker_probe_lr_top1": 0.08164965632159966,
+      "speaker_probe_lr_nmi": 0.45972349649049277
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 5.0,
+      "seed": 7,
+      "best_epoch": 2,
+      "best_val_uar": 0.6219821316884656,
+      "tau": 0.05,
+      "uar_devel_test_argmax": 0.6559749147241435,
+      "uar_devel_test_calibrated": 0.6278204491596553,
+      "recall_C": 0.709741550695825,
+      "recall_NC": 0.5458993476234856,
+      "val_test_gap": -0.033992783035677876,
+      "cos_init_final": 0.8219085967467001,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 7.812489821401366,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        3,
+        5,
+        2,
+        6
+      ],
+      "speaker_probe_lr_top1": 0.08394084565715476,
+      "speaker_probe_lr_nmi": 0.4570416368725408
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 10.0,
+      "seed": 42,
+      "best_epoch": 3,
+      "best_val_uar": 0.6209320795068332,
+      "tau": 0.31499999999999995,
+      "uar_devel_test_argmax": 0.6373450814219992,
+      "uar_devel_test_calibrated": 0.6493499395055575,
+      "recall_C": 0.4254473161033797,
+      "recall_NC": 0.8732525629077353,
+      "val_test_gap": -0.016413001915166037,
+      "cos_init_final": 0.6452929327480966,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 43.9245582308375,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        6,
+        3,
+        5,
+        9
+      ],
+      "speaker_probe_lr_top1": 0.07935846698604457,
+      "speaker_probe_lr_nmi": 0.46587781533717976
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 10.0,
+      "seed": 123,
+      "best_epoch": 6,
+      "best_val_uar": 0.6278218432863607,
+      "tau": 0.21999999999999997,
+      "uar_devel_test_argmax": 0.6513551496241563,
+      "uar_devel_test_calibrated": 0.6563081900025755,
+      "recall_C": 0.4393638170974155,
+      "recall_NC": 0.8732525629077353,
+      "val_test_gap": -0.0235333063377956,
+      "cos_init_final": 0.6129373939542571,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 75.45096689581847,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        9,
+        6,
+        1,
+        3
+      ],
+      "speaker_probe_lr_top1": 0.08435742553634659,
+      "speaker_probe_lr_nmi": 0.464615975748115
+    },
+    {
+      "init": "uniform",
+      "lr_factor": 10.0,
+      "seed": 7,
+      "best_epoch": 3,
+      "best_val_uar": 0.632429921626673,
+      "tau": 0.4699999999999999,
+      "uar_devel_test_argmax": 0.6455294329086061,
+      "uar_devel_test_calibrated": 0.6461271976713808,
+      "recall_C": 0.415506958250497,
+      "recall_NC": 0.8767474370922647,
+      "val_test_gap": -0.013099511281933096,
+      "cos_init_final": 0.6946021708897948,
+      "init_max_min_ratio": 1.0,
+      "final_max_min_ratio": 31.08685872431992,
+      "init_top5": [
+        24,
+        23,
+        22,
+        21,
+        20
+      ],
+      "final_top5": [
+        4,
+        3,
+        6,
+        1,
+        2
+      ],
+      "speaker_probe_lr_top1": 0.08144136638200375,
+      "speaker_probe_lr_nmi": 0.46586112851645917
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 3.0,
+      "seed": 42,
+      "best_epoch": 1,
+      "best_val_uar": 0.6287620756000888,
+      "tau": 0.22499999999999998,
+      "uar_devel_test_argmax": 0.652378830465483,
+      "uar_devel_test_calibrated": 0.663143459837434,
+      "recall_C": 0.6620278330019881,
+      "recall_NC": 0.6642590866728798,
+      "val_test_gap": -0.023616754865394163,
+      "cos_init_final": 0.9699273257071209,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 10.712334027439358,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.07748385752968132,
+      "speaker_probe_lr_nmi": 0.4598885743134552
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 3.0,
+      "seed": 123,
+      "best_epoch": 1,
+      "best_val_uar": 0.6316889241046126,
+      "tau": 0.14999999999999997,
+      "uar_devel_test_argmax": 0.6596914320229601,
+      "uar_devel_test_calibrated": 0.6175813247263854,
+      "recall_C": 0.8071570576540755,
+      "recall_NC": 0.42800559179869524,
+      "val_test_gap": -0.028002507918347463,
+      "cos_init_final": 0.9701706900617442,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 10.674901122907634,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.07623411789210581,
+      "speaker_probe_lr_nmi": 0.4593315746982564
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 3.0,
+      "seed": 7,
+      "best_epoch": 3,
+      "best_val_uar": 0.6438390366298552,
+      "tau": 0.5599999999999999,
+      "uar_devel_test_argmax": 0.6593838645665615,
+      "uar_devel_test_calibrated": 0.6576602824803277,
+      "recall_C": 0.415506958250497,
+      "recall_NC": 0.8998136067101584,
+      "val_test_gap": -0.015544827936706307,
+      "cos_init_final": 0.9138771706431471,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 16.962806724852907,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08706519475109352,
+      "speaker_probe_lr_nmi": 0.4677209890872533
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 5.0,
+      "seed": 42,
+      "best_epoch": 2,
+      "best_val_uar": 0.6342523811882005,
+      "tau": 0.6449999999999999,
+      "uar_devel_test_argmax": 0.6565106101508378,
+      "uar_devel_test_calibrated": 0.6327635306520615,
+      "recall_C": 0.341948310139165,
+      "recall_NC": 0.923578751164958,
+      "val_test_gap": -0.022258228962637294,
+      "cos_init_final": 0.8929552557786344,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 23.280279293757758,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.0903978337846282,
+      "speaker_probe_lr_nmi": 0.467023779587292
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 5.0,
+      "seed": 123,
+      "best_epoch": 2,
+      "best_val_uar": 0.6353072480195741,
+      "tau": 0.4049999999999999,
+      "uar_devel_test_argmax": 0.6641210518807008,
+      "uar_devel_test_calibrated": 0.665556289476561,
+      "recall_C": 0.49304174950298213,
+      "recall_NC": 0.8380708294501398,
+      "val_test_gap": -0.028813803861126752,
+      "cos_init_final": 0.8995215315381528,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 22.07139926005995,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08977296396584045,
+      "speaker_probe_lr_nmi": 0.46980146020818536
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 5.0,
+      "seed": 7,
+      "best_epoch": 3,
+      "best_val_uar": 0.631783612216188,
+      "tau": 0.22499999999999998,
+      "uar_devel_test_argmax": 0.6527827443540064,
+      "uar_devel_test_calibrated": 0.6548377489026698,
+      "recall_C": 0.5228628230616302,
+      "recall_NC": 0.7868126747437092,
+      "val_test_gap": -0.020999132137818455,
+      "cos_init_final": 0.875628960515104,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 28.657916411158272,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08977296396584045,
+      "speaker_probe_lr_nmi": 0.4676091644363504
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 10.0,
+      "seed": 42,
+      "best_epoch": 2,
+      "best_val_uar": 0.6421053041849852,
+      "tau": 0.635,
+      "uar_devel_test_argmax": 0.66179785221569,
+      "uar_devel_test_calibrated": 0.6532410847126005,
+      "recall_C": 0.4194831013916501,
+      "recall_NC": 0.8869990680335508,
+      "val_test_gap": -0.01969254803070475,
+      "cos_init_final": 0.8356204215163667,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 46.27442990995914,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.0868569048114976,
+      "speaker_probe_lr_nmi": 0.4672899309246554
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 10.0,
+      "seed": 123,
+      "best_epoch": 3,
+      "best_val_uar": 0.6449101815627345,
+      "tau": 0.945,
+      "uar_devel_test_argmax": 0.6677400647373911,
+      "uar_devel_test_calibrated": 0.6077435665596357,
+      "recall_C": 0.2345924453280318,
+      "recall_NC": 0.9808946877912396,
+      "val_test_gap": -0.022829883174656618,
+      "cos_init_final": 0.8143533562358926,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 72.79229082811848,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08748177463028536,
+      "speaker_probe_lr_nmi": 0.4726118466791421
+    },
+    {
+      "init": "honest_prior",
+      "lr_factor": 10.0,
+      "seed": 7,
+      "best_epoch": 1,
+      "best_val_uar": 0.6371647857435012,
+      "tau": 0.25999999999999995,
+      "uar_devel_test_argmax": 0.661958352401898,
+      "uar_devel_test_calibrated": 0.6330312625644086,
+      "recall_C": 0.7236580516898609,
+      "recall_NC": 0.5424044734389561,
+      "val_test_gap": -0.024793566658396826,
+      "cos_init_final": 0.8831996859017937,
+      "init_max_min_ratio": 8.466838836669922,
+      "final_max_min_ratio": 23.534671657418777,
+      "init_top5": [
+        0,
+        2,
+        5,
+        22,
+        24
+      ],
+      "final_top5": [
+        0,
+        2,
+        5,
+        6,
+        1
+      ],
+      "speaker_probe_lr_top1": 0.08956467402624453,
+      "speaker_probe_lr_nmi": 0.47017490519965877
+    }
+  ]
+}

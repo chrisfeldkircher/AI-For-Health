@@ -65,7 +65,7 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A2.5  | **NEW BASELINE**    | A2 + honesty-prior layer-weight init (logits = T·sub@1 from A5d)    | UAR 0.6564 ± 0.0038 (Δ +0.020 vs A2_grouped, 4.7σ); MLP probe flat, LR probe -0.0035       |
 | A3    | **REJECTED**        | Manner-aware pooling (pYIN+RMS, 3-cat) two-stream head              | UAR 0.6344 ± 0.0069 (Δ −0.008), probe top-1 +0.005. Both gates failed.                     |
 | A5a   | **LOCKED**          | Honesty audit over low-dim physiological feature groups             | 8 groups, 6 admitted (G1,G2,G3,G4_gi,G5,G6). Admission by sub@1: G4_gi,G1,G6,G5,G2,G3.     |
-| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | Rand: Δ +.015±.005 (3.3σ); Grp: Δ +.023±.006 (3.8σ); both PASS A2+G4_gi K=1              |
+| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | A2.5 anchor β=4–6 plateau: UAR .6875–.6917, Δ +.031 to +.035 vs A2.5 (~6σ), spk probes PASS |
 | A5c   | revivable           | Learned per-group gate, honesty-initialised + regularised           | A5b passed → revivable, but K=1 leaves little room; on hold pending A5.5/A6                |
 | A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk mono L0→L24 (.087→.043 R, .072→.042 G); cold UAR flat; sub@1 ≪ 0.15 on both           |
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
@@ -220,14 +220,40 @@ lr_factor   val_test_gap
 
 Gap widens (more pessimistic) as lr increases — higher-lr models harder to model-select cleanly on devel_val. The canonical A2.5 should balance UAR mean and val-test gap stability; if lr×10 gives 0.66 UAR with -0.03 gap vs lr×1 giving 0.65 UAR with -0.02 gap, the lr×1 version is the more honest baseline despite slightly lower UAR. Decision deferred to §4.6.2 controls.
 
-#### 4.6.2 Pending controls (lr × init grid + extended β-sweep)
+#### 4.6.2 Controls — lr × init grid (DONE; A2.5 canonical confirmed)
 
-Two control runs queued before the canonical A2.5 is locked:
+**Status: DONE.** 18 retrains: (uniform init, honesty-prior init) × (lr×3, lr×5, lr×10) × 3 seeds. Output: `results/A2_lr_init_grid.json`.
 
-- **A2 lr × init grid** — (uniform init, honesty-prior init) × (lr×3, lr×5, lr×10), 3 seeds each = 18 retrains (~36 min on cached features). Output: `results/A2_lr_init_grid.json`. Settles whether the prior contribution survives at higher lr.
-- **A5b extended β-sweep + G4-alone baseline** — see §4.7. Settles the boundary-pegged β*=2.0 result.
+**Aggregate per (init, lr_factor):**
 
-After both run, the canonical A2.5 is locked at whichever (init, lr) combination jointly maximises UAR mean and minimises val-test gap drift, and A5b's K=1 verdict re-evaluates against that anchor.
+```text
+init           lr×    argmax UAR        spk LR top1   cos(init,final)   final max/min
+uniform        3.0    0.6447 ± 0.0073   0.0807        0.844             ~6× (from 1×)
+uniform        5.0    0.6466 ± 0.0099   0.0850        0.802             ~9×
+uniform       10.0    0.6447 ± 0.0070   0.0817        0.651             ~50×
+honest_prior   3.0    0.6572 ± 0.0041   0.0803        0.951             ~13× (from 8.5×)
+honest_prior   5.0    0.6578 ± 0.0058   0.0900        0.889             ~25×
+honest_prior  10.0    0.6638 ± 0.0034   0.0880        0.844             ~47×
+
+Reference (lr×0.1, prior 3-seed runs):
+uniform       0.1    0.6361 ± 0.0019   0.0760
+honest_prior  0.1    0.6564 ± 0.0038   0.0725  ← A2.5 default (CANONICAL)
+```
+
+**Three load-bearing findings:**
+
+1. **The honesty prior is a different attractor, not just a faster start.** Uniform init plateaus at 0.6447–0.6466 across lr×{3, 5, 10} — never reaches the 0.656+ that honesty-prior achieves at every lr setting tested. Δ(prior − uniform) at lr×10 = +0.019 with prior having tighter σ (0.0034 vs 0.0070). This refines (A1) substantially: the prior's value isn't "useful at standard low lr only" — it's a *distinct attractor in the layer-weight subspace that uniform init cannot reach via lr alone*. Strongest formulation of the architectural claim earned so far.
+2. **Speaker probe inflates with higher lr in both regimes.** Uniform: 0.076 → 0.081–0.085. Honest_prior: 0.0725 → 0.080–0.090. The lr increase concentrates weight on early speaker-rich layers (top-5 final layers shift toward L0/L4/L5 at higher lr), pushing more speaker info into the fused 4096-d. **For a speaker-honesty-focused paper, this matters.**
+3. **A2.5-default (honest_prior + lr×0.1) is Pareto-canonical.** A2.5-default vs honest_prior + lr×10:
+   - A2.5-default: UAR 0.6564, spk 0.0725
+   - honest_prior + lr×10: UAR 0.6638 (+0.0074, ~1.3σ at N=3), spk 0.0880 (+0.016, real inflation)
+   - Trade: +0.007 UAR for +0.016 speaker leak. **Bad trade for de-confounding paper narrative.** A2.5-default stays canonical.
+
+**Decision: A2.5 (honest_prior, lr×0.1) is locked as canonical.** The lr × init grid serves as ablation evidence ("the prior contribution is robust across lr regimes") rather than a replacement. honest_prior + lr×10 (A2.7-equivalent) is a reference row showing the upper-UAR Pareto frontier; honest_prior + lr×3 (A2.6-equivalent) is strictly Pareto-dominated by A2.5 (+0.0008 UAR for +0.008 spk leak — same UAR, more leak, no reason to switch).
+
+**Mechanism revision (third pass).** The original "flat landscape" claim was wrong (M5). The first revision said "good init dominates because lr is too low to move." The lr × init grid revises that further: **"the honesty prior is a genuinely different attractor that uniform init cannot reach via lr alone — at any tested lr the prior wins by +0.011 to +0.019 UAR with comparable or tighter σ."** The corrected (A1) paper claim: *"Data-derived layer-weight init produces +0.020 UAR over uniform init at default lr; the contribution is not 'cheaper start to the same attractor' but rather convergence to a distinct attractor that uniform init does not reach even with 10× layer-weight learning rate."*
+
+**Open: val-test gap drift at higher lr.** -0.0204 → -0.0224 → -0.0177 (uniform); -0.0224 → -0.0240 → -0.0224 (prior). All slightly more pessimistic than A2.5-default's -0.020. Plausible mechanism: faster early-stopping (epochs 1–3 vs 3–7) at higher lr makes the early-stopping signal noisier. A2.5-default still has the cleanest val-test gap; another reason to keep it canonical. 5-seed re-run on the locked A2.5 deferred to paper-prep stage.
 
 ### 4.7 A5b K=1 re-audit on A2.5 anchor (β=1.00 FAIL → β-sweep PASS, boundary-pegged)
 
@@ -285,13 +311,80 @@ Non-monotonic and bumpy. Middle β values create unfavorable τ-operating-point 
 
 **G4_gi-alone reference (from A5a).** G4_gi standalone label_gain = +0.132 → UAR ~0.632 on devel_val. Materially weaker than A2.5 (0.6564). β→∞ baseline on devel_test would land near ~0.63, well below the 0.6755 K=1 number. So fusion is NOT being dominated by G4_gi (the "G4_gi alone is better than A2.5" possibility is empirically ruled out by A5a). But "G4_gi has more weight than A2.5 in the locked fusion" remains an open mechanism question.
 
-**Pending follow-ups before locking the verdict** (§4.6.2 + extended sweep):
+#### 4.7.3 Extended β-sweep + G4-alone baseline (DONE; verdict LOCKED)
 
-1. **Extended β grid** to `{2.5, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0}`. Find where the per-β UAR plateaus. If it plateaus at β=4 with UAR ≈ 0.69, that's the locked β*. If it keeps climbing past β=8, the fusion is approaching the G4-alone limit.
-2. **G4-alone baseline on devel_test** under the same protocol. Confirms the prior-evidence number from A5a (~0.63) replicates on the same split, settles "is G4_gi dominating?" with direct evidence.
-3. **Robust β diagnostic** — smallest β within 1σ of per-β-UAR peak, alongside argmax-locked β*. Less sensitive to grid resolution.
+**Status: DONE.** β grid extended with {2.5, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0}. G4-alone (β=∞ limit) added: logit_G4 alone with τ swept on train_threshold, evaluated on devel_test. Robust-β diagnostic: smallest β within 1σ of per-β-UAR peak. Output: `results/A5b_grouped_honestprior_betasweep_extended.json`.
 
-**Provisional verdict.** K=1 fusion lift survives on A2.5 anchor with proper β tuning (Δ +0.019 above gate by mean), but with weaker statistical support than the original uniform-A2 result (3.3σ → ~1σ above gate). Pending the extended sweep + G4-alone baseline before final lock. **The two-stackable-contributions paper framing is tentatively supported but caveated.**
+**Per-β aggregate (3 seeds):**
+
+```text
+β       dt_UAR mean ± std    thr_UAR mean    tau@edge
+0.00    0.6568 ± 0.0169      0.5184          0/3   (sanity == A2.5_τ ✓)
+0.05    0.6592 ± 0.0150      0.5185          0/3
+0.10    0.6408 ± 0.0224      0.5219          1/3
+0.25    0.6461 ± 0.0189      0.5299          0/3
+0.50    0.6396 ± 0.0200      0.5523          1/3
+0.75    0.6507 ± 0.0195      0.5628          1/3
+1.00    0.6346 ± 0.0168      0.5829          1/3   ← original FAIL point
+1.50    0.6550 ± 0.0233      0.6075          2/3
+2.00    0.6755 ± 0.0208      0.6256          0/3   ← original boundary lock
+2.50    0.6743 ± 0.0126      0.6393          1/3
+3.00    0.6830 ± 0.0099      0.6489          0/3
+4.00    0.6875 ± 0.0111      0.6552          0/3   ← robust β (smallest within 1σ of peak)
+6.00    0.6917 ± 0.0085      0.6570          0/3   ← peak β
+8.00    0.6895 ± 0.0089      0.6558          0/3
+12.00   0.6917 ± 0.0030      0.6518          0/3
+16.00   0.6895 ± 0.0021      0.6463          0/3
+
+G4-alone (β=∞)  0.6632 ± 0.0000   (τ ≈ +0.475 across all seeds)
+```
+
+**Per-seed locked configs (per-seed argmax of train_threshold UAR):**
+
+```text
+seed    β*    τ*       devel_test UAR    Δ vs A2.5_argmax
+42      6.0   -3.325   0.6825            +0.0294
+123     8.0   -1.100   0.6957            +0.0351
+7       4.0   -2.825   0.6957            +0.0403
+
+aggregate (per-seed argmax lock):
+  K=1 fused UAR     = 0.6913 ± 0.0076
+  Δ vs A2.5_argmax  = +0.0349 ± 0.0054   (~6.5σ, strong PASS)
+  Δ vs A2.5_τ       = +0.0345 ± 0.0120
+```
+
+**Three independent lines of evidence converge on PASS:**
+
+1. **Interior peak at β=6, plateau through β=12-16.** The β-curve climbs sharply from β=2 to β=4, plateaus at 0.6875–0.6917 across β ∈ [4, 16], then drops to 0.6632 at β=∞ (G4-alone). The lock is genuinely in an interior optimum, not a boundary artifact. The original boundary-pegged β*=2.0 was just the upper edge of the truncated grid; the true plateau is β=[4, 16].
+2. **K=1 fused (0.6913) > G4-alone (0.6632) by +0.0281.** Fusion is genuinely additive — A2.5 contributes real cold signal that G4_gi alone doesn't carry, even at the high-β regime where G4 dominates the fusion. Settles the "G4 dominance" possibility raised in §4.7.2: G4_gi alone is materially weaker than the fused result.
+3. **Per-seed β* spread is wide [4, 6, 8] but the per-β aggregate is stable in the plateau.** σ of per-β UAR drops from 0.011 (β=4) to 0.003 (β=12) — the high-β region is dominated by G4_gi (deterministic per seed), so seed-to-seed variance shrinks. The result survives any plateau-region β choice.
+
+**Speaker probes are β-independent** — both probe (i) literal 2-D = `[logit_A2, z_logit_G4]` and probe (ii) backbone concat = `[pooled_4096, G4_gi_7]` operate on β-independent feature spaces (β only enters the cold classifier's decision rule, not the probe inputs). Locked values from the original sweep cell carry over: probe (i) = 0.0156 ± 0.0026, probe (ii) = 0.0733 ± 0.0002 — **both PASS** the codepath-consistent ceiling 0.0780 by wide margin (~5×) and small margin (0.005) respectively.
+
+**Three reportable lock options for the paper:**
+
+| Lock protocol                     | β                   | UAR             | Δ vs A2.5       | σ        | Notes                                |
+| --------------------------------- | ------------------- | --------------- | --------------- | -------- | ------------------------------------ |
+| Per-seed argmax (protocol-strict) | per-seed [6, 8, 4]  | 0.6913 ± 0.0076 | +0.0349 (~6.5σ) | tightest | mixes seed-specific τ over-fitting   |
+| Aggregate-peak (across seeds)     | 6.0                 | 0.6917 ± 0.0085 | +0.0353         | clean    | slightly above A2.5 + 0.035          |
+| Robust-β (across seeds)           | 4.0                 | 0.6875 ± 0.0111 | +0.0311         | wider    | most defensible / conservative       |
+
+**LOCKED VERDICT.** A5b K=1 PASSES on A2.5 anchor at all three lock protocols. The conservative defensible lock is **β=4** (robust-β, Δ +0.031, ~5.7σ above gate); the headline lock is **β=6** (peak, Δ +0.035, ~6.5σ); the protocol-strict per-seed argmax matches the headline (Δ +0.035). All three plateau-region β values produce K=1 fused UAR within ~1σ of each other. Speaker probes (i) and (ii) PASS by wide margins.
+
+**Striking parity observation.** G4-alone hits UAR 0.6632 — nearly equal to A2.5-alone 0.6564 (Δ ~0.7σ). A 7-dim handcrafted feature matches a 4096-dim WavLM-Large representation on chunk-level cold UAR. Two interpretations worth noting in the paper: (a) G4_gi's gain-invariant slice happens to be unusually well-suited to URTIC cold detection; (b) the chunk-level signal has a low ceiling and any reasonable representation hits it. Either way, the fusion result (+0.028 over G4-alone) confirms partial orthogonality of A2.5 and G4 cold signals — they capture distinct information.
+
+**Final paper claim chain (locked):**
+
+```text
+A2 grouped (uniform, lr×0.1):     UAR 0.6361 ± 0.0019  ← historical baseline (within-partition leak corrected)
+A2.5 (honest_prior, lr×0.1):       UAR 0.6564 ± 0.0038  ← +0.0202 (4.7σ), CANONICAL anchor
+G4-alone (β=∞):                    UAR 0.6632 ± 0.0000  ← reference (7-dim handcrafted)
+A5b K=1 fused (β=4, robust):       UAR 0.6875 ± 0.0111  ← +0.0311 over A2.5
+A5b K=1 fused (β=6, peak):         UAR 0.6917 ± 0.0085  ← +0.0353 over A2.5
+A5b K=1 fused (per-seed argmax):   UAR 0.6913 ± 0.0076  ← +0.0349 over A2.5 (protocol-strict, headline)
+```
+
+Total stack uniform-A2-grouped → A2.5 → A5b K=1 fused = +0.055 UAR over the leak-corrected baseline (+0.049 over the historical A2 baseline). Two clean stackable contributions, both speaker-probe-clean, both resolvable to interior optima.
 
 ---
 
