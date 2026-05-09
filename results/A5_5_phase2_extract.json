@@ -1,0 +1,145 @@
+{
+  "rung_id": "A5_5_phase2_extract",
+  "description": "Augmented pooled cache build for A5.5: K=3 cross-speaker spliced variants per train_fit chunk on grouped splits. Splice partners are same Cold label + different pseudo-speaker. Splicer skip rate ~23% on the smoke test (Phase 1); fallback writes the original audio's pooled stats with sidecar 'skipped' flag, so downstream sampling from {original, aug_0..K-1} naturally produces the right effective augmentation rate.",
+  "split_seed": 42,
+  "base_seed": 42,
+  "k_variants": 3,
+  "r_range": [
+    0.2,
+    0.3
+  ],
+  "partner_retries": 5,
+  "n_train_fit": 8532,
+  "elapsed_minutes": 10.911175739765167,
+  "per_k": [
+    {
+      "k": 0,
+      "n_total": 8532,
+      "n_successful_splices": 6871,
+      "n_fallback_to_original": 1661,
+      "skip_reasons": {
+        "no_valid_anchor_boundaries": 1553,
+        "no_valid_partner_window": 108
+      },
+      "boundary_kinds": {
+        "unvoiced": 6819,
+        "silence": 52
+      },
+      "partner_reuse_top5": [
+        {
+          "partner": "train_5757.wav",
+          "n_uses": 7,
+          "pct_of_total": 0.0008204406938584154
+        },
+        {
+          "partner": "train_8095.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_5449.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_9319.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_4843.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        }
+      ],
+      "this_run_extracted": 8532,
+      "this_run_minutes": 3.5832286874453225
+    },
+    {
+      "k": 1,
+      "n_total": 8532,
+      "n_successful_splices": 6872,
+      "n_fallback_to_original": 1660,
+      "skip_reasons": {
+        "no_valid_anchor_boundaries": 1558,
+        "no_valid_partner_window": 102
+      },
+      "boundary_kinds": {
+        "unvoiced": 6815,
+        "silence": 57
+      },
+      "partner_reuse_top5": [
+        {
+          "partner": "train_9133.wav",
+          "n_uses": 7,
+          "pct_of_total": 0.0008204406938584154
+        },
+        {
+          "partner": "train_4330.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_0107.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_1822.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_6435.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        }
+      ],
+      "this_run_extracted": 8532,
+      "this_run_minutes": 3.5078534881273904
+    },
+    {
+      "k": 2,
+      "n_total": 8532,
+      "n_successful_splices": 6868,
+      "n_fallback_to_original": 1664,
+      "skip_reasons": {
+        "no_valid_anchor_boundaries": 1553,
+        "no_valid_partner_window": 111
+      },
+      "boundary_kinds": {
+        "unvoiced": 6815,
+        "silence": 53
+      },
+      "partner_reuse_top5": [
+        {
+          "partner": "train_9015.wav",
+          "n_uses": 7,
+          "pct_of_total": 0.0008204406938584154
+        },
+        {
+          "partner": "train_2391.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_0309.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_9096.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_5065.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        }
+      ],
+      "this_run_extracted": 8532,
+      "this_run_minutes": 3.4527512828509015
+    }
+  ]
+}
