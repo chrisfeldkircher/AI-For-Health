@@ -1,0 +1,95 @@
+{
+  "rung_id": "A5_5_planB_audit",
+  "description": "A5.5 Plan B audit. (A) Mixup-detector UAR (orig vs mixed pooled) \u2014 DESCRIPTIVE diagnostic, augmentation-class baseline. (B) Mix-bit-as-cold-predictor \u2014 HARD GATE for the actual shortcut concern; should be \u2248 0.5 by class-balanced augmentation design. PASS if (B) \u2264 0.52.",
+  "split_seed": 42,
+  "audit_val_frac": 0.2,
+  "probe_seed": 42,
+  "shortcut_gate": 0.52,
+  "n_train_chunks": 6826,
+  "n_eval_chunks": 1706,
+  "probe_train_n_orig": 6826,
+  "probe_train_n_mixed": 20478,
+  "probe_eval_n_orig": 1706,
+  "probe_eval_n_mixed": 5118,
+  "audit_A_descriptive": {
+    "layer_averaged": {
+      "uar": 0.5034193044157874,
+      "recall_original": 0.2198124267291911,
+      "recall_mixed": 0.7870261821023837
+    },
+    "per_layer": [
+      {
+        "layer": 0,
+        "uar": 0.5047870261821024,
+        "recall_original": 0.223915592028136,
+        "recall_mixed": 0.7856584603360688
+      },
+      {
+        "layer": 4,
+        "uar": 0.5009769441187963,
+        "recall_original": 0.22215709261430247,
+        "recall_mixed": 0.7797967956232903
+      },
+      {
+        "layer": 7,
+        "uar": 0.5052754982415006,
+        "recall_original": 0.2456037514654162,
+        "recall_mixed": 0.764947245017585
+      },
+      {
+        "layer": 12,
+        "uar": 0.5037123876514263,
+        "recall_original": 0.23329425556858147,
+        "recall_mixed": 0.7741305197342712
+      },
+      {
+        "layer": 18,
+        "uar": 0.5019538882375928,
+        "recall_original": 0.20105509964830012,
+        "recall_mixed": 0.8028526768268855
+      },
+      {
+        "layer": 24,
+        "uar": 0.5047870261821024,
+        "recall_original": 0.22860492379835873,
+        "recall_mixed": 0.780969128565846
+      }
+    ],
+    "per_k": [
+      {
+        "k": 0,
+        "uar": 0.4997069167643611,
+        "recall_original": 0.3130128956623681,
+        "recall_mixed": 0.686400937866354
+      },
+      {
+        "k": 1,
+        "uar": 0.5017584994138335,
+        "recall_original": 0.32180539273153574,
+        "recall_mixed": 0.6817116060961314
+      },
+      {
+        "k": 2,
+        "uar": 0.5023446658851114,
+        "recall_original": 0.3042203985932005,
+        "recall_mixed": 0.7004689331770223
+      }
+    ],
+    "phase3_audio_splicing_layer_avg_uar": 0.9981010988811304,
+    "delta_vs_phase3": -0.494681794465343
+  },
+  "audit_B_shortcut_gate": {
+    "mix_bit_as_cold_uar": 0.5,
+    "recall_NC": 1.0,
+    "recall_C": 0.0,
+    "cold_rate_orig": 0.10167008496923528,
+    "cold_rate_mixed": 0.10167008496923528,
+    "delta_cold_rate": 0.0,
+    "gate_passed": true
+  },
+  "verdict": {
+    "shortcut_gate_passed": true,
+    "decision": "PASS \u2014 proceed to Plan B Phase 4 training"
+  },
+  "elapsed_minutes": 4.8820996960004175
+}

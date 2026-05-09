@@ -1,0 +1,161 @@
+{
+  "rung_id": "A5_5_planB_phase2_mixup",
+  "description": "A5.5 Plan B Phase 2-equivalent: embedding-mixup cache build for K=3 mixed pooled-stats variants per train_fit chunk on grouped splits. Pivot from audio splicing (Phase 3.5 verdict: splicer broken; self-splice UAR 0.99 \u2248 cross-splice 0.998). Mixup operates on cached WavLM pooled stats: mixed = alpha*anchor + (1-alpha)*partner with alpha ~ Uniform(0.70, 0.85). Partner pool: same Cold + different pseudo-speaker (reused from data/splice.py::build_partner_pool). Pure CPU tensor op.",
+  "split_seed": 42,
+  "base_seed": 42,
+  "k_variants": 3,
+  "alpha_range": [
+    0.7,
+    0.85
+  ],
+  "partner_retries": 5,
+  "partner_pool_design": "same Cold label + different pseudo-speaker (build_partner_pool)",
+  "n_train_fit": 8532,
+  "elapsed_minutes": 1.1314003705978393,
+  "per_k": [
+    {
+      "k": 0,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "skip_reasons": {},
+      "alpha_mean": 0.775074719285133,
+      "alpha_std": 0.0428804193040872,
+      "alpha_range": [
+        0.7,
+        0.85
+      ],
+      "partner_reuse_top5": [
+        {
+          "partner": "train_9064.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_5190.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_1445.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_1403.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_3389.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        }
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178,
+        "corpus_cold_rate": 0.10114861697140178
+      },
+      "this_run_mixed": 8532,
+      "this_run_minutes": 0.30466826756795246
+    },
+    {
+      "k": 1,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "skip_reasons": {},
+      "alpha_mean": 0.7754183635334546,
+      "alpha_std": 0.0432605469825775,
+      "alpha_range": [
+        0.7,
+        0.85
+      ],
+      "partner_reuse_top5": [
+        {
+          "partner": "train_1460.wav",
+          "n_uses": 7,
+          "pct_of_total": 0.0008204406938584154
+        },
+        {
+          "partner": "train_4786.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_3867.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_7563.wav",
+          "n_uses": 5,
+          "pct_of_total": 0.0005860290670417253
+        },
+        {
+          "partner": "train_0112.wav",
+          "n_uses": 5,
+          "pct_of_total": 0.0005860290670417253
+        }
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178,
+        "corpus_cold_rate": 0.10114861697140178
+      },
+      "this_run_mixed": 8532,
+      "this_run_minutes": 0.3002217213312785
+    },
+    {
+      "k": 2,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "skip_reasons": {},
+      "alpha_mean": 0.7754159022204812,
+      "alpha_std": 0.043001782172454664,
+      "alpha_range": [
+        0.7,
+        0.85
+      ],
+      "partner_reuse_top5": [
+        {
+          "partner": "train_4539.wav",
+          "n_uses": 7,
+          "pct_of_total": 0.0008204406938584154
+        },
+        {
+          "partner": "train_8587.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_7535.wav",
+          "n_uses": 6,
+          "pct_of_total": 0.0007032348804500703
+        },
+        {
+          "partner": "train_5844.wav",
+          "n_uses": 5,
+          "pct_of_total": 0.0005860290670417253
+        },
+        {
+          "partner": "train_6641.wav",
+          "n_uses": 5,
+          "pct_of_total": 0.0005860290670417253
+        }
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178,
+        "corpus_cold_rate": 0.10114861697140178
+      },
+      "this_run_mixed": 8532,
+      "this_run_minutes": 0.29917453130086263
+    }
+  ]
+}
