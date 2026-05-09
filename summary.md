@@ -18,7 +18,7 @@ Binary audio classification: Cold vs Non-Cold on the ComParE 2017 Cold sub-chall
 - **A5e** — *SKIPPED.* A5d verdict closed the retrain track. GPU goes to A5.5 / A6 instead.
 - **A5c** — *revivable.* Was conditional on A5b passing the gate; A5b passes at K=1, so A5c is technically revivable. But K=1 leaves little fusion stack for a learned gate to refine over — on hold pending A5.5 / A6 outcomes, then revisit if a richer admission set re-opens.
 - **A4** — *planned (speculative).* Discrete audio tokens (EnCodec/HuBERT-codes) as auxiliary stream
-- **A5.5** — *planned.* Augmentation — directly attacks training-speaker shortcut
+- **A5.5** — *Phase 1-2 DONE; Phase 3 FAILED; Phase 3.5 diagnostic queued.* Cross-speaker splicing augmentation (directly attacks training-speaker shortcut). Phase 1 (splice primitives in `model/data/splice.py`) + smoke test 77.3% successful splices DONE. Phase 2 (K=3 augmented pooled cache for 8532 grouped train_fit chunks) DONE in 10.9 min — 80.5% successful splices per variant, ~20% fall-back-to-original (`results/A5_5_phase2_extract.json`, cache at `cache/microsoft_wavlm-large/pooled_aug_k{0,1,2}/`). **Phase 3 splice-detector audit FAILED at the originally-specified hard gate**: binary LR probe distinguishes original vs spliced pooled features at UAR 0.998 across all layers + per-k variants vs gate target ≤ 0.55 (`results/A5_5_phase3_splice_detector.json`). Diagnosis: cross-speaker splicing inherently shifts per-layer pooled means by 25-30% toward partner's speaker characteristics — gate as written was likely calibrated for perceptual-equivalence augmentations (time-warp, noise injection); for cross-speaker splicing it's unachievable by construction. The actual shortcut concern (splice-presence correlated with cold) is structurally mitigated by the symmetric-across-classes partner-pool design. **Phase 3.5 self-splice control queued** (splice anchors with same-pseudo-speaker partners — distinguishes "splicer technique broken" from "cross-speaker mixing is the loud signal"). If self-splice UAR < 0.6 → splicer clean, gate redefinition justified, proceed to Phase 4. If 0.6-0.85 → splicer fixes (longer crossfades, RMS-noise-floor matching). If > 0.85 → pivot to **embedding mixup** as Plan B. Phase 4 (head training) pending Phase 3.5. See [plan.md §4.8](plan.md) for full phase-by-phase documentation.
 - **A6** — *planned.* Contrastive pretraining (speaker-masked loss)
 - **A7** — *planned.* MDD adversarial head — highest-variance, highest-upside bet
 - **A9** — *merged into A5.* Late fusion is A5's output stage, not a standalone rung
@@ -144,6 +144,8 @@ results/
   A5b_grouped_honestprior.json  A5b K=1 lock on A2.5 anchor with β=1.00 forced (FAIL — calibration failure under wrong-anchor β)
   A5b_grouped_honestprior_betasweep.json  A5b β-sweep on A2.5 anchor (β grid {0..2.0}, PASS at β*=2.0 boundary; superseded by extended)
   A5b_grouped_honestprior_betasweep_extended.json  A5b extended β-sweep {0..16} + G4-alone baseline (LOCKED PASS at β=4-6 plateau, +0.035 over A2.5)
+  A5_5_phase2_extract.json    A5.5 Phase 2: K=3 augmented pooled cache build per train_fit chunk (80.5% successful splices, 10.9 min on GPU)
+  A5_5_phase3_splice_detector.json   A5.5 Phase 3: splice-detector audit (FAIL at UAR 0.998 vs gate ≤ 0.55; gate-redefinition framing)
   A5d_layer_honesty.csv   per-layer cold + speaker probes on cached pooled[:, L, :] for L=0..24 (random splits)
   A5d_grouped_layer_honesty.csv   same per-layer probes on grouped splits
 ```

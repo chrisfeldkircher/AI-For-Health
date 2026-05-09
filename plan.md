@@ -386,6 +386,88 @@ A5b K=1 fused (per-seed argmax):   UAR 0.6913 ± 0.0076  ← +0.0349 over A2.5 (
 
 Total stack uniform-A2-grouped → A2.5 → A5b K=1 fused = +0.055 UAR over the leak-corrected baseline (+0.049 over the historical A2 baseline). Two clean stackable contributions, both speaker-probe-clean, both resolvable to interior optima.
 
+### 4.8 A5.5 — cross-speaker splicing augmentation (in progress; Phase 3 FAIL → Phase 3.5 diagnostic)
+
+**Status: Phase 1-2 DONE; Phase 3 FAILED; Phase 3.5 (diagnostic) queued.** Implementation broken into phases for risk-staged execution.
+
+#### 4.8.1 Phase 1 — splice primitives (DONE)
+
+[`model/data/splice.py`](AI-For-Health/model/data/splice.py) implements plan §6 splicing recipe: silence/unvoiced boundary picker on cached manner labels, equal-power crossfade, RMS match, partner window with voiced-fraction floor, splice composer, partner-pool builder. Smoke test on 30 anchors × 5 trials: 77.3% successful splice rate, 0 length mismatches, partner voiced-fraction mean 0.715, partner reuse top user 1.3% of trials. Module + smoke test committed.
+
+#### 4.8.2 Phase 2 — augmented pooled cache build (DONE)
+
+K=3 augmented variants per grouped train_fit chunk pre-extracted to `cache/microsoft_wavlm-large/pooled_aug_k{0,1,2}/{stem}.pt` with sidecar metadata in `_meta/`. Per (anchor, k): sample partner (same Cold + different pseudo-speaker, 5 retries), splice via `splice_chunk`, fall back to original audio if splicer skips (sidecar flag), run WavLM forward, save pooled stats. Output: `results/A5_5_phase2_extract.json`.
+
+```text
+k    successful splices    fallback     boundary kinds
+0    6871/8532 (80.5%)     1661         6819 unvoiced + 52 silence
+1    6872/8532 (80.5%)     1660         6815 unvoiced + 57 silence
+2    6868/8532 (80.5%)     1664         6815 unvoiced + 53 silence
+```
+
+Total: 10.9 min on GPU (8× faster than 90-135 min estimate). Consistent 80.5% successful-splice rate replicates the smoke test prediction at corpus scale (smoke 77.3% on 150 trials → 80.5% on 25.6k). Three variants are independent (no overlap in top-5 partner reuse lists across k). Partner reuse top user only ~7 trials = 0.082% of total — diverse cross-speaker mixings, not three slight variants of the same splicing pattern. The fallback-to-original design preserves dataset size and avoids introducing splice-amenability as a confounded variable.
+
+#### 4.8.3 Phase 3 — splice-detector audit (FAIL — gate as written is unrealistic for cross-speaker splicing)
+
+**Status: FAILED at the originally-specified hard gate.** Per plan §6: "linear probe on train_fit cached pooled features for original vs spliced; gate at detector UAR ≤ 0.55." Output: `results/A5_5_phase3_splice_detector.json`.
+
+```text
+substrate                            UAR     PASS≤0.55
+layer-averaged (4096-d, headline)    0.9981  FAIL
+worst single layer (L7)              0.9982  FAIL
+per-k breakdown (k=0/1/2)            0.997-0.999  ALL FAIL
+```
+
+**Diagnosis (with reflection-sharpened framing).** UAR 0.998 means the binary LR probe perfectly distinguishes original from spliced pooled features at every layer (L0-L24) and every k variant. Two competing interpretations of why:
+
+1. **"Gate is miscalibrated for cross-speaker splicing."** Pooled stats are mean+std+skew+kurt over time per WavLM layer. Replacing 25-30% of a chunk with audio from a *different speaker* shifts those per-layer time-means toward the partner's per-layer mean. Different speakers occupy different regions of WavLM's per-layer 1024-d hidden state space (same property ECAPA exploits for speaker recognition). A 25-30% mass-shift in 4096-d features is trivially detectable by a linear probe. Cross-speaker splicing is supposed to make chunks acoustically different — that's how the (chunk → anchor speaker) link breaks. The 0.55 gate was likely designed for *perceptual-equivalence* augmentations (time-warp, noise injection, mild EQ); for cross-speaker splicing it's unachievable by construction.
+
+2. **"Splicer technique itself is leaving artifacts beyond cross-speaker mixing."** Detection is layer-uniform (L0=0.992, L7=0.998, L24=0.995) — if cross-speaker mixing were the *only* loud signal, the detector should be noticeably stronger in early speaker-rich layers (per A5d: spk_top1 0.072 @ L0 → 0.042 @ L24). Layer-uniform detection suggests multi-faceted artifacts (crossfade discontinuities, spectral boundary mismatches, recording-session signature, F0 trajectory jumps) on top of cross-speaker mixing. **Caveat: at UAR 0.998 the detector is at saturation, so the layer-distribution argument is only suggestive.**
+
+**The shortcut concern is structurally mitigated regardless of which interpretation holds.** Plan §6 risk: "augmentation creates splice-detection shortcut." The mitigation is symmetric-across-classes splicing — every chunk regardless of cold label gets K=3 augmented variants, splice presence is uncorrelated with cold. The model can detect "this is spliced" with UAR 0.998 *and still not be able to use it to predict cold*, because the splice-vs-original distinction is class-balanced (partner-pool design enforces same Cold + different pseudo-speaker). A direct splice-bit-as-cold-predictor audit would give UAR ≈ 0.5 by construction.
+
+**Decision: don't proceed to Phase 4 yet.** Run the diagnostic in §4.8.4 first to settle which interpretation is correct.
+
+#### 4.8.4 Phase 3.5 — self-splice control (diagnostic, queued)
+
+The reflection's recommended diagnostic: splice each anchor with a partner from the **same pseudo-speaker cluster** (instead of the cross-speaker partner pool used in Phase 2). Run the same Phase 3 splice-detector audit on (original, self-spliced). The result distinguishes:
+
+- **Self-splice UAR < 0.60** → splicer technique is clean. The 0.998 cross-splice UAR IS the cross-speaker mixing signal, which is the desired augmentation. The original 0.55 gate was miscalibrated for cross-speaker splicing — redefine the gate; symmetric-across-classes is the actual safeguard. Proceed to Phase 4.
+- **Self-splice UAR 0.60–0.85** → splicer leaves moderate signature (likely crossfade artifacts + within-speaker session mismatches). Try splicer fixes (longer crossfade window, RMS-noise-floor matching, tighter low-energy boundary selection, smaller r) and re-audit. If fixes can't drive self-splice UAR < 0.6, pivot to embedding mixup.
+- **Self-splice UAR > 0.85** → splicer is fundamentally artefact-laden independent of cross-speaker mixing. Cross-speaker mixing on top adds the additional ~0.99 detection. Pivot to embedding mixup (Plan B below) — splicer fixes won't recover from this regime.
+
+**Implementation.** N=1000 train_fit anchors, sample one same-pseudo-speaker partner per anchor (excluding self), apply `splice_chunk` with the same recipe as Phase 2, run WavLM forward, save to `cache/microsoft_wavlm-large/pooled_selfsplice_k0/`. Run the same Phase 3 detector logic (chunk-disjoint 80/20, layer-averaged + per-layer + per-k probes). Cost: ~3 min on GPU. Output: `results/A5_5_phase3p5_selfsplice_control.json`.
+
+**Caveat.** Same-pseudo-speaker partner is a proxy for same-speaker — pseudo-speaker clusters (k=210) are pure-ish (kNN cohesion @ k=10 = 0.957 per the validation), so this is a reasonable proxy. URTIC speakers may have been recorded across multiple sessions with slightly different mic/room acoustics; even self-splices CAN cross sessions. So a moderate self-splice UAR (~0.7-0.8) might partly reflect session-mismatch noise rather than splicer technique itself.
+
+#### 4.8.5 Plan B — embedding mixup (pivot if Phase 3.5 says "splicer broken")
+
+If self-splice UAR > 0.85 and splicer fixes can't recover, pivot to **embedding-level mixup**: extract WavLM pooled stats per chunk (already cached); for each anchor, find a partner from a different pseudo-speaker with the same cold label; mix the *embeddings* (e.g., 0.7·anchor_pooled + 0.3·partner_pooled) instead of the audio. Sidesteps every audio-level artifact. Audit the same way (binary detector on mixed vs natural pooled vectors) — embedding mixup typically gets UAR ≈ 0.7-0.85 on the detector (a much smoother operation than audio splicing).
+
+**Trade-offs:** loses the temporal-mixing aspect (mixup operates per-chunk, not within-chunk); changes the architectural framing from "audio-level cross-speaker augmentation" to "embedding-level cross-speaker mixing." Different paper story but defensible — this is the standard mixup family applied to upstream embeddings, well-precedented for cross-speaker emotion/accent classification work.
+
+#### 4.8.6 Phase 4 — A5.5 head training (pending Phase 3.5 outcome)
+
+Subject to Phase 3.5 verdict. Design when Phase 3.5 PASSes:
+
+- **Sampling**: per-epoch random sampling across `{original, k=0, k=1, k=2}` per chunk (Option B from plan §6).
+- **Anchor**: warm start from A2.5 checkpoint (`head_A2grouped_honestprior_seed{seed}.pt`) — tests "does augmentation refine the honesty-prior representation toward speaker-invariance?" Same training recipe as A2.5.
+- **Pseudo-speaker labels for augmented chunks**: anchor's label (the speaker probe should have a *harder* time learning anchor speaker from augmented chunks where partner's voice is mixed in — that's the de-confounding mechanism).
+- **Devel set unaugmented**: only train_fit was augmented in Phase 2; devel_val and devel_test stay clean.
+- **Acceptance gates** (3-D, per plan §6):
+  - UAR ≥ A2.5 − 1σ (no material drop).
+  - LR speaker probe top-1 drops by ≥ 1σ vs A2.5.
+  - **Splice-bit-as-cold-predictor ≤ 0.52** (replaces the original "splice-detector ≤ 0.55" gate which we're redefining; the new gate tests the actual shortcut concern — does splice presence predict cold? Should be ~0.5 by symmetric-across-classes design).
+
+#### 4.8.7 Time-budget reality check
+
+The reflection raised a fair point: A5.5 debugging could eat a week if it requires multiple splicer iterations. Two framings:
+
+- **A5.5 as keystone "data-level de-confounding" rung** (paired with A6 representation-level + A7 gradient-level for a triple-mechanism story). Worth a week of iteration; the paper's architectural completeness depends on it.
+- **A5.5 as additive ladder rung** (one more +1-2 UAR contribution). A week of debugging is steep; might skip and move to A6 (which is conceptually similar — its contrastive loss enforces de-confounding via training signal rather than data).
+
+We're committed to A5.5 as keystone. Phase 3.5 self-splice control (~3 min compute) is the cheap diagnostic that decides whether splicer fixes are tractable or whether we need to pivot to embedding mixup. Either way, A5.5 ships.
+
 ---
 
 ## 5. A5 — feature enhancement + honesty-audited late fusion

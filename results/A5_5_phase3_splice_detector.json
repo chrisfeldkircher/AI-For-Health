@@ -1,0 +1,123 @@
+{
+  "rung_id": "A5_5_phase3_splice_detector",
+  "description": "A5.5 Phase 3 splice-detector audit (HARD GATE per plan \u00a76). Linear probe (binary LR, balanced classes) on grouped train_fit pooled stats, with chunk-disjoint 80/20 split. Three substrates: per-layer (L=0/4/7/12/18/24), layer-averaged 4096-d (headline), and per-k breakdown. Gate: detector UAR \u2264 0.55.",
+  "split_seed": 42,
+  "audit_val_frac": 0.2,
+  "probe_seed": 42,
+  "hard_gate_uar": 0.55,
+  "n_train_chunks": 6826,
+  "n_eval_chunks": 1706,
+  "probe_train_n_orig": 6826,
+  "probe_train_n_spliced": 16482,
+  "probe_eval_n_orig": 1706,
+  "probe_eval_n_spliced": 4129,
+  "layer_averaged": {
+    "uar": 0.9981010988811304,
+    "recall_original": 0.9976553341148886,
+    "recall_spliced": 0.9985468636473722,
+    "gate_passed": false
+  },
+  "per_layer": [
+    {
+      "layer": 0,
+      "uar": 0.9916971343571916,
+      "recall_original": 0.9894490035169988,
+      "recall_spliced": 0.9939452651973844,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    },
+    {
+      "layer": 4,
+      "uar": 0.9964952809978997,
+      "recall_original": 0.9958968347010551,
+      "recall_spliced": 0.9970937272947444,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    },
+    {
+      "layer": 7,
+      "uar": 0.9981519927246647,
+      "recall_original": 0.9982415005861665,
+      "recall_spliced": 0.998062484863163,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    },
+    {
+      "layer": 12,
+      "uar": 0.9979291103415437,
+      "recall_original": 0.9970691676436108,
+      "recall_spliced": 0.9987890530394768,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    },
+    {
+      "layer": 18,
+      "uar": 0.9974640385663183,
+      "recall_original": 0.9958968347010551,
+      "recall_spliced": 0.9990312424315815,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    },
+    {
+      "layer": 24,
+      "uar": 0.9954440427513964,
+      "recall_original": 0.9935521688159438,
+      "recall_spliced": 0.9973359166868491,
+      "n_train_orig": 6826,
+      "n_train_spliced": 16482,
+      "n_eval_orig": 1706,
+      "n_eval_spliced": 4129,
+      "gate_passed": false
+    }
+  ],
+  "per_k": [
+    {
+      "k": 0,
+      "uar": 0.997587683053923,
+      "recall_original": 0.9988276670574443,
+      "recall_spliced": 0.9963476990504018,
+      "n_train_orig": 6826,
+      "n_train_spliced": 5502,
+      "gate_passed": false
+    },
+    {
+      "k": 1,
+      "uar": 0.9969405177349437,
+      "recall_original": 0.9982415005861665,
+      "recall_spliced": 0.9956395348837209,
+      "n_train_orig": 6826,
+      "n_train_spliced": 5496,
+      "gate_passed": false
+    },
+    {
+      "k": 2,
+      "uar": 0.998691290176121,
+      "recall_original": 0.9988276670574443,
+      "recall_spliced": 0.9985549132947977,
+      "n_train_orig": 6826,
+      "n_train_spliced": 5484,
+      "gate_passed": false
+    }
+  ],
+  "verdict": {
+    "all_passed": false,
+    "worst_uar": 0.998691290176121,
+    "decision": "FAIL \u2014 retune splicer before training"
+  },
+  "elapsed_minutes": 1.0439903696378072
+}
