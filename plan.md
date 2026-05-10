@@ -832,7 +832,43 @@ soft threshold — i.e., MLP > 0.040 OR LR > 0.0727):
 
 This generalises beyond URTIC. Anyone doing representation-level de-confounding on foundation-model features with a projection MLP should run a random-projection control at the same target dim before claiming mechanism activation.
 
-**Status.** A6 head-only PoC mechanism = LOCKED as illusory (bottleneck artefact). (A-i) layer-weight-open variant available IF the user wants to spend 2-4 hr GPU on it, but must include the same controls. Otherwise pivot to A7 (gradient-level adversary, the remaining unexplored de-confounding mechanism).
+**Status.** A6 head-only PoC mechanism = LOCKED as illusory (bottleneck artefact). (A-i) layer-weight-open variant available IF the user wants to spend 2-4 hr GPU on it, but must include the same controls. Otherwise pivot to A7 (gradient-level adversary, the remaining unexplored de-confounding mechanism). See §4.9.1.2 for the follow-up combined-loss test that closed the head-only scope across all variants.
+
+#### 4.9.1.2 A6b — combined cold-CE + speaker-masked SupCon (lambda-sweep, DONE; closes head-only scope)
+
+**Why this exists.** §4.9.1.1 disproved the strong claim *"speaker-masked SupCon alone uniquely de-confounds the representation"* but didn't disprove *"contrastive class-pressure as a regulariser on top of CE-anchored cold bottleneck might still help."* §4.9.1.2 tests the latter directly: train projection + cold linear head jointly with `L = L_cold_CE + λ · L_supcon_speaker_masked`, sweep λ ∈ {0.0, 0.05, 0.1, 0.25, 0.5}. λ=0 reproduces cold-CE-only at this code path (sanity).
+
+**Recipe.** Same A2.5 anchor (frozen scaler + layer_weights), same projection (4096 → 512 → 128, L2-norm), same `SpeakerBlockSampler`, same probe protocol as §4.9.1.1. New components: `cold_head = nn.Linear(128, 2)` for the CE term; `loss = F.cross_entropy(cold_head(z), cold_t, weight=ce_class_weights) + λ · supcon_speaker_masked_loss(z, cold_t, spk_t, mask_speakers=True)`. 10 epochs, AdamW lr 5e-5. 3 seeds {42, 123, 7}. Cost: 2.66 min (5 λ × 3 seeds, training+probes).
+
+**Results (DONE).** `results/A6b_phase1_combined_lambda_sweep.json`:
+
+| variant (128-d z) | MLP top1 | LR top1 | cold UAR | margin |
+| ----------------- | -------- | ------- | -------- | ------ |
+| A6b λ=0.0 (pure cold-CE) | **0.0408 ± 0.0008** | **0.0371 ± 0.0005** | **0.6128 ± 0.0058** | **+0.3503 ± 0.0127** |
+| A6b λ=0.05 | 0.0428 ± 0.0016 | 0.0387 ± 0.0041 | 0.5994 ± 0.0020 | +0.2959 ± 0.0135 |
+| A6b λ=0.1 | 0.0435 ± 0.0006 | 0.0379 ± 0.0025 | 0.6028 ± 0.0058 | +0.2422 ± 0.0113 |
+| A6b λ=0.25 | 0.0451 ± 0.0007 | 0.0414 ± 0.0035 | 0.5996 ± 0.0055 | +0.1601 ± 0.0122 |
+| A6b λ=0.5 | 0.0462 ± 0.0011 | 0.0419 ± 0.0019 | 0.6005 ± 0.0030 | +0.1065 ± 0.0077 |
+
+**Verdict: `contrastive_dead_pivot_to_a7`.** λ=0 is monotonically the best on every measured dimension:
+
+- **MLP probe** worsens monotonically with λ: 0.0408 → 0.0428 → 0.0435 → 0.0451 → 0.0462.
+- **LR probe** worsens monotonically (with a tiny noise dip at λ=0.1): 0.0371 → 0.0387 → 0.0379 → 0.0414 → 0.0419.
+- **Cold UAR** drops at λ > 0 and stays flat-low (0.5994–0.6028 vs λ=0's 0.6128) — the contrastive term mildly damages cold linearity.
+- **Margin** drops monotonically (+0.350 → +0.107 as λ grows) — the contrastive pressure shrinks rather than enhances the class margin when CE is already shaping the geometry.
+
+**Sanity.** A6b λ=0.0 reproduces the cached cold-CE control within seed noise (0.0408/0.0371/0.6128/+0.350 vs cached 0.0413/0.0373/0.6124/+0.350) — code path validated.
+
+**Mechanism reading.** When CE has already shaped the projection geometry to maximise class margin (+0.35), adding contrastive class-pressure on top doesn't *add* class structure — it *competes* with the CE-shaped structure. The contrastive objective wants intra-class points close in cosine space; CE has already arranged that more strongly than contrastive can. The speaker-masked positive set (~33 anchors per batch, varying with batch composition) gives a noisier and weaker geometry signal than the dense per-sample CE supervision, so the combined gradient noisily perturbs the CE-found minimum without finding a Pareto-better one.
+
+**Status: A6 head-only fully closed across all tested recipes.** Three independent recipes tested — pure speaker-masked SupCon (A6 PoC, §4.9.1), vanilla SupCon (control C3, §4.9.1.1), and combined CE+SupCon λ-sweep (this section). All fail; pure cold-CE Pareto-dominates. **Conclusion: contrastive class-pressure has no de-confounding leverage on URTIC + frozen WavLM at head-only scope.** This is the publishable negative result — the methodology yielded a clean closure, not just a single-recipe failure.
+
+**Implications for future A6 variants:**
+
+- (A-i) layer-weight-open (~2-4 hr GPU + controls): tests a *structurally different* mechanism (layer re-orientation under contrastive pressure rather than projection re-shaping). Not ruled out by §4.9.1 / §4.9.1.1 / §4.9.1.2 — those all hold the layer mix frozen at A2.5's converged state. Worth running IF the user wants to spend the budget; otherwise the layer-weight scope ships as "untested" and the de-confounding paper claim is anchored on data (A5.5) + gradient (A7).
+- (A-ii) full transformer fine-tune: still doubly disqualified.
+
+**Pivot recommendation: A7 (gradient-level adversary).** The data-level rung (A5.5) is locked at modest UAR / null on probe. The representation-level head-only scope is now fully closed. Gradient-level is the remaining unexplored mechanism — explicit speaker-direction subtraction in the optimization signal via MDD/DANN. Plan §4.10 to be scoped.
 
 #### 4.9.2 Phase 2 — conditional escalation (scoped, conditional on Phase 1)
 
