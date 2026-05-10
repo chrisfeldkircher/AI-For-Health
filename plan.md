@@ -815,16 +815,16 @@ soft threshold — i.e., MLP > 0.040 OR LR > 0.0727):
 | mode (substrate) | MLP top1 | LR top1 | cold UAR | margin |
 | ---------------- | -------- | ------- | -------- | ------ |
 | A2.5 (**4096-d** reference) | 0.0501 | 0.0725 | 0.6564 | — |
-| C1 random projection (128-d, no training) | 0.0490 ± 0.0027 | **0.0427 ± 0.0016** | 0.6007 ± 0.0071 | +0.0016 ± 0.0024 |
-| C2 cold-CE only (128-d, no contrastive) | **0.0408 ± 0.0008** | **0.0371 ± 0.0005** | **0.6128 ± 0.0058** | **+0.3503 ± 0.0127** |
-| C3 vanilla SupCon (128-d, no speaker mask) | 0.0463 ± 0.0021 | **0.0400 ± 0.0038** | 0.6012 ± 0.0061 | +0.0489 ± 0.0039 |
+| C1 random projection (128-d, no training) | 0.0500 ± 0.0022 | **0.0427 ± 0.0016** | 0.6007 ± 0.0071 | +0.0016 ± 0.0024 |
+| C2 cold-CE only (128-d, no contrastive) | **0.0413 ± 0.0014** | **0.0373 ± 0.0006** | **0.6124 ± 0.0060** | **+0.3503 ± 0.0127** |
+| C3 vanilla SupCon (128-d, no speaker mask) | 0.0468 ± 0.0024 | **0.0395 ± 0.0040** | 0.6012 ± 0.0061 | +0.0489 ± 0.0039 |
 | **A6 speaker-masked SupCon (128-d)** | 0.0477 ± 0.0008 | 0.0410 ± 0.0024 | 0.5988 ± 0.0085 | +0.0594 ± 0.0065 |
 
 **Verdict: `bottleneck_explains_lr_drop`.** Three independent refutations of the head-only A6 mechanism:
 
 1. **Bottleneck alone explains the LR drop.** Random untrained projection drops LR to 0.0427 (within 0.0017 of A6's 0.0410). The 4096 → 128 + L2-norm bottleneck does essentially all of the LR-substrate de-confounding, independent of training.
-2. **Cold-CE Pareto-dominates A6 on every measured dimension.** Lower LR (0.0371 vs A6's 0.0410), lower MLP (0.0408 vs 0.0477), higher cold UAR (0.6128 vs 0.5988), and a much higher margin (+0.350 vs +0.059). Supervised cold pressure subsumes whatever the speaker-aware contrastive was supposed to provide.
-3. **Speaker-masking isn't just neutral — it's mildly harmful.** Vanilla SupCon (drop the `diff_speaker` constraint) gives LR=0.0400, slightly better than A6's 0.0410. The masking lever reduces the positive count and weakens the loss signal without buying any de-confounding back.
+2. **Cold-CE Pareto-dominates A6 on every measured dimension.** Lower LR (0.0373 vs A6's 0.0410), lower MLP (0.0413 vs 0.0477), higher cold UAR (0.6124 vs 0.5988), and a much higher margin (+0.350 vs +0.059). Supervised cold pressure subsumes whatever the speaker-aware contrastive was supposed to provide.
+3. **Speaker-masking isn't just neutral — it's mildly harmful.** Vanilla SupCon (drop the `diff_speaker` constraint) gives LR=0.0395, slightly better than A6's 0.0410. The masking lever reduces the positive count and weakens the loss signal without buying any de-confounding back.
 
 **Implication for §4.9.2 Phase 2.** The original "A_strict_PASS / A_soft_PASS → escalate to (A-i) layer-weight-open" trigger is invalidated for the head-only PoC: there's no Phase 1 mechanism to escalate. **(A-i) layer-weight-open is not automatically dead** — opening the WavLM layer-weight subspace under combined cls + supcon loss tests a different mechanism (layer re-orientation, not projection re-shaping) — but it MUST run with the same control discipline (cold-CE-only at layer-weight-open, random-projection-at-layer-weight-open) before any verdict is locked. **(A-ii) full transformer fine-tune is doubly disqualified for now**: the head-only PoC's mechanism is illusory, and A-i needs its own controls before justifying multi-hour-to-day fine-tune spend.
 
