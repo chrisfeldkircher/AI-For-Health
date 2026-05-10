@@ -108,6 +108,15 @@ def supcon_speaker_masked_loss(
         positive[i, j] = same_class[i, j] AND diff_speaker[i, j]
         (and i != j)
 
+    Negative set for anchor i:
+        negative[i, j] = NOT same_class[i, j]   (and i != j)
+        # Different-class pairs are negatives regardless of speaker.
+
+    Same-class same-speaker pairs are NEITHER positives NOR negatives -- they
+    are excluded from the denominator entirely. Including them as implicit
+    negatives (the standard SupCon denominator) would push same-speaker chunks
+    apart, which is the OPPOSITE of speaker-invariance and anti-de-confounding.
+
     Anchors with empty positive sets are excluded from the loss (their
     contribution would be 0/0). Count of excluded anchors is reported in stats
     as `n_anchors_excluded`.
@@ -122,19 +131,21 @@ def supcon_speaker_masked_loss(
     sim_max = sim.detach().max(dim=1, keepdim=True).values
     sim = sim - sim_max
 
-    # Build positive and "any other anchor" masks.
+    # Build positive, negative, and denominator masks.
     same_class = cold_labels.unsqueeze(0) == cold_labels.unsqueeze(1)      # [B, B]
     diff_spk   = pseudo_speakers.unsqueeze(0) != pseudo_speakers.unsqueeze(1)
     eye        = torch.eye(B, dtype=torch.bool, device=device)
 
-    pos_mask = same_class & diff_spk & ~eye                                # [B, B]
-    any_mask = ~eye                                                        # [B, B]
+    pos_mask   = same_class & diff_spk & ~eye                              # [B, B]
+    neg_mask   = (~same_class) & ~eye                                      # [B, B]
+    denom_mask = pos_mask | neg_mask                                       # [B, B]
 
-    # SupCon denominator includes ALL non-self pairs (same and different class
-    # alike) -- standard formulation. Different-class same-speaker pairs ARE in
-    # the denominator, so they act as negatives the model must push away from
-    # the anchor.
-    exp_sim   = torch.exp(sim) * any_mask
+    # Speaker-masked denominator: positives (same-class diff-speaker) +
+    # true negatives (different-class). Same-class same-speaker pairs are
+    # absent from the denominator -- the loss never sees them, so the gradient
+    # neither pulls them together (would re-introduce speaker structure) nor
+    # pushes them apart (would be anti-de-confounding).
+    exp_sim   = torch.exp(sim) * denom_mask
     log_denom = torch.log(exp_sim.sum(dim=1) + eps)                        # [B]
 
     # log( exp(sim) ) = sim.  Per-anchor log-prob over its positive set:
@@ -178,7 +189,7 @@ def supcon_speaker_masked_loss(
 class _SamplerStats:
     n_batches_yielded: int
     n_batches_rejected: int
-    n_chunks_per_speaker_actual: list[int]
+    batch_size_actual: list[int]
     n_speakers_per_batch_actual: list[int]
 
 
@@ -256,7 +267,7 @@ class SpeakerBlockSampler(Sampler[list[int]]):
         self.stats = _SamplerStats(
             n_batches_yielded=0,
             n_batches_rejected=0,
-            n_chunks_per_speaker_actual=[],
+            batch_size_actual=[],
             n_speakers_per_batch_actual=[],
         )
 
@@ -320,7 +331,7 @@ class SpeakerBlockSampler(Sampler[list[int]]):
         self.stats.n_speakers_per_batch_actual.append(
             int(np.unique(speakers).size)
         )
-        self.stats.n_chunks_per_speaker_actual.append(len(batch))
+        self.stats.batch_size_actual.append(len(batch))
         return batch
 
     def __iter__(self) -> Iterator[list[int]]:
