@@ -72,34 +72,34 @@
         {
           "seed": 42,
           "best_train_top1": 1.0,
-          "best_devel_top1": 0.08170070499181747
+          "best_devel_top1": 0.08461859077215195
         },
         {
           "seed": 123,
           "best_train_top1": 1.0,
-          "best_devel_top1": 0.08816172927618027
+          "best_devel_top1": 0.0807628184556961
         },
         {
           "seed": 7,
           "best_train_top1": 1.0,
-          "best_devel_top1": 0.08649437129497528
+          "best_devel_top1": 0.08576489984989166
         }
       ],
       "D3_4096_2048_1024": [
         {
           "seed": 42,
-          "best_train_top1": 0.9978902953586498,
-          "best_devel_top1": 0.08315964788198471
+          "best_train_top1": 0.9976558837318331,
+          "best_devel_top1": 0.08243017643690109
         },
         {
           "seed": 123,
-          "best_train_top1": 0.9970698546647914,
-          "best_devel_top1": 0.08493121713399887
+          "best_train_top1": 0.9991795593061416,
+          "best_devel_top1": 0.08326385915279388
         },
         {
           "seed": 7,
           "best_train_top1": 0.9974214721050164,
-          "best_devel_top1": 0.0815964937210083
+          "best_devel_top1": 0.08659858256578445
         }
       ]
     },
@@ -123,31 +123,31 @@
           "n": 3
         },
         "best_devel_top1": {
-          "mean": 0.08545226852099101,
-          "std": 0.00273869705571107,
+          "mean": 0.08371543635924657,
+          "std": 0.002139621537983167,
           "n": 3
         }
       },
       "D3_4096_2048_1024": {
         "best_train_top1": {
-          "mean": 0.9974605407094859,
-          "std": 0.0003360808433756436,
+          "mean": 0.9980856383809971,
+          "std": 0.0007794162112540818,
           "n": 3
         },
         "best_devel_top1": {
-          "mean": 0.0832291195789973,
-          "std": 0.001362281125612778,
+          "mean": 0.0840975393851598,
+          "std": 0.0018009570532000242,
           "n": 3
         }
       }
     },
-    "strongest_devel": 0.0832291195789973,
-    "strongest_train": 0.9974605407094859,
-    "memorisation_gap": 0.9142314211304886,
+    "strongest_devel": 0.0840975393851598,
+    "strongest_train": 0.9980856383809971,
+    "memorisation_gap": 0.9139880989958372,
     "decision": "memorisation_dead",
     "proceed_to_a_ii": false
   },
   "phase_a_ii": null,
   "final_decision": "a7c_dead_memorisation_dead",
-  "elapsed_minutes": 1.6968986868858338
+  "elapsed_minutes": 1.7792564392089845
 }
