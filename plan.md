@@ -71,7 +71,7 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
 | A4    | planned             | Discrete-token histograms (HuBERT units → optional VQ-VAE)          | Deferred behind A5 — more speculative, no built-in anti-shortcut mechanism                 |
 | A5.5  | **LOCKED (cons-α)** | Cross-speaker augmentation. Audio splicing FAIL → embedding mixup pivot | Conservative α∈[0.70,0.85]: UAR 0.6624 (Δ +0.006, ~1.6σ), probe ~unchanged. Aggressive α∈[0.50,0.70] branch (d): UAR 0.6397 (Δ -0.017), probe still flat → narrow window EMPTY. A5.5 = cons-α canonical; aggro = ablation row |
-| A6    | planned             | Supervised contrastive pretraining (speaker-masked positives)       | Requires the projection-MLP refactor; pseudo-speakers already cached                       |
+| A6    | **queued (PoC)**    | Supervised contrastive pretraining (speaker-masked positives)       | Phase 1 head-only PoC scoped (§4.9): projection MLP on cached pooled stats, A2.5 anchor, 30-60 min CPU/GPU. PoC verdict drives escalation to layer-weight-open or transformer fine-tune |
 | A7    | planned             | MDD speaker adversary (DANN fallback) — main contribution           | High-variance, high-upside; ramps λ_adv from 0                                             |
 | A8    | planned             | MDD vs DANN comparison                                              | Only run if A7 lands                                                                       |
 | A9    | **merged into A5**  | Late fusion with standalone ComParE+SVM                             | A5's output stage is the late-fusion result; no separate rung                              |
@@ -678,6 +678,131 @@ The reflection raised a fair point: A5.5 debugging could eat a week if it requir
 - **A5.5 as additive ladder rung** (one more +1-2 UAR contribution). A week of debugging is steep; might skip and move to A6 (which is conceptually similar — its contrastive loss enforces de-confounding via training signal rather than data).
 
 We're committed to A5.5 as keystone. Phase 3.5 self-splice control (~3 min compute) is the cheap diagnostic that decides whether splicer fixes are tractable or whether we need to pivot to embedding mixup. Either way, A5.5 ships.
+
+### 4.9 A6 — supervised contrastive pretraining with speaker-masked positives (Phase 1 PoC scoped; queued)
+
+**One-line framing.** A5.5 LOCKED at conservative-α with a null-on-probe verdict (M9 narrow-window-empty) tells us data-level mixup on post-frozen-backbone representations cannot de-confound without an explicit objective. A6 is the first rung where the de-confounding mechanism is **explicit in the loss**: a supervised contrastive objective with **speaker-masked positives** (same Cold label + different pseudo-speaker = positive; same-speaker same-class pairs masked out) directly pulls same-class-different-speaker representations together while pushing different-class apart. If this doesn't move the speaker probe, no purely-data-level intervention will, and we proceed to A7 (gradient-level adversary).
+
+**Status: Phase 1 head-only PoC scoped + queued.** Anchor: A2.5 alone (cleaner ablation than A2.5 + A5b K=1 fused — A5b can be re-applied on top of A6 later as a separate fusion stage; that ordering keeps "contrastive helps" disambiguated from "contrastive helps on top of fusion"). Compute envelope for Phase 1: head-only PoC (~30-60 min) — cheapest first read on whether the speaker-masked-positive recipe even moves the probe. PoC verdict gates escalation to deeper interventions.
+
+#### 4.9.1 Phase 1 PoC — head-only contrastive on cached pooled stats
+
+**Recipe.**
+
+- **Inputs.** Cached `pooled[chunk] ∈ R^{25×4096}` (existing A2/A2.5 cache, no new feature extraction). Apply A2.5's locked layer-weight softmax to collapse 25 layers → `R^4096` per chunk (uses the locked A2.5 init as the layer-mix prior; layer weights stay frozen during Phase 1 PoC — only the projection MLP and supervised-contrastive temperature train).
+- **Projection MLP.** `R^4096 → R^512 → R^128` with GELU + LayerNorm; output L2-normalized to the unit hypersphere. Initialised fresh (no warm-start — projection space is new).
+- **Loss.** Supervised contrastive (Khosla et al. 2020 SupCon) with **speaker-masked positives**:
+  - Positive set for anchor `i`: all chunks `j ≠ i` in batch with `cold_label[j] == cold_label[i]` AND `pseudo_speaker[j] != pseudo_speaker[i]`. Same-speaker same-class pairs are EXCLUDED from positives (the de-confounding lever).
+  - Negative set: all chunks `j ≠ i` in batch with `cold_label[j] != cold_label[i]` (different class). Same-speaker different-class pairs ARE used as negatives (no speaker-masking on negatives — we want the model to push apart classes regardless of speaker).
+  - Loss: `L_i = -1/|P(i)| · sum_{p∈P(i)} log( exp(z_i · z_p / τ) / sum_{a∈A(i)} exp(z_i · z_a / τ) )`, τ = 0.07 default (SupCon's reported sweet spot).
+- **Batch composition.** 8 pseudo-speakers × 8 chunks per batch (64 chunks per batch). Pseudo-speaker sampling: stratified to ensure each batch has both cold and non-cold chunks across multiple pseudo-speakers (so each anchor has at least 1 cross-speaker positive of its own class with high probability). Class proportions tracked per batch; reject batches where any anchor has 0 valid positives in the batch (rare but possible at small batch sizes given URTIC's 9.5% cold rate; document the rejection rate as a diagnostic).
+- **Optimizer.** AdamW, lr 5e-5 (lower than head training's 1e-3 because the projection space is new and contrastive losses have higher gradient variance), weight decay 1e-4, 10 epochs, no early stopping (Phase 1 is pretraining, not classification).
+- **Splits.** Train on `train_fit` (grouped split, 8532 chunks). Speaker-masked positive sampling uses the k=210 pseudo-speaker assignments. Devel never seen during contrastive training.
+
+**Phase 1 measurement protocol (no classifier yet).**
+
+After contrastive pretraining, evaluate the projection-MLP output `z ∈ R^128` on devel (no fine-tuning, no classifier head — the projection itself is the representation under test):
+
+1. **Speaker probe on `z`** (this is the de-confounding measurement — the *primary* PoC signal). Train MLP (`speakers/probe.py`) and LR (`honesty/probe.py`) probes on `z[train_fit]` with pseudo-speaker targets, evaluate on `z[devel]`. Report top-1 + NMI. **Target: probe top-1 drops measurably below A2.5's 0.0501 (MLP) / 0.0725 (LR) — anything > 0.04 (MLP) or > 0.06 (LR) is a "didn't activate" verdict.**
+2. **Cold linearity probe on `z`** (sanity: is cold info still present?). Train logistic regression on `z[train_fit]` with cold targets, evaluate on `z[devel]`. Report UAR. **Target: cold-LR UAR on `z` ≥ 0.60 (within ~5pp of A2.5's full-stack 0.6564) — confirms the projection didn't strip the cold signal alongside the speaker signal.**
+3. **Class-collapse diagnostic.** Compute mean intra-class cosine similarity vs mean inter-class cosine similarity on `z[devel]`. **Target: intra-class > inter-class by ≥ 0.05** (the contrastive objective should produce a measurable class margin in cosine space).
+
+**Phase 1 PoC acceptance gate (3 conditions).**
+
+- **(P1-G1)** Speaker probe drops: MLP top-1 ≤ 0.040 AND LR top-1 ≤ 0.060 on `z[devel]`.
+- **(P1-G2)** Cold information preserved: cold-LR on `z` UAR ≥ 0.60.
+- **(P1-G3)** Class-margin emerged: intra/inter cosine gap ≥ 0.05.
+
+All three must PASS for a "Phase 1 PoC PASS" verdict. The gate is intentionally cheaper than the full A5.5 3-D gate (no full classifier training, no layer-weight stress test) — this is a diagnostic on whether the recipe activates the de-confounding mechanism at all, not a final A6 verdict.
+
+**Phase 1 decision tree (4 branches):**
+
+```text
+(A) ALL THREE gates PASS:
+    → Recipe works. Escalate to Phase 2 (open layer weights at lr×10 per M5,
+      attach classification head, full 3-D acceptance gate vs A2.5).
+    → Lock A6 = projection+head with speaker-masked-positive contrastive
+      pretraining as the canonical representation-level de-confounding rung.
+
+(B) GATES P1-G2 + P1-G3 PASS, P1-G1 FAILS (probe doesn't drop):
+    → Class-margin emerged but speaker is still in z. Likely cause: pseudo-speaker
+      labels at k=210 are too coarse (real speaker count >> 210, masked positives
+      still share many true speakers) OR temperature τ too low (encourages
+      sharp same-anchor neighborhoods that preserve speaker microstructure).
+    → Diagnostic before escalation: (a) re-cluster to k=420 or k=600 and re-run;
+      (b) τ sweep ∈ {0.05, 0.07, 0.1, 0.2}; (c) hard-negative mining (use
+      same-speaker-different-class as forced hard negatives).
+    → If diagnostics don't move the probe, accept "data + representation-level
+      can't de-confound on URTIC + frozen WavLM" and proceed to A7
+      (gradient-level adversary — only mechanism left below transformer fine-tune).
+
+(C) GATES P1-G1 PASS, P1-G2 FAILS (cold info collapsed):
+    → Contrastive objective stripped cold alongside speaker. Likely cause: λ_balance
+      between supervised-contrastive and cold-aware regularization is wrong;
+      the unmodified SupCon assumes cold and speaker are independently separable,
+      but URTIC's cold-in-voice-quality means the two are partially aligned in
+      pooled space. Stripping speaker direction strips part of cold direction.
+    → Diagnostic: add a cold-classification auxiliary loss with small weight λ_cls
+      (e.g., 0.1) to anchor cold linearity during contrastive training. Re-run.
+    → If aux-loss doesn't recover cold without losing speaker drop, document the
+      Pareto trade-off (analogous to A5.5's branch (c)) and lock A6 as
+      "speaker-invariant but UAR-degraded" with explicit framing.
+
+(D) NEITHER GATE PASSES (probe stays AND cold collapses):
+    → Recipe completely failed to learn structure. Most likely cause: projection
+      MLP collapsed to constant (all z ≈ same vector — class-margin gate would
+      flag this too). Diagnose batch composition (any anchor with 0 valid
+      positives → SupCon undefined; rejection rate too high collapses the loss).
+    → Fix batch sampler (force ≥ 1 cross-speaker positive per anchor by
+      construction), re-run.
+    → If still null, the head-only setting is too constrained and the contrastive
+      signal can't propagate into the frozen feature space. Escalate directly to
+      Phase 2 (open layer weights) without claiming Phase 1 PoC verdict.
+```
+
+**Cost.** ~30-60 min: 8532 chunks × 10 epochs × ~64 chunks/batch ≈ 1300 SGD steps; on cached pooled stats this is essentially compute-free per step. Phase 1 measurement (probes + class-margin) adds ~5 min. PoC fits well inside an hour.
+
+**Output.** `results/A6_phase1_PoC.json` with: contrastive loss curve (per epoch), Phase 1 measurement triple (speaker probe top-1 MLP/LR, cold-LR UAR on z, intra/inter cosine gap), batch-rejection rate, gate verdict (PASS / branch B/C/D), per-seed (3 seeds {42, 123, 7}). Checkpoints: `cache/microsoft_wavlm-large/A6_phase1_proj_seed{seed}.pt`.
+
+**Engineering deliverables for Phase 1.**
+
+- New module: `model/representation/contrastive.py` — projection MLP, SupCon loss with speaker-masked positives, batch sampler.
+- Cell in `run.ipynb`: Phase 1 training + measurement + verdict classifier (mirrors A5.5's auto-classifier pattern).
+- Reuses existing: `data.cached_dataset.PooledCacheDataset`, `data.cached_dataset.stratified_grouped_split`, `speakers.cluster.load_pseudo_speakers`, `speakers.probe.train_probe` (MLP), `honesty.speaker_probe` (LR).
+
+#### 4.9.2 Phase 2 — conditional escalation (scoped, conditional on Phase 1)
+
+**Triggers (Phase 1 verdict → Phase 2 action):**
+
+- **(A) PoC PASS** → Phase 2 is the canonical full A6, but the *depth* of intervention is an **open re-decision** with PoC evidence in hand. Two candidate Phase 2 recipes (deferred — pick after PoC verdict):
+  - **(A-i) Layer-weight-open + projection + classification head** (~2-4 hr GPU). Open WavLM layer weights at lr×10 (per M5 — layer subspace has gradient signal at higher lr), attach cold-classification head, train end-to-end with combined loss `L = L_classifier + λ_contrastive · L_supcon` (λ_contrastive ramped from 1.0 at epoch 0 to 0.1 by epoch 10 — contrastive shapes the representation early, classifier dominates late). Keeps the WavLM transformer frozen; only the layer mix re-orients under the contrastive + classification objective. Lowest-risk, highest-information escalation.
+  - **(A-ii) Full WavLM transformer fine-tune** (multi-hour-to-day GPU). Unfreeze WavLM, contrastive + classification losses propagate through the transformer. Strongest possible mechanism activation but expensive and may overfit on 8.5k train_fit chunks (URTIC is small for unfreezing a 300M-param transformer). Risky — better as a Phase 3 if (A-i) PASSes but is bottlenecked by the frozen-transformer ceiling.
+  - **Default (re-decide at PoC verdict):** if PoC PASSes with **strong margins on all 3 gates** (probe drop ≥ 2σ, cold-LR ≥ 0.62, class-margin ≥ 0.10), escalate directly to (A-i) — the layer-weight subspace likely carries enough capacity. If PoC PASSes with **borderline margins** (any gate within 1σ of threshold), the head-only ceiling is close to its limit; (A-i) may produce only marginal gains over PoC, so consider running (A-i) first as a 2-4 hr investment with a clear PASS/FAIL verdict before committing to (A-ii)'s multi-hour-to-day spend. **Re-ask the user with PoC numbers in hand rather than pre-committing.**
+- **(B) PoC branch B** (probe didn't drop) → Phase 2 is the diagnostic sweep (k re-cluster, τ sweep, hard-negative mining). Each diagnostic is its own ~30 min run; if any moves the probe below threshold, escalate to (A); otherwise proceed to A7. Cost: ~1.5-2 hr.
+- **(C) PoC branch C** (cold collapsed) → Phase 2 is auxiliary-loss recovery (add λ_cls·L_cls term, sweep λ_cls ∈ {0.05, 0.1, 0.25}). Cost: ~1.5 hr.
+- **(D) PoC branch D** (recipe failed) → Phase 2 is batch-sampler diagnosis + (if needed) direct escalation to layer-weight-open without Phase 1 verdict. Cost: ~30 min diag + 2-4 hr if escalated.
+
+**No Phase 2 plan locked yet** — keeping it conditional on Phase 1 results to avoid scoping work that the Phase 1 verdict may obviate. The Phase 1 PoC is the cheap diagnostic that decides Phase 2's direction.
+
+#### 4.9.3 Acceptance gate for the full A6 rung (post-Phase 2)
+
+**3-D acceptance gate vs A2.5 (mirrors A5.5's structure):**
+
+1. **UAR floor.** A6 head UAR ≥ A2.5 - 1σ (= 0.6525) on devel_test, 3 seeds.
+2. **Speaker probe drop.** MLP probe top-1 ≤ A2.5 - 1σ (= 0.0456) AND LR probe top-1 ≤ A2.5 - 1σ (= 0.0723) — at least one must clear by ≥ 2σ for a "strong PASS" verdict; both clearing at 1σ is "PASS".
+3. **Class-margin sustained** (replaces A5.5's mix-bit gate). Intra-class cosine ≥ inter-class cosine + 0.05 on devel — confirms the contrastive structure survived the classifier-head fine-tune.
+
+**Strong PASS:** all 3 with at least one probe clearing at 2σ. **PASS:** all 3 at 1σ. **PARTIAL PASS:** UAR floor + probe drop on one substrate (MLP or LR) but not both. **FAIL:** any other combination → re-scope toward A7.
+
+#### 4.9.4 A6 in the 3-level de-confounding ladder (paper framing)
+
+A5.5's modest contribution + null-on-probe is the load-bearing evidence that data-level intervention is insufficient. A6's value (whether PoC PASSes or FAILs) is **direct evidence about whether representation-level intervention is sufficient on URTIC + frozen WavLM**:
+
+- **A6 PoC PASS → full A6 PASS:** the de-confounding paper claim moves from "we tried two levels and only the representation level worked" to "we localized the de-confounding mechanism to the representation level." A7 becomes optional ablation (does adding gradient-level on top of representation-level help further?).
+- **A6 PoC PASS → full A6 PARTIAL:** representation level activates the mechanism but not enough; A7 is the load-bearing rung for the headline UAR + probe drop.
+- **A6 PoC FAIL (branch B/C/D, no escape via diagnostics):** the de-confounding paper claim becomes "neither data nor representation-level intervention works on URTIC + frozen WavLM at the contrastive-loss strength tested; A7 (gradient-level) is necessary." A7 becomes the paper's main contribution.
+
+Either outcome is publishable. A6 PoC's main risk is *invisibility* (silent PARTIAL where probe moves slightly but no gate clears) — the 3-of-3 gate at strict thresholds prevents that by forcing a categorical verdict.
 
 ---
 
