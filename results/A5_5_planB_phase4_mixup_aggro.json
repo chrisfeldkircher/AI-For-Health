@@ -1,0 +1,200 @@
+{
+  "rung_id": "A5_5_planB_phase4_mixup_aggro",
+  "description": "A5.5 Plan B Phase 4 AGGRESSIVE-\u03b1 variant. Same recipe as conservative Phase 4 but uses pooled_mixup_aggro_k* cache (\u03b1 \u223c U(0.50, 0.70) \u2014 35-50% partner contribution per mix). Tests whether more aggressive embedding mixup activates the de-confounding mechanism that the conservative variant didn't reach (UAR \u0394 +0.006 but probe didn't drop). 3 seeds {42, 123, 7}, warm-start from A2.5. Same 3-D acceptance gate.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7
+  ],
+  "anchor": "A2.5 (head_A2grouped_honestprior_seed{seed}.pt)",
+  "k_variants": 3,
+  "alpha_range": [
+    0.5,
+    0.7
+  ],
+  "distribution": {
+    "uar_argmax": {
+      "mean": 0.6397403093091034,
+      "std": 0.01860020637807867,
+      "n": 3
+    },
+    "uar_calibrated": {
+      "mean": 0.6322619579200781,
+      "std": 0.01937933262305812,
+      "n": 3
+    },
+    "recall_C": {
+      "mean": 0.4042412193505633,
+      "std": 0.12336193687547391,
+      "n": 3
+    },
+    "recall_NC": {
+      "mean": 0.860282696489593,
+      "std": 0.08760432984189448,
+      "n": 3
+    },
+    "val_test_gap": {
+      "mean": -0.006041077880048151,
+      "std": 0.02013006388130506,
+      "n": 3
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "best_epoch": 1,
+      "best_val_uar": 0.631997290957079,
+      "tau": 0.36499999999999994,
+      "uar_train_threshold_at_tau": 0.5519738404092293,
+      "devel_test_argmax": {
+        "uar": 0.6590086693260753,
+        "recall_C": 0.510934393638171,
+        "recall_NC": 0.8070829450139795
+      },
+      "devel_test_calibrated": {
+        "uar": 0.651148097435888,
+        "recall_C": 0.5427435387673957,
+        "recall_NC": 0.7595526561043803
+      },
+      "val_test_gap": -0.027011378368996253,
+      "cos_init_final": 0.9999778519564144
+    },
+    {
+      "seed": 123,
+      "best_epoch": 1,
+      "best_val_uar": 0.6340834099091911,
+      "tau": 0.57,
+      "uar_train_threshold_at_tau": 0.5160367788305886,
+      "devel_test_argmax": {
+        "uar": 0.6383229050672665,
+        "recall_C": 0.3856858846918489,
+        "recall_NC": 0.8909599254426841
+      },
+      "devel_test_calibrated": {
+        "uar": 0.6332133017366444,
+        "recall_C": 0.36381709741550694,
+        "recall_NC": 0.9026095060577819
+      },
+      "val_test_gap": -0.004239495158075424,
+      "cos_init_final": 0.9999814336299051
+    },
+    {
+      "seed": 7,
+      "best_epoch": 1,
+      "best_val_uar": 0.6350169934208958,
+      "tau": 0.8099999999999999,
+      "uar_train_threshold_at_tau": 0.49077831257689236,
+      "devel_test_argmax": {
+        "uar": 0.6218893535339686,
+        "recall_C": 0.3817097415506958,
+        "recall_NC": 0.8620689655172413
+      },
+      "devel_test_calibrated": {
+        "uar": 0.6124244745877021,
+        "recall_C": 0.3061630218687873,
+        "recall_NC": 0.9186859273066169
+      },
+      "val_test_gap": 0.013127639886927223,
+      "cos_init_final": 0.9999846491379144
+    }
+  ],
+  "speaker_probe_mlp": {
+    "top1": {
+      "mean": 0.048457689583301544,
+      "std": 0.0016377916140444028,
+      "n": 3
+    },
+    "nmi": {
+      "mean": 0.3732740294656277,
+      "std": 0.00541802228014664,
+      "n": 3
+    },
+    "runs": [
+      {
+        "seed": 42,
+        "top1": 0.04814505949616432,
+        "nmi": 0.3788987043015509,
+        "train_top1": 0.9385841537740272,
+        "best_epoch": 24
+      },
+      {
+        "seed": 123,
+        "top1": 0.04699874669313431,
+        "nmi": 0.36808951158008685,
+        "train_top1": 0.9438584153774027,
+        "best_epoch": 35
+      },
+      {
+        "seed": 7,
+        "top1": 0.050229262560606,
+        "nmi": 0.3728338725152454,
+        "train_top1": 0.9497187060478199,
+        "best_epoch": 39
+      }
+    ]
+  },
+  "speaker_probe_lr": {
+    "top1": {
+      "mean": 0.07352634867735888,
+      "std": 0.0005510833807674574,
+      "n": 3
+    },
+    "nmi": {
+      "mean": 0.4523272791051113,
+      "std": 0.0023451241333460483,
+      "n": 3
+    },
+    "runs": [
+      {
+        "seed": 42,
+        "top1": 0.0737346386169548,
+        "nmi": 0.4549261114612997
+      },
+      {
+        "seed": 123,
+        "top1": 0.07290147885857114,
+        "nmi": 0.4516867711066014
+      },
+      {
+        "seed": 7,
+        "top1": 0.07394292855655071,
+        "nmi": 0.4503689547474327
+      }
+    ]
+  },
+  "comparison_to_a2_5": {
+    "delta_uar_argmax": -0.01662261596620962,
+    "delta_mlp_top1": -0.00166736046473185,
+    "delta_lr_top1": 0.0010414496979795906
+  },
+  "comparison_to_conservative_planB": {
+    "conservative_uar": 0.6624235636198342,
+    "conservative_mlp": 0.05057662849624952,
+    "conservative_lr": 0.07588696799277929,
+    "delta_uar_vs_cons": -0.022683254310730816,
+    "delta_mlp_vs_cons": -0.002118938912947975,
+    "delta_lr_vs_cons": -0.0023606193154204064
+  },
+  "gates": {
+    "gate1_uar_floor": {
+      "target": 0.6525178076787085,
+      "achieved": 0.6397403093091034,
+      "passed": false
+    },
+    "gate2a_mlp_drop": {
+      "target": 0.04564038379808328,
+      "achieved": 0.048457689583301544,
+      "passed": false
+    },
+    "gate2b_lr_drop": {
+      "target": 0.07227660903978338,
+      "achieved": 0.07352634867735888,
+      "passed": false
+    },
+    "overall_passed": false,
+    "branch": "branch_d_both_degrade",
+    "decision": "branch (d, unexpected): UAR drops + probe doesn't drop \u2014 \u03b1 too aggressive for label validity AND insufficient for de-confounding"
+  },
+  "elapsed_minutes": 4.10447260538737
+}

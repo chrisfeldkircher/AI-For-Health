@@ -1,0 +1,69 @@
+{
+  "rung_id": "A5_5_planB_phase2_mixup_aggro",
+  "description": "A5.5 Plan B Phase 2-equiv AGGRESSIVE-\u03b1 variant. Mix WavLM pooled stats per chunk with \u03b1 \u223c Uniform(0.50, 0.70) \u2014 35-50% partner contribution. Tests whether more aggressive mixing activates the speaker-de-confounding mechanism that conservative \u03b1 (0.70, 0.85) didn't reach (Phase 4 conservative gave UAR \u0394 +0.006 but probe didn't drop). Cache subdir pooled_mixup_aggro_k{0,1,2}/ preserves the conservative-\u03b1 cache for comparison.",
+  "split_seed": 42,
+  "base_seed": 1042,
+  "k_variants": 3,
+  "alpha_range": [
+    0.5,
+    0.7
+  ],
+  "n_train_fit": 8532,
+  "elapsed_minutes": 1.1326474269231162,
+  "per_k": [
+    {
+      "k": 0,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "alpha_mean": 0.5995689392407425,
+      "alpha_std": 0.05796005249512539,
+      "alpha_range": [
+        0.5,
+        0.7
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178
+      },
+      "this_run_minutes": 0.30276323556900026
+    },
+    {
+      "k": 1,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "alpha_mean": 0.599136433449427,
+      "alpha_std": 0.05786056587462529,
+      "alpha_range": [
+        0.5,
+        0.7
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178
+      },
+      "this_run_minutes": 0.3023464639981588
+    },
+    {
+      "k": 2,
+      "n_total": 8532,
+      "n_successful_mixes": 8532,
+      "n_fallback_to_original": 0,
+      "alpha_mean": 0.6005039442176463,
+      "alpha_std": 0.058046478684896693,
+      "alpha_range": [
+        0.5,
+        0.7
+      ],
+      "partner_class_balance": {
+        "cold_partners_used": 863,
+        "nc_partners_used": 7669,
+        "cold_partner_rate": 0.10114861697140178
+      },
+      "this_run_minutes": 0.2988733410835266
+    }
+  ]
+}

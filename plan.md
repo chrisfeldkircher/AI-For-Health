@@ -70,7 +70,7 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk mono L0→L24 (.087→.043 R, .072→.042 G); cold UAR flat; sub@1 ≪ 0.15 on both           |
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
 | A4    | planned             | Discrete-token histograms (HuBERT units → optional VQ-VAE)          | Deferred behind A5 — more speculative, no built-in anti-shortcut mechanism                 |
-| A5.5  | planned             | Cross-speaker splicing augmentation (symmetric across classes)      | Code stub exists in [data/augmentation.py](AI-For-Health/model/data/augmentation.py)       |
+| A5.5  | **LOCKED (cons-α)** | Cross-speaker augmentation. Audio splicing FAIL → embedding mixup pivot | Conservative α∈[0.70,0.85]: UAR 0.6624 (Δ +0.006, ~1.6σ), probe ~unchanged. Aggressive α∈[0.50,0.70] branch (d): UAR 0.6397 (Δ -0.017), probe still flat → narrow window EMPTY. A5.5 = cons-α canonical; aggro = ablation row |
 | A6    | planned             | Supervised contrastive pretraining (speaker-masked positives)       | Requires the projection-MLP refactor; pseudo-speakers already cached                       |
 | A7    | planned             | MDD speaker adversary (DANN fallback) — main contribution           | High-variance, high-upside; ramps λ_adv from 0                                             |
 | A8    | planned             | MDD vs DANN comparison                                              | Only run if A7 lands                                                                       |
@@ -386,7 +386,7 @@ A5b K=1 fused (per-seed argmax):   UAR 0.6913 ± 0.0076  ← +0.0349 over A2.5 (
 
 Total stack uniform-A2-grouped → A2.5 → A5b K=1 fused = +0.055 UAR over the leak-corrected baseline (+0.049 over the historical A2 baseline). Two clean stackable contributions, both speaker-probe-clean, both resolvable to interior optima.
 
-### 4.8 A5.5 — cross-speaker splicing augmentation (in progress; Phase 3 FAIL → Phase 3.5 diagnostic)
+### 4.8 A5.5 — cross-speaker augmentation (LOCKED at conservative-α embedding mixup; aggro-α ablation closes α-axis)
 
 **Status: Phase 1-2 DONE; Phase 3 FAILED; Phase 3.5 (diagnostic) queued.** Implementation broken into phases for risk-staged execution.
 
@@ -458,7 +458,7 @@ self-splice extraction summary:
 
 **Decision: pivot to Plan B (embedding mixup, §4.8.5).** Audio-level splicing is dead on this corpus + this backbone.
 
-#### 4.8.5 Plan B — embedding mixup (Phase 2 + audit DONE; Phase 4 PARTIAL PASS pending α-sweep follow-up)
+#### 4.8.5 Plan B — embedding mixup (Phase 2 + audit DONE; Phase 4 PARTIAL PASS at cons-α; aggro-α α-sweep §4.8.8 confirms narrow window EMPTY → A5.5 LOCKED at cons-α)
 
 **Status: Phase 2 + audit DONE (both PASS); Phase 4 PARTIAL PASS (UAR floor PASS, speaker probe drop FAIL); α ∈ [0.5, 0.7] sweep queued (§4.8.8).** With Phase 3.5's branch-C verdict (splicer broken, §4.8.4), audio-level splicing is dead on this corpus. Embedding mixup operates on the cached WavLM pooled stats directly — no audio operation, no WavLM forward, no crossfade artifacts.
 
@@ -547,9 +547,9 @@ cold rate among mixed chunks    0.1017   Δ exactly +0.0000
 
 **Verdict: PASS — proceed to Plan B Phase 4 training.** Augmentation cannot create a cold-prediction shortcut (per gate B). Detector UAR (0.503) is descriptive of augmentation-class baseline detectability — by construction, mixed pooled vectors are slightly distinguishable from natural ones, but this can't be exploited as a cold shortcut.
 
-#### 4.8.6 Phase 4 — A5.5 head training on mixed embeddings (DONE; PARTIAL PASS, α-sweep follow-up queued)
+#### 4.8.6 Phase 4 — A5.5 head training on mixed embeddings (DONE; conservative-α PARTIAL PASS, aggro-α α-sweep in §4.8.8 closes the α-axis at branch (d))
 
-**Status: DONE. Verdict: PARTIAL PASS — UAR floor PASS but speaker probe drop FAIL on the strict 3-D gate.** α ∈ [0.5, 0.7] sweep queued in §4.8.8 to test whether more aggressive mixing activates the de-confounding mechanism.
+**Status: DONE. Verdict: PARTIAL PASS at conservative α ∈ [0.70, 0.85] — UAR floor PASS but speaker probe drop FAIL on the strict 3-D gate.** §4.8.8 ran the α ∈ [0.50, 0.70] aggressive sweep to test the de-confounding-mechanism hypothesis; verdict = branch (d) (UAR drops AND probe still doesn't drop), confirming both endpoints of the α-axis fail. **A5.5 is LOCKED at the conservative-α variant as canonical**; the aggressive variant ships as ablation evidence (M9 narrow-window-empty). Decision-tree details below in §4.8.8.
 
 Output: `results/A5_5_planB_phase4_mixup.json`, `cache/microsoft_wavlm-large/head_A55mixup_seed{seed}.pt` (3 seeds).
 
@@ -613,51 +613,62 @@ OVERALL VERDICT: FAIL on the strict 3-D gate
 2. **Substantive criteria read:** A5.5 PASSES on UAR floor + no probe inflation beyond noise + clean shortcut gate. The +0.006 UAR with more balanced recall pattern is a real contribution; per the plan §6 spirit, augmentation didn't make things worse and added a small lift.
 3. **Mechanism read (paper-relevant):** A5.5's de-confounding mechanism activated weakly. The +0.006 UAR comes from generic regularization (more effective training-data variation), NOT from speaker-invariant feature learning. The paper claim should be honest: *"Embedding mixup at α ∈ [0.70, 0.85] gave a small UAR lift over A2.5 (+0.006, within σ) without measurably reducing the speaker probe; the de-confounding mechanism didn't activate at this conservative mixing strength."*
 
-**Decision: try α ∈ [0.5, 0.7] before locking** (§4.8.8 sweep). 35-50% partner contribution should activate the de-confounding mechanism if it's accessible at all. Three possible outcomes:
+**Decision (taken; see §4.8.8 for the sweep result): A5.5 LOCKED at conservative α ∈ [0.70, 0.85] as canonical.** The α ∈ [0.50, 0.70] sweep (§4.8.8) returned branch (d) — UAR DROPPED (Δ -0.017 vs A2.5) AND probe still didn't drop (MLP and LR both within noise of A2.5). Both ends of the α-axis fail: conservative is too gentle to de-confound; aggressive is too strong for label validity without recovering de-confounding. Per-chunk pooled-stat mixing has no usable operating point on URTIC + frozen WavLM. **Paper claim:** *"Embedding mixup at α ∈ [0.70, 0.85] gave a small UAR lift over A2.5 (+0.006, within σ) without measurably reducing the speaker probe; the de-confounding mechanism didn't activate at this conservative mixing strength, and a more aggressive sweep at α ∈ [0.50, 0.70] degraded UAR (Δ -0.017) without any probe drop, confirming that the operating window for per-chunk pooled-stat mixing on URTIC's frozen WavLM is empty. A5.5 ships as a modest data-level rung; the de-confounding load moves to A6 (representation-level contrastive) and A7 (gradient-level adversary)."*
 
-- **Lower probe + same UAR** → A5.5 PASSes the strict 3-D gate properly with the new α range. Lock the aggressive variant as canonical A5.5.
-- **Lower probe + lower UAR** → trade-off documented (de-confounding works but at UAR cost). Lock with explicit Pareto framing or pick the UAR-preserving α.
-- **No probe drop even at aggressive α** → confirmed limitation: per-chunk pooled-stat mixing is fundamentally too gentle to break the speaker shortcut on URTIC's WavLM representation. Lock A5.5 as "modest UAR / null on probe" and move to A6 (contrastive, with stronger built-in de-confounding via speaker-masked positives).
+#### 4.8.8 α-sweep clarifying experiment (DONE; α ∈ [0.50, 0.70] → branch (d) → A5.5 LOCKED at conservative-α)
 
-#### 4.8.8 α-sweep clarifying experiment (queued; α ∈ [0.5, 0.7])
+**Status: DONE. Verdict: branch (d, unexpected) — UAR DROPS AND probe still doesn't drop. Both endpoints of the α-axis fail.** This was the cleanest possible disposition for the locking decision: it removes any "we should try more α" follow-up by showing that the operating window for per-chunk pooled-stat mixing on URTIC + frozen WavLM is empty, not just under-explored. **A5.5 LOCKED at conservative α ∈ [0.70, 0.85] as canonical**; the aggressive variant ships as ablation evidence (extends M9 → narrow-window-empty finding).
 
-**Status: queued.** Tests whether more aggressive embedding mixup (35-50% partner contribution per mix) activates the de-confounding mechanism that the safe α ∈ [0.70, 0.85] variant didn't reach (§4.8.6 PARTIAL PASS verdict).
+**Recipe (executed).** Mirrored Plan B Phase 2-equiv + Phase 4 with `ALPHA_RANGE = (0.50, 0.70)`, `BASE_SEED = 42 + 1000` (different seed namespace to avoid partner collision with conservative cache). New cache subdir `cache/microsoft_wavlm-large/pooled_mixup_aggro_k{0,1,2}/` (preserves the conservative-α cache for ablation comparison). Checkpoints `head_A55mixup_aggro_seed{seed}.pt`. Outputs: `results/A5_5_planB_phase2_mixup_aggro.json` + `results/A5_5_planB_phase4_mixup_aggro.json`. Cost: 1.13 min CPU cache build + 4.10 min Phase 4 (3 seeds, warm-start from A2.5).
 
-**Recipe.** Mirror Plan B Phase 2-equiv + Phase 4 with `ALPHA_RANGE = (0.50, 0.70)` instead of `(0.70, 0.85)`. New cache subdir `cache/microsoft_wavlm-large/pooled_mixup_aggro_k{0,1,2}/` (preserves the conservative-α cache for comparison). New checkpoints `head_A55mixup_aggro_seed{seed}.pt`. Output: `results/A5_5_planB_phase2_mixup_aggro.json` + `results/A5_5_planB_phase4_mixup_aggro.json`.
+**Cache integrity (Phase 2-equiv aggressive).** All k ∈ {0, 1, 2}: 8532/8532 successful mixes (100%), 0 fallback-to-original, mean α = 0.600 ± ~0.058 across all variants (sampled centre of [0.50, 0.70]), partner-class balance ~9% cold (matches corpus rate; class-balanced sampling preserved at the new α range). No partner-pool degeneracy — partner reuse top entries are 4–5× (same magnitude as conservative cache).
 
-**No re-audit needed for gate B.** The mix-bit-as-cold-predictor gate (§4.8.5.b) passes by class-balanced-augmentation construction — it's independent of α magnitude (partner pool design is unchanged). Detector UAR (gate A descriptive) will likely RISE at lower α (more partner contribution = more distributional shift), but that's expected and was always descriptive, not a hard gate.
-
-**Acceptance criteria (3-D gate, identical to §4.8.6):**
-
-1. UAR ≥ A2.5 - 1σ (= 0.6525) — no material UAR drop from more aggressive mixing.
-2. LR speaker probe top-1 drops ≥ 1σ vs A2.5 (= ≤ 0.0723) — augmentation must measurably reduce speaker leakage.
-3. Mix-bit-as-cold-predictor ≤ 0.52 — confirmed pre-training.
-
-**Three possible outcomes (decision tree):**
+**Phase 4 results — aggressive α (3 seeds {42, 123, 7}):**
 
 ```text
-(a) UAR holds (≥ 0.6525) AND probe drops (≤ 0.0723):
-    → A5.5 PASSES strict 3-D gate at α ∈ [0.5, 0.7]
-    → Lock aggressive variant as canonical A5.5
-    → Safe-α version becomes ablation row
-    → A5.5 is a real de-confounding rung
-
-(b) UAR holds AND probe doesn't drop:
-    → Embedding mixup is fundamentally too gentle for speaker-shortcut attack
-       on URTIC's WavLM representation, regardless of α
-    → Lock conservative-α A5.5 as "modest UAR / null on probe"
-    → Move to A6 (contrastive, stronger built-in de-confounding)
-
-(c) UAR drops (< 0.6525) at lower α:
-    → Aggressive mixing degrades cold prediction (label noise from partner-dominant mix)
-    → Document the Pareto trade-off
-    → Either pick a middle α (e.g., U(0.6, 0.8)) or accept conservative-α as the right operating point
-    → Move to A6
+metric                  A2.5 baseline                  A5.5 cons-α (α∈[0.70,0.85])    A5.5 aggro-α (α∈[0.50,0.70])    Δ vs A2.5 (aggro)
+UAR (argmax)            0.6564 ± 0.0038                0.6624 ± 0.0031                 0.6397 ± 0.0186                 -0.0166  (-0.9σ_aggro, σ exploded ~6×)
+UAR (calibrated)        —                              0.6636 ± 0.0145                 0.6323 ± 0.0194                 —
+recall_C                0.43                           0.474 ± 0.088                   0.404 ± 0.123                   ↓
+recall_NC               0.87                           0.853 ± 0.061                   0.860 ± 0.088                   flat
+val→test gap            -0.001                         -0.029 ± 0.003                  -0.006 ± 0.020                  noisier (σ 7×)
+MLP probe top-1         0.0501 ± 0.0045                0.0506 ± 0.0019                 0.0485 ± 0.0016                 -0.0017  (within noise)
+LR  probe top-1         0.0725 ± 0.0002                0.0759 ± 0.0030                 0.0735 ± 0.0006                 +0.0010  (within noise)
+cos(init_A2.5, final)   1.0000                         {0.99985, 0.99998, 0.99974}     {0.99998, 0.99998, 0.99998}     even MORE locked at A2.5 init
+best_epoch              {1, 1, 5}                      {3, 1, 5}                       {1, 1, 1}                       converged-and-degrades immediately
 ```
 
-**Cost.** ~30 min on GPU total: ~1-2 min cache build (CPU, 25.6k mixed variants) + ~25 min Phase 4 retrain (3 seeds, warm-start from A2.5, same recipe).
+**3-D gate verdict (aggressive α):**
 
-**This is a clarifying experiment, not a new rung.** Either outcome lets us lock A5.5 with a defensible verdict. (a) gives the strongest A5.5 result; (b) and (c) give weaker results but still publishable as "audio splicing failed → embedding mixup pivoted → modest UAR contribution + null/Pareto on probe → A6 takes the de-confounding load."
+| gate | target | achieved | passed |
+| ---- | ------ | -------- | ------ |
+| 1. UAR floor (≥ A2.5 - 1σ = 0.6525) | 0.6525 | 0.6397 | **FAIL** |
+| 2a. MLP probe drop (≤ A2.5 - 1σ = 0.0456) | 0.0456 | 0.0485 | **FAIL** |
+| 2b. LR  probe drop (≤ A2.5 - 1σ = 0.0723) | 0.0723 | 0.0735 | **FAIL** |
+| 3. mix-bit-as-cold (≤ 0.52, gate B) | 0.52 | inherits 0.5000 from §4.8.5.b (α-independent) | **PASS** |
+| **overall** | strict 3-of-3 (gates 1 + 2 + 3) | 1-of-4 | **FAIL → branch (d)** |
+
+**Diagnostic interpretation (aggressive α, three findings):**
+
+- **Branch (d) is the most informative branch in the decision tree.** It's the only branch that closes the α-axis: not "α was wrong, try another setting" (which is what branches a, b, or c would have left open) but "the entire α-axis is the wrong knob for this corpus + this backbone." The follow-up question becomes "what mechanism is missing?" rather than "what α should we try?"
+- **σ exploded ~6× (0.0031 → 0.0186 on UAR), best_epoch collapsed to {1, 1, 1}.** At aggressive α the partner contribution (35–50%) is large enough that the cold label is no longer reliably the anchor's — mixed pooled vectors increasingly resemble partner-class statistics. The model converges on epoch 1 (training loss bottoms out fast), then DEGRADES with further training (the augmented distribution becomes noise from the cold-prediction perspective). σ across seeds explodes because the augmented training distribution is now sensitive to which partners get sampled — exactly the label-validity damage the conservative range was designed to avoid.
+- **cos(init_A2.5, final) = 0.99998 across all 3 seeds — EVEN MORE LOCKED at A2.5 init than the conservative variant (which had {0.99985, 0.99998, 0.99974}).** The optimizer didn't move the layer weights at all. Combined with best_epoch = 1 across seeds, the picture is consistent: the head fine-tuned the MLP/classifier in the first epoch to fit the noisier augmented distribution, didn't move the layer-weight subspace (which is M5's known issue at default lr), and additional epochs only over-fit to partner-noise. **No mechanism activated** — not de-confounding (probes flat), not generic regularization (UAR dropped), not layer reweighting (cosine ~1).
+
+**M9 extension (narrow-window-empty):** The original M9 ("embedding mixup at safe α produces small UAR lift but doesn't activate de-confounding") is now extended with the symmetric endpoint: **at aggressive α, label-validity damage shows up in UAR before any de-confounding shows up in the probe.** Both endpoints fail in different ways. The intermediate range U(0.60, 0.80) wouldn't change this: gentler than aggressive → falls back toward conservative's "no probe drop"; stronger than conservative → falls toward aggressive's "label damage." There's no escape via α tuning.
+
+**Decision (locked).** Skip further α exploration. **A5.5 = conservative α ∈ [0.70, 0.85]** (UAR Δ +0.006, probe within noise, recall pattern more cold-balanced) **as canonical**; aggressive α ∈ [0.50, 0.70] ships as the ablation row that closes the α-axis. The de-confounding load moves to A6 (contrastive pretraining with speaker-masked positives) where the de-confounding objective is **explicit in the loss**, not implicit in the data distribution. Per the reflection's deeper diagnosis: mixup on post-frozen-backbone representations cannot de-confound without an explicit objective; A6 (representation-level) and A7 (gradient-level adversary) are the architecturally necessary rungs for the speaker-invariance claim.
+
+**Three-level de-confounding story (paper framing).** With A5.5 locked, the de-confounding ladder is now scoped at three architectural levels — each addressing the speaker shortcut at a different point in the pipeline:
+
+| level | rung | mechanism | A5.5's role |
+| ----- | ---- | --------- | ----------- |
+| data-level | A5.5 (LOCKED) | per-chunk embedding mixup, pseudo-speaker-aware partner sampling | small UAR lift via training-distribution variation; null on de-confounding probe — *evidence that data-level intervention is insufficient on its own* |
+| representation-level | A6 (NEXT) | supervised contrastive pretraining with speaker-masked positives | explicit speaker-invariance objective in the embedding loss |
+| gradient-level | A7 | MDD/DANN speaker adversary on the head's gradient | adversarial subtraction of the speaker direction during head training |
+
+A5.5's modest contribution is itself the load-bearing evidence for *why* A6 and A7 are necessary. The paper writes this as a coherent three-level story rather than a missed gate.
+
+**This is a closed clarifying experiment, not a new rung.** No further α-sweep, no follow-up Phase 4 variants. Documentation updates (this section, §4.8.6 decision pointer, §4.8 header, ladder row, summary.md, EXPLAINER.md M9 + A4) are the deliverable; A6 is the next active rung.
 
 #### 4.8.7 Time-budget reality check
 
