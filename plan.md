@@ -935,54 +935,69 @@ Either outcome is publishable. A6 PoC's main risk is *invisibility* (silent PART
   - **Cold head**: `Linear(128, 2)` trained with class-balanced cross-entropy on cold labels.
   - **Speaker discriminator**: `GradReverse(λ_adv) → Linear(128, 256) → GELU → Linear(256, n_speakers=210)` trained with cross-entropy on pseudo-speaker labels.
 - **Loss.** `L = L_cold_CE + L_speaker_CE`. The gradient reversal layer `GradReverse(λ)` passes the forward pass unchanged but multiplies gradients by `-λ` on the backward pass — so the projection sees the speaker discriminator's gradient as a *push to make speaker harder to predict*, while the discriminator itself still trains normally to predict speaker (an arms race).
-- **λ_adv schedule.** Standard Ganin sigmoid ramp `λ_adv(p) = λ_max · (2/(1+exp(-10p)) - 1)` where `p = epoch/total_epochs`. Sweep `λ_max ∈ {0.0, 0.1, 0.5, 1.0}` (λ_max=0 reproduces cold-CE-only at this code path — sanity check, mirrors the A6b λ=0 baseline).
+- **λ_adv schedule.** Standard Ganin sigmoid ramp `λ_adv(p) = λ_max · (2/(1+exp(-10p)) - 1)` where `p = epoch/total_epochs`. Sweep `λ_max ∈ {0.0, 0.01, 0.03, 0.1, 0.3, 1.0}` — finer at the low end because speaker and cold are entangled (λ=1 may scrub useful disease signal); λ_max=0 reproduces "everything except the adversary" at this code path and is **the primary matched control** (not A2.5) for the acceptance gate. Mirrors the A6b λ=0 baseline pattern.
 - **Optimizer.** AdamW, lr 1e-4 on projection + heads, lr 1e-5 on layer_weights (M5's lr×10 from base 1e-4 — actually lr×0.1 from the head lr; this is the "layer weights open at lr×10" in M5 terminology). Weight decay 1e-4. 20 epochs (longer than A6 because adversarial training is noisier and needs the ramp to anneal).
 - **Splits.** Train on `train_fit` (grouped, 8532 chunks) with the existing `SpeakerBlockSampler` (8 spk × 8 chunks = 64). Devel never seen during training.
 - **Anchor.** Warm-start the projection from cold-CE-only PoC checkpoint (the C2 control from §4.9.1.1) so the projection starts at a known-good cold geometry. Layer_weights warm-start from A2.5. Speaker discriminator initialized fresh.
 
-**Phase 1 measurement protocol.** Same as A6 PoC + controls (M10-disciplined apples-to-apples on 128-d L2-normalized z):
+**Phase 1 measurement protocol.** Same as A6 PoC + controls (M10-disciplined apples-to-apples on 128-d L2-normalized z), plus adversary-health diagnostics:
 
 1. **Speaker probe on `z` after training** (the de-confounding measurement). Train MLP probe (`speakers/probe.py`) and LR probe (`honesty/probe.py`) on `z[train_fit]` with pseudo-speaker targets, evaluate on `z[devel]`. Report top-1 + NMI.
 2. **Cold linearity probe on `z`** (sanity: did adversary destroy cold info?). Train cold-LR probe; report UAR + recall_pos / recall_neg.
 3. **Class-margin diagnostic.** intra/inter cosine on `z[devel]`.
-4. **Cold classifier UAR on devel_test.** The actual headline number — does the cold head's prediction (not just the probe-on-z) clear the A2.5-based gate?
+4. **Cold classifier UAR on devel_test.** The actual headline number — does the cold head's prediction (not just the probe-on-z) clear the gate?
+5. **Adversary-health diagnostics (per-epoch logging during training):** speaker discriminator train accuracy on the batch, and devel-set discriminator accuracy at end-of-training. **Why this matters:** if discriminator train accuracy stays near chance (1/210 ≈ 0.005), the adversary isn't learning to predict speaker → no adversarial signal → null verdict is uninterpretable. If it climbs to ~1.0 immediately, it's overfitting → noisy/weak signal. Healthy: steady climb that the GRL pulls back over time, leaving the discriminator at a meaningful but non-saturated level (e.g., 0.05-0.30). This diagnostic is what makes the verdict interpretable — without it, "λ=0 best" could mean "adversary actually hurts" OR "adversary never trained" and we can't tell which.
 
-**Phase 1 acceptance gate (3-D vs A2.5).**
+**Phase 1 acceptance gate — MATCHED CONTROL (vs λ=0, not A2.5).** A2.5 is the global reference but A7's λ=0 sibling is architecturally identical to A7(λ>0) except for the adversary, so it isolates the adversary's contribution. A7 with λ=0 already has the layer-weight-open training, the projection MLP, the warm start, and the 20-epoch horizon — comparing A7(λ>0) to A2.5 instead would conflate "layer-weight training helps" with "adversary helps." Tiered verdict, mirrors A6b's pattern:
 
-- **(A7-G1) UAR floor.** Cold classifier UAR on devel_test ≥ A2.5 - 1σ (= 0.6525), 3 seeds.
-- **(A7-G2) Speaker probe drops ≥ 2σ vs A2.5.** MLP probe top-1 ≤ A2.5 - 2σ (= 0.0411) AND LR probe top-1 ≤ A2.5 - 2σ (= 0.0721). Note: the 2σ requirement is stricter than A6's 1σ because A7 is the load-bearing rung — we want a clear de-confounding signal, not borderline.
-- **(A7-G3) M10 bottleneck control.** A7's z-substrate probes must beat both: (a) random-projection at the same dim (LR ≤ 0.0427), and (b) cold-CE-only at the same dim (LR ≤ 0.0371). Otherwise the apparent probe drop is bottleneck + CE, not adversary.
+- **(A7-Strict)** Probe drop ≥ 2σ_{λ=0} vs the λ=0 mean (both MLP and LR substrates), AND cold classifier UAR ≥ λ=0_mean - 1σ_{λ=0}. The 2σ requirement is stricter than A6's 1σ because A7 is the load-bearing de-confounding rung — we want a clear adversary signal.
+- **(A7-Soft)** Probe drop ≥ 1σ_{λ=0} on at least one substrate, AND cold UAR ≥ λ=0_mean - 0.5σ_{λ=0} (preserved within tighter noise). Catches cases where the adversary moved one substrate cleanly while leaving the other within noise — analogous to A6b's `A_soft_PASS` framing.
+- **(A7-G3) M10 same-scope control.** A7 must also beat **random projection at layer-weight-open scope** on the LR probe. The λ=0 control IS the cold-CE-at-layer-weight-open baseline (so "beats λ=0" subsumes the cold-CE control). Random projection at the same scope is the additional control row to disambiguate "did the layer-weight training shape the geometry beyond what random init achieves?" — necessary to claim the layer-weight scope itself activates de-confounding pressure.
+- **A2.5 reference comparison** still reported in the table for global context, but it's diagnostic, not gating.
 
-**Phase 1 decision tree (4 branches):**
+**Phase 1 decision tree (5 branches with the tiered verdict):**
 
 ```text
-(A) λ_max > 0 wins on G1 + G2 + G3:
-    → Adversary works. Lock best λ_max as canonical A7. Escalate to Phase 2
-      (longer training, MDD substitution as ablation, full transformer
+(A_strict_PASS) Best λ_max wins on A7-Strict + A7-G3:
+    → Adversary clearly works. Lock best λ_max as canonical A7. Escalate to
+      Phase 2 (longer training, MDD substitution as ablation, full transformer
       fine-tune as Phase 3 if Phase 2 plateaus).
 
-(B) λ_max = 0 strict best (no adversary helps):
-    → DANN at this scope/recipe doesn't activate de-confounding either.
-      Try MDD (more principled discrepancy bound) before declaring A7 dead.
-      If MDD also fails → de-confounding at any architectural level is
-      mechanism-resistant on URTIC + frozen WavLM. Paper becomes a strong
-      negative-result methodology contribution: "all three levels tested,
-      none clears the gate at the strengths tested."
+(A_soft_PASS) Best λ_max wins on A7-Soft (not Strict) + A7-G3:
+    → Adversary partially activates. Lock best λ_max as canonical A7 with
+      "soft PASS" framing. Phase 2 escalation considers MDD substitution
+      first (stronger discrepancy bound may convert soft -> strict) before
+      committing to full-fine-tune.
 
-(C) λ_max > 0 lowers probe but drops UAR (Pareto trade-off):
-    → Document the trade-off. Try smaller λ_max grid {0.01, 0.05, 0.1}
-      or warmer ramp schedule. If no setting clears both gates → A7
-      ships as "speaker-invariant but UAR-degraded" with explicit Pareto
-      framing.
+(B) λ_max = 0 strict best (no adversary helps) AND adversary discriminator
+trained meaningfully (train acc > 5x chance, e.g., > 0.025):
+    → DANN at this scope/recipe doesn't activate de-confounding. Adversary
+      saw real speaker signal but couldn't push it out of z. Try MDD before
+      declaring A7 dead. If MDD also fails -> de-confounding at any
+      architectural level is mechanism-resistant on URTIC + frozen WavLM.
+      Paper becomes a strong negative-result methodology contribution.
+
+(B_null) λ_max = 0 strict best AND discriminator never trained meaningfully
+(train acc ~ chance):
+    → Verdict uninterpretable -- adversary signal was null because the
+      discriminator architecture is too weak or the GRL gradient is being
+      cancelled. Diagnose: (a) deeper/wider discriminator; (b) lower lr on
+      adversary; (c) decouple discriminator and projection updates (alternate
+      step like GAN training). Re-run before claiming B.
+
+(C) λ_max > 0 lowers probe but drops UAR below A7-Soft floor (Pareto trade-off):
+    → Document the trade-off. Try smaller λ_max grid {0.005, 0.01} or warmer
+      ramp schedule. If no setting clears both gates -> A7 ships as
+      "speaker-invariant but UAR-degraded" with explicit Pareto framing.
 
 (D) Adversary destabilises training (loss diverges, UAR collapses to chance):
-    → λ_max too aggressive at this scope. Switch to constant-λ schedule
-      with smaller values, or warm up λ over more epochs.
+    → λ_max too aggressive at this scope. Switch to constant-λ schedule with
+      smaller values, or warm up λ over more epochs.
 ```
 
-**Cost.** ~1-2 hr GPU: 4 λ_max × 3 seeds × ~5-10 min each (longer than A6 because layer_weights are open + 20 epochs vs 10). Plus M10/M11 controls (~5 min — random projection at layer-weight-open scope; cold-CE-only at layer-weight-open scope). Total fits in a single afternoon.
+**Cost.** ~2-3 hr GPU: 6 λ_max × 3 seeds × ~5-10 min each (longer than A6 because layer_weights are open + 20 epochs vs 10). λ=0 IS the cold-CE-at-layer-weight-open control (no separate run needed); random-projection-at-layer-weight-open adds 1 extra row × 3 seeds (~15 min). Total fits in an afternoon.
 
-**Output.** `results/A7_phase1_PoC.json` — λ_adv sweep + per-seed metrics + tiered verdict + control rows. Checkpoints: `cache/microsoft_wavlm-large/A7_phase1_proj_seed{seed}_lambda{λ}.pt`.
+**Output.** `results/A7_phase1_PoC.json` — λ_adv sweep + per-seed metrics + adversary-health diagnostics + tiered verdict + matched-control row + random-projection row. Checkpoints: `cache/microsoft_wavlm-large/A7_phase1_proj_seed{seed}_lambda{λ}.pt`.
 
 **Engineering deliverables for Phase 1.**
 
