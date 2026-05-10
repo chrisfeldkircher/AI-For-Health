@@ -707,24 +707,37 @@ After contrastive pretraining, evaluate the projection-MLP output `z ∈ R^128` 
 2. **Cold linearity probe on `z`** (sanity: is cold info still present?). Train logistic regression on `z[train_fit]` with cold targets, evaluate on `z[devel]`. Report UAR. **Target: cold-LR UAR on `z` ≥ 0.60 (within ~5pp of A2.5's full-stack 0.6564) — confirms the projection didn't strip the cold signal alongside the speaker signal.**
 3. **Class-collapse diagnostic.** Compute mean intra-class cosine similarity vs mean inter-class cosine similarity on `z[devel]`. **Target: intra-class > inter-class by ≥ 0.05** (the contrastive objective should produce a measurable class margin in cosine space).
 
-**Phase 1 PoC acceptance gate (3 conditions).**
+**Phase 1 PoC acceptance gate (tiered P1-G1; 3 conditions).**
 
-- **(P1-G1)** Speaker probe drops: MLP top-1 ≤ 0.040 AND LR top-1 ≤ 0.060 on `z[devel]`.
+- **(P1-G1)** Speaker probe drops — **two tiers**:
+  - **strict:** MLP top-1 ≤ 0.040 AND LR top-1 ≤ 0.060 on `z[devel]` (clear de-confounding signal on both substrates).
+  - **soft:**   MLP top-1 ≤ 0.040 AND LR top-1 ≤ 0.0727 (LR didn't *inflate* beyond A2.5 + 1 seed-σ = 0.0725 + 0.0002; MLP still cleared strict). Catches "MLP responded to the contrastive objective; LR substrate weak but not damaged."
 - **(P1-G2)** Cold information preserved: cold-LR on `z` UAR ≥ 0.60.
 - **(P1-G3)** Class-margin emerged: intra/inter cosine gap ≥ 0.05.
 
-All three must PASS for a "Phase 1 PoC PASS" verdict. The gate is intentionally cheaper than the full A5.5 3-D gate (no full classifier training, no layer-weight stress test) — this is a diagnostic on whether the recipe activates the de-confounding mechanism at all, not a final A6 verdict.
+`A_strict_PASS` requires P1-G1 strict + G2 + G3; `A_soft_PASS` requires P1-G1 soft + G2 + G3 (and not strict). Both escalate to Phase 2, but the soft tier flags the LR substrate as weak signal and recommends a τ-sweep diagnostic before committing to the heavier (A-ii) full-fine-tune. The gate is intentionally cheaper than the full A5.5 3-D gate (no full classifier training, no layer-weight stress test) — this is a diagnostic on whether the recipe activates the de-confounding mechanism at all, not a final A6 verdict.
 
-**Phase 1 decision tree (4 branches):**
+**Phase 1 decision tree (5 branches with the tiered P1-G1):**
 
 ```text
-(A) ALL THREE gates PASS:
-    → Recipe works. Escalate to Phase 2 (open layer weights at lr×10 per M5,
-      attach classification head, full 3-D acceptance gate vs A2.5).
-    → Lock A6 = projection+head with speaker-masked-positive contrastive
-      pretraining as the canonical representation-level de-confounding rung.
+(A_strict_PASS) ALL gates PASS at strict P1-G1:
+    → Recipe works clearly on both probe substrates. Escalate to Phase 2
+      (re-decide A-i layer-weight-open vs A-ii full-fine-tune per §4.9.2).
+    → Default escalation: A-i if all gates clear with strong margins, else
+      A-i first as the cheaper investment before considering A-ii.
 
-(B) GATES P1-G2 + P1-G3 PASS, P1-G1 FAILS (probe doesn't drop):
+(A_soft_PASS) ALL gates PASS at soft P1-G1 (MLP strict; LR within noise):
+    → MLP cleared strict but LR substrate weak (between strict 0.060 and
+      soft-noise 0.0727). The contrastive objective activated asymmetrically.
+    → Escalate to Phase 2 — but BEFORE committing to (A-ii)'s heavy spend,
+      run the branch-(B) sub-action τ-sweep ∈ {0.05, 0.07, 0.1, 0.2} as a
+      ~30 min diagnostic to test whether a different temperature lifts the
+      LR substrate too. If it does, re-run as (A_strict_PASS) and proceed
+      to (A-i). If not, escalate to (A-i) at τ=0.07 as the working setting
+      and accept the LR substrate is intrinsically weaker on URTIC.
+
+(B) GATES P1-G2 + P1-G3 PASS, P1-G1 SOFT FAILS (probe didn't drop, even at the
+soft threshold — i.e., MLP > 0.040 OR LR > 0.0727):
     → Class-margin emerged but speaker is still in z. Likely cause: pseudo-speaker
       labels at k=210 are too coarse (real speaker count >> 210, masked positives
       still share many true speakers) OR temperature τ too low (encourages
@@ -736,7 +749,7 @@ All three must PASS for a "Phase 1 PoC PASS" verdict. The gate is intentionally 
       can't de-confound on URTIC + frozen WavLM" and proceed to A7
       (gradient-level adversary — only mechanism left below transformer fine-tune).
 
-(C) GATES P1-G1 PASS, P1-G2 FAILS (cold info collapsed):
+(C) GATES P1-G1 PASS (any tier), P1-G2 FAILS (cold info collapsed):
     → Contrastive objective stripped cold alongside speaker. Likely cause: λ_balance
       between supervised-contrastive and cold-aware regularization is wrong;
       the unmodified SupCon assumes cold and speaker are independently separable,
@@ -762,7 +775,7 @@ All three must PASS for a "Phase 1 PoC PASS" verdict. The gate is intentionally 
 
 **Cost.** ~30-60 min: 8532 chunks × 10 epochs × ~64 chunks/batch ≈ 1300 SGD steps; on cached pooled stats this is essentially compute-free per step. Phase 1 measurement (probes + class-margin) adds ~5 min. PoC fits well inside an hour.
 
-**Output.** `results/A6_phase1_PoC.json` with: contrastive loss curve (per epoch), Phase 1 measurement triple (speaker probe top-1 MLP/LR, cold-LR UAR on z, intra/inter cosine gap), batch-rejection rate, gate verdict (PASS / branch B/C/D), per-seed (3 seeds {42, 123, 7}). Checkpoints: `cache/microsoft_wavlm-large/A6_phase1_proj_seed{seed}.pt`.
+**Output.** `results/A6_phase1_PoC.json` with: contrastive loss curve (per epoch), Phase 1 measurement triple (speaker probe top-1 MLP/LR, cold-LR UAR on z, intra/inter cosine gap), batch-rejection rate, tiered gate verdict (`P1_G1_strict`, `P1_G1_soft`, `P1_G2_cold_preserved`, `P1_G3_class_margin`), branch enum ∈ {A_strict_PASS, A_soft_PASS, B_probe_didnt_drop, C_cold_collapsed, D_recipe_failed_or_mixed}, per-seed (3 seeds {42, 123, 7}). Checkpoints: `cache/microsoft_wavlm-large/A6_phase1_proj_seed{seed}.pt`.
 
 **Engineering deliverables for Phase 1.**
 
@@ -774,10 +787,14 @@ All three must PASS for a "Phase 1 PoC PASS" verdict. The gate is intentionally 
 
 **Triggers (Phase 1 verdict → Phase 2 action):**
 
-- **(A) PoC PASS** → Phase 2 is the canonical full A6, but the *depth* of intervention is an **open re-decision** with PoC evidence in hand. Two candidate Phase 2 recipes (deferred — pick after PoC verdict):
+- **(A_strict_PASS or A_soft_PASS) PoC PASS** → Phase 2 is the canonical full A6, but the *depth* of intervention is an **open re-decision** with PoC evidence in hand. Two candidate Phase 2 recipes (deferred — pick after PoC verdict):
   - **(A-i) Layer-weight-open + projection + classification head** (~2-4 hr GPU). Open WavLM layer weights at lr×10 (per M5 — layer subspace has gradient signal at higher lr), attach cold-classification head, train end-to-end with combined loss `L = L_classifier + λ_contrastive · L_supcon` (λ_contrastive ramped from 1.0 at epoch 0 to 0.1 by epoch 10 — contrastive shapes the representation early, classifier dominates late). Keeps the WavLM transformer frozen; only the layer mix re-orients under the contrastive + classification objective. Lowest-risk, highest-information escalation.
   - **(A-ii) Full WavLM transformer fine-tune** (multi-hour-to-day GPU). Unfreeze WavLM, contrastive + classification losses propagate through the transformer. Strongest possible mechanism activation but expensive and may overfit on 8.5k train_fit chunks (URTIC is small for unfreezing a 300M-param transformer). Risky — better as a Phase 3 if (A-i) PASSes but is bottlenecked by the frozen-transformer ceiling.
-  - **Default (re-decide at PoC verdict):** if PoC PASSes with **strong margins on all 3 gates** (probe drop ≥ 2σ, cold-LR ≥ 0.62, class-margin ≥ 0.10), escalate directly to (A-i) — the layer-weight subspace likely carries enough capacity. If PoC PASSes with **borderline margins** (any gate within 1σ of threshold), the head-only ceiling is close to its limit; (A-i) may produce only marginal gains over PoC, so consider running (A-i) first as a 2-4 hr investment with a clear PASS/FAIL verdict before committing to (A-ii)'s multi-hour-to-day spend. **Re-ask the user with PoC numbers in hand rather than pre-committing.**
+  - **Default (re-decide at PoC verdict):**
+    - If `A_strict_PASS` with **strong margins on all 3 gates** (probe drop ≥ 2σ, cold-LR ≥ 0.62, class-margin ≥ 0.10), escalate directly to (A-i) — the layer-weight subspace likely carries enough capacity.
+    - If `A_strict_PASS` with **borderline margins** (any gate within 1σ of threshold), the head-only ceiling is close to its limit; run (A-i) first as a 2-4 hr investment with a clear PASS/FAIL verdict before committing to (A-ii)'s multi-hour-to-day spend.
+    - If `A_soft_PASS`, the LR substrate is weak. **Run the τ-sweep diagnostic first** (~30 min, branch-B sub-action). If τ-sweep recovers `A_strict_PASS`, proceed to (A-i) at the new τ. If not, proceed to (A-i) at τ=0.07 and accept LR is intrinsically weaker on URTIC.
+    - **Re-ask the user with PoC numbers in hand rather than pre-committing.**
 - **(B) PoC branch B** (probe didn't drop) → Phase 2 is the diagnostic sweep (k re-cluster, τ sweep, hard-negative mining). Each diagnostic is its own ~30 min run; if any moves the probe below threshold, escalate to (A); otherwise proceed to A7. Cost: ~1.5-2 hr.
 - **(C) PoC branch C** (cold collapsed) → Phase 2 is auxiliary-loss recovery (add λ_cls·L_cls term, sweep λ_cls ∈ {0.05, 0.1, 0.25}). Cost: ~1.5 hr.
 - **(D) PoC branch D** (recipe failed) → Phase 2 is batch-sampler diagnosis + (if needed) direct escalation to layer-weight-open without Phase 1 verdict. Cost: ~30 min diag + 2-4 hr if escalated.
