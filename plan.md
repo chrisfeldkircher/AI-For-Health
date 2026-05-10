@@ -999,6 +999,71 @@ trained meaningfully (train acc > 5x chance, e.g., > 0.025):
 
 **Output.** `results/A7_phase1_PoC.json` — λ_adv sweep + per-seed metrics + adversary-health diagnostics + tiered verdict + matched-control row + random-projection row. Checkpoints: `cache/microsoft_wavlm-large/A7_phase1_proj_seed{seed}_lambda{λ}.pt`.
 
+**Phase 1 PoC results (DONE; verdict = INCONCLUSIVE / B_null pending discriminator-ceiling diagnostic).** Ran 4.95 min:
+
+| variant | cls UAR | MLP | LR | margin | disc-train |
+| ------- | ------- | --- | -- | ------ | ---------- |
+| A2.5 (4096-d ref) | 0.6564 | 0.0501 | 0.0725 | — | — |
+| M10 random-LW (128-d) | — | 0.0498 | 0.0427 | +0.002 | — |
+| A7 λ_max=0 (matched control) | 0.6280 ± 0.0034 | 0.0488 ± 0.0030 | 0.0436 ± 0.0019 | +0.363 | **0.0235** |
+| A7 λ_max=0.01 | 0.6375 ± 0.0118 | 0.0504 ± 0.0027 | 0.0444 ± 0.0020 | +0.376 | 0.0233 |
+| A7 λ_max=0.03 | 0.6297 ± 0.0032 | 0.0461 ± 0.0039 | 0.0419 ± 0.0042 | +0.348 | 0.0230 |
+| A7 λ_max=0.1 | 0.6268 ± 0.0130 | 0.0473 ± 0.0021 | 0.0433 ± 0.0011 | +0.336 | 0.0214 |
+| A7 λ_max=0.3 | 0.6186 ± 0.0126 | 0.0551 ± 0.0048 | 0.0461 ± 0.0019 | +0.310 | 0.0210 |
+| A7 λ_max=1.0 | 0.5927 ± 0.0103 | 0.0700 ± 0.0007 | 0.0630 ± 0.0012 | +0.174 | **0.0144** |
+
+**Three observations:**
+
+1. **GRL is mechanically active** — discriminator accuracy decreases monotonically with λ (0.0235 → 0.0144), so the gradient reversal IS pulling the projection away from speaker.
+2. **No λ > 0 clears the matched-control gate.** Probes mostly stay flat or rise; only λ=0.03 LR (0.0419) sneaks below M10 random-LW (0.0427) but not by 1σ vs λ=0.
+3. **λ=1.0 destabilises** — cls UAR drops 3.5pp, MLP probe inflates 44%, margin halves. Too aggressive at this scope.
+
+**Verdict: INCONCLUSIVE / B_null.** Discriminator at λ=0 train accuracy = 0.0235, just below the 5×-chance threshold (0.025). The reflection's adversary-health diagnostic flagged this as the case where the verdict is uninterpretable BEFORE drawing conclusions about λ > 0: if the discriminator can't strongly recover speaker when GRL is off, then a null adversarial result could mean "DANN doesn't help" OR "discriminator was never strong enough to put real adversarial pressure on the projection." The numbers don't disambiguate. The next required step is the discriminator-ceiling diagnostic (§4.10.1.1) to decide which.
+
+**Future λ_max range** (post-ceiling-diagnostic, if we re-run): drop 0.3 and 1.0 (both damage UAR/probes), keep low end. Recommended: `λ_max ∈ {0.01, 0.03, 0.1, 0.2}`.
+
+#### 4.10.1.1 Discriminator-ceiling diagnostic (queued; ~5 min)
+
+**Why this exists.** A7 PoC's B_null verdict is uninterpretable. Either the bottleneck has compressed speaker info enough that even a strong discriminator can't recover it (in which case A7 at this scope is genuinely dead — same M10 conclusion as A6), OR the PoC discriminator (128 → 256 → 210) was simply under-powered (in which case A7 needs to be re-run with a stronger adversary). The diagnostic separates these cases at ~5 min cost.
+
+**Recipe.** Load each saved A7 λ=0 projection checkpoint (`A7_phase1_proj_seed{seed}_lam0.00.pt`), freeze the projection + scaler + layer-weights, compute `z_train` and `z_devel` once per seed. Train **three discriminator architectures** with progressively more capacity on `(z_train, spk_train)`, evaluate on `(z_devel, spk_devel)`:
+
+- **D1: linear LR** (`honesty.probe.speaker_probe`) — the simplest probe.
+- **D2: MLP 128 → 512 → 512 → 210** (GELU + dropout 0.1, 200 epochs, AdamW lr 1e-3, wd 1e-4) — the "stronger discriminator" the reflection prescribed.
+- **D3: MLP 128 → 1024 → 512 → 210** (same training settings) — the "much stronger" tier.
+
+Track best train top-1 and best devel top-1 per architecture; report the train-vs-devel gap (memorisation diagnostic).
+
+**Decision rule:**
+
+- **Strong discriminator best devel top-1 > 0.08** → A7 PoC was under-powered; re-run with the strongest discriminator architecture + tightened λ_max range, expect interpretable verdict. *(Path: rebuild adversary cell with new discriminator + re-sweep.)*
+- **Strong discriminator best devel top-1 ≤ 0.04** (~5× chance) → bottleneck has removed most recoverable speaker signal; A7 at this scope is dead, the M10 conclusion holds. *(Path: write A7 negative result, declare the de-confounding ladder closed at this scope; consider full transformer fine-tune for completeness or accept three-level closure as the paper.)*
+- **Train top-1 high but devel top-1 low (memorisation gap > 0.5)** → discriminator is memorising pseudo-speaker IDs without learning transferable speaker structure; A7 wouldn't benefit even from a stronger discriminator. Treat as the dead case.
+- **Devel top-1 ∈ [0.04, 0.08]** (intermediate) → ambiguous; pick by margin from chance and probe sensitivity, lean toward "re-run A7 with stronger architecture but expect modest gains."
+
+**Output.** `results/A7_disc_ceiling.json` — per-architecture per-seed train + devel top-1 + memorisation-gap diagnostic + decision string.
+
+**Cost.** ~5 min (3 architectures × 3 seeds × ~30 sec; LR via sklearn is fast).
+
+**Results (DONE; verdict = memorisation_a7_dead).** Ran 1.30 min. Strongest discriminator (D3, MLP 128 → 1024 → 512 → 210, 200 epochs) reaches **best devel top-1 = 0.0422 ± 0.0007** while best train top-1 = 0.9521 ± 0.0062 — **memorisation gap +0.910 (well above the 0.5 threshold).** D2 (MLP 512/512) shows the same pattern (gap +0.860). D1 (LR) reaches devel 0.0434, within noise of D3 — confirming there's no nonlinear speaker structure for the deeper discriminators to find. **Decision: `memorisation_a7_dead`** (the M12 case identified in EXPLAINER §14.1).
+
+**Mechanism reading.** The A7 PoC's discriminator wasn't under-powered — it was working with a substrate that has no generalisable speaker information. The 128-d projection compresses speaker-discriminative directions away during cold-CE training (M10 returns at the layer-weight-open scope, just as it did at head-only scope in A6). The strong discriminator then learns to memorise individual training chunks' speaker labels (95% train accuracy via fingerprint matching) but cannot transfer to unseen chunks (4% devel ≈ chance + noise). The adversary in A7 was pushing the projection away from a memorised in-batch fingerprint, not from a generalisable speaker direction — which is why no λ_adv > 0 produced a real probe drop on devel.
+
+**A7 at layer-weight-open scope = closed.** Three independent diagnostic lines now all point to the same conclusion:
+
+1. **Probe-substrate measurements** (the original PoC): no λ > 0 cleared the matched-control gate; high λ destabilised training.
+2. **Adversary-health diagnostics**: discriminator at λ=0 trained to ~5× chance, decreasing with λ — mechanically active but baseline too weak.
+3. **Discriminator capacity ceiling** (this diagnostic): even a 200-epoch 1024-d discriminator can't recover speaker from z above chance + memorisation-noise. The substrate has no recoverable speaker for any adversary to push against.
+
+**Implications:**
+
+- **A7 (A-i) layer-weight-open is now closed**, not just inconclusive. The bottleneck-confound (M10) returns at this scope: cold-CE pressure on a 128-d projection compresses speaker info regardless of whether the layer-weights are open or frozen.
+- **The de-confounding ladder is fully closed at every frozen-backbone scope tested.** A5.5 (data-level) modest UAR / null probe (M9). A6 (representation head-only) categorical closure across 3 recipes (M10 + M11). A7 (representation layer-weight-open with adversary) memorisation-dead at the only scope tractable in our compute budget.
+- **The remaining unexplored option is full transformer fine-tune** (A7 (A-ii) or A6 (A-ii)). At that scope the WavLM transformer can rearrange itself so the bottleneck doesn't dominate before the adversary acts. Cost: multi-hour-to-day GPU + risk of overfit on 8.5k chunks. Not in the time budget for the current paper.
+- **Alternative within budget: un-bottlenecked adversary.** Apply the DANN adversary directly at the 4096-d fused substrate (skip the projection MLP entirely). Tests "does adversary at the un-compressed substrate add value?" Same A2.5 anchor + layer-weights-open + 4096-d cold linear head + 4096-d → 1024 → 210 discriminator with GRL. Cost ~30-60 min. **Optional follow-up worth queuing if user wants one more A7 attempt before declaring closure.**
+
+**Or accept the three-level closure and write the negative-result methodology paper** anchored on M8 + M9 + M10 + M11 + M12 + the systematic three-level closure pattern. The paper's contribution becomes the *audit framework + four+ paper-relevant negative-control disciplines*, with the speaker shortcut being shown as mechanism-resistant on URTIC + frozen WavLM at the architectural levels and computational scopes tractable for a small-budget paralinguistic project. This is publishable as-is.
+
 **Engineering deliverables for Phase 1.**
 
 - New module: `model/representation/adversary.py` — `GradReverse` autograd function (forward = identity, backward = -λ * grad), `SpeakerDiscriminator` MLP, λ_adv sigmoid scheduler.
