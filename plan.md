@@ -859,16 +859,29 @@ This generalises beyond URTIC. Anyone doing representation-level de-confounding 
 
 **Sanity.** A6b λ=0.0 reproduces the cached cold-CE control within seed noise (0.0408/0.0371/0.6128/+0.350 vs cached 0.0413/0.0373/0.6124/+0.350) — code path validated.
 
-**Mechanism reading.** When CE has already shaped the projection geometry to maximise class margin (+0.35), adding contrastive class-pressure on top doesn't *add* class structure — it *competes* with the CE-shaped structure. The contrastive objective wants intra-class points close in cosine space; CE has already arranged that more strongly than contrastive can. The speaker-masked positive set (~33 anchors per batch, varying with batch composition) gives a noisier and weaker geometry signal than the dense per-sample CE supervision, so the combined gradient noisily perturbs the CE-found minimum without finding a Pareto-better one.
+**Mechanism reading (4-step causal chain).** Why does adding any positive λ make every metric strictly worse? The CE+bottleneck combination already does the substrate-compression work that the contrastive recipe was supposed to provide, leaving no headroom for SupCon to add value:
+
+1. **CE on the 128-d projection bottleneck produces a sharply class-separated geometry** (margin +0.350) where speaker information is mostly compressed away by the bottleneck itself (the M10 finding — random projection alone gives LR=0.0427).
+2. **Adding SupCon class-pressure pushes points toward class centroids** — but the bottleneck already produced clean separation, so the contrastive pressure doesn't *add* useful structure; it *flattens within-class diversity* by pulling intra-class points closer than the CE objective alone would.
+3. **The flattened within-class diversity includes the cold-relevant variation that helped CE generalise.** Squeezing it out drops cold UAR (0.6128 → ~0.60 across all λ > 0) — the model loses the cold-discriminative micro-structure that survived CE alone.
+4. **SupCon treats "different cold class" as separation pressure regardless of speaker** — so it can pull two same-speaker chunks (one cold, one not) further apart than CE alone would. This *re-introduces speaker-correlated variance* into the projection by amplifying intra-speaker class-disagreement, which is why MLP probe top-1 climbs monotonically with λ (0.0408 → 0.0462).
+
+The four-step chain is consistent with the data and gives a falsifiable mechanistic claim: *"on a CE-anchored projection bottleneck where the substrate compression already eliminates most linearly-decodable speaker information, adding supervised contrastive pressure is subtractive — it flattens cold-relevant within-class variation (lowering cold UAR) while amplifying speaker-correlated separation between same-speaker different-class pairs (raising probe top-1)."* This is a publishable mechanism, not just a recipe-level FAIL.
 
 **Status: A6 head-only fully closed across all tested recipes.** Three independent recipes tested — pure speaker-masked SupCon (A6 PoC, §4.9.1), vanilla SupCon (control C3, §4.9.1.1), and combined CE+SupCon λ-sweep (this section). All fail; pure cold-CE Pareto-dominates. **Conclusion: contrastive class-pressure has no de-confounding leverage on URTIC + frozen WavLM at head-only scope.** This is the publishable negative result — the methodology yielded a clean closure, not just a single-recipe failure.
 
-**Implications for future A6 variants:**
+**Implications for future A6 variants — recommendation: don't.** The architectural argument against scaling up:
 
-- (A-i) layer-weight-open (~2-4 hr GPU + controls): tests a *structurally different* mechanism (layer re-orientation under contrastive pressure rather than projection re-shaping). Not ruled out by §4.9.1 / §4.9.1.1 / §4.9.1.2 — those all hold the layer mix frozen at A2.5's converged state. Worth running IF the user wants to spend the budget; otherwise the layer-weight scope ships as "untested" and the de-confounding paper claim is anchored on data (A5.5) + gradient (A7).
-- (A-ii) full transformer fine-tune: still doubly disqualified.
+- The λ-sweep didn't fail by a small margin or in a specific corner of recipe space. It failed monotonically across five λ values, with λ=0 strictly best on every metric.
+- The mechanism that produces this monotonic failure is *not* "the contrastive recipe needs more substrate access." It's "contrastive class-pressure is subtractive on CE-anchored bottlenecks" (the 4-step chain above).
+- (A-i) layer-weight-open gives the contrastive loss more parameters to push around, but the underlying interaction (CE + bottleneck → already-compressed; SupCon adds nothing useful) *doesn't change with more parameters*.
+- (A-ii) full transformer fine-tune *might* give a different result — but only because the CE anchor is no longer dominant (the transformer can rearrange itself), so you'd be testing "does fine-tuning help" rather than "does contrastive de-confounding work." That's a different question and not the one A6 was scoped to answer.
 
-**Pivot recommendation: A7 (gradient-level adversary).** The data-level rung (A5.5) is locked at modest UAR / null on probe. The representation-level head-only scope is now fully closed. Gradient-level is the remaining unexplored mechanism — explicit speaker-direction subtraction in the optimization signal via MDD/DANN. Plan §4.10 to be scoped.
+**Decision: A6 head-only fully closed; layer-weight and full-fine-tune variants NOT recommended.** The λ-sweep verdict generalises to any CE-anchored scope — the substrate already does the work CE needs, contrastive adds nothing useful regardless of where the gradient flows. Pivot directly to A7.
+
+**Optional follow-up worth queuing AFTER A7 lands** (interesting paper reference point, not a critical-path test): run cold-CE Phase 2 — train a cold classifier on top of the cold-CE-only projection from §4.9.1.1 control (currently used only as a Phase 1 measurement substrate). If Phase 2 cold-CE matches A2.5's UAR with comparable probe numbers, the paper has an extra reference: *"Phase 1 cold-CE pretraining is approximately equivalent to A2.5's joint training; the projection bottleneck does the de-confounding work that the contrastive recipes attempted but failed to add."* Optional; not load-bearing.
+
+**Pivot recommendation: A7 (gradient-level adversary).** The data-level rung (A5.5) is locked at modest UAR / null on probe. The representation-level head-only scope is now fully closed across three recipe families with a sharp mechanistic explanation. Gradient-level is the remaining unexplored mechanism with the architectural access to operate where the others can't reach. Plan §4.10 to be scoped next.
 
 #### 4.9.2 Phase 2 — conditional escalation (scoped, conditional on Phase 1)
 
