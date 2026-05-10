@@ -783,6 +783,57 @@ soft threshold — i.e., MLP > 0.040 OR LR > 0.0727):
 - Cell in `run.ipynb`: Phase 1 training + measurement + verdict classifier (mirrors A5.5's auto-classifier pattern).
 - Reuses existing: `data.cached_dataset.PooledCacheDataset`, `data.cached_dataset.stratified_grouped_split`, `speakers.cluster.load_pseudo_speakers`, `speakers.probe.train_probe` (MLP), `honesty.speaker_probe` (LR).
 
+#### 4.9.1.1 Bottleneck confound + controls (DONE-as-scoped, runs after Phase 1 PoC)
+
+**Why this exists.** The Phase 1 PoC (DONE; see `results/A6_phase1_PoC.json`) gave a striking result: LR speaker probe dropped from A2.5's 0.0725 to 0.0410 (~43% relative, ~13σ on the LR seed-σ); MLP probe barely moved (0.0501 → 0.0477); cold-LR UAR landed at 0.5988 ± 0.0085 (borderline G2); class margin emerged at +0.0594. The strict gate fired branch (D) for 2/3 seeds, but the mechanistic read was richer: linear speaker direction got scrubbed strongly while nonlinear pockets survived, and cold linearity took a hit.
+
+**The confound.** A2.5's LR=0.0725 reference was measured on the **4096-d** fused representation. The PoC LR is on a **128-d L2-normalised z**. The 32× dimensionality reduction plus the metric change to the unit hypersphere can drop LR-recoverable speaker information *independent of the contrastive objective*. Same problem for cold-LR (information loss from bottleneck). Without controls, we can't tell whether the LR drop is from speaker-masked SupCon doing real de-confounding work, or just from the bottleneck reshaping the substrate.
+
+**Three controls** (all measured on the same 128-d L2-normalised `z` for apples-to-apples; same A2.5 frozen scaler + layer-weights as the PoC; 3 seeds {42, 123, 7}):
+
+| control | training | isolates |
+| ------- | -------- | -------- |
+| **C1: random projection** | none — fresh init, no training | bottleneck + L2-norm only |
+| **C2: cold-CE only** | 10 epochs CE on cold (linear cold head, class-balanced weights), no contrastive | bottleneck + supervised cold pressure (no speaker-aware objective) |
+| **C3: vanilla SupCon** | 10 epochs SupCon with `mask_speakers=False` (positives = same Cold any speaker) | bottleneck + class-pressure (no speaker-masking lever) |
+
+**Decision rule** (auto-classifier in the cell):
+
+- **A6 beats all 3 controls on LR drop while preserving margin + cold-LR** → real speaker-masking effect → escalate to Phase 2 (re-decide A-i layer-weight-open vs A-ii full-fine-tune per §4.9.2).
+- **C1/C2 already drop LR to ~A6 level** (within +0.005) → bottleneck explains most of the drop → A6's contrastive mechanism is largely illusory; pivot to A7.
+- **C3 matches A6's LR drop** (within +0.005) → class-structure pressure alone is sufficient; speaker-masking adds no value; simplify recipe (drop `diff_speaker` constraint and re-run as A6 canonical).
+
+**Engineering deliverables.**
+
+- `model/representation/contrastive.py`: added `mask_speakers: bool = True` parameter to `supcon_speaker_masked_loss`. When `False`, positive set drops the `diff_speaker` filter — degrades to vanilla SupCon. Smoke-tested.
+- New cell in `run.ipynb` (cells 92-93): `a6_phase1_poc_controls.py` runs the 3 controls × 3 seeds, computes the comparison table, applies the decision rule, writes `results/A6_phase1_PoC_controls.json`. Self-contained (re-loads splits + materialises pooled caches; doesn't depend on cell 91 being run in the same kernel).
+
+**Cost.** ~10-15 min total: 3 controls × 3 seeds × ~30 s training (cached pooled stats are essentially compute-free) + ~60 s per-seed measurement (probes + cosine margin).
+
+**Results (DONE).** Controls ran in 1.62 min (`results/A6_phase1_PoC_controls.json`). Comparison table on the same 128-d L2-normalised `z` substrate:
+
+| mode (substrate) | MLP top1 | LR top1 | cold UAR | margin |
+| ---------------- | -------- | ------- | -------- | ------ |
+| A2.5 (**4096-d** reference) | 0.0501 | 0.0725 | 0.6564 | — |
+| C1 random projection (128-d, no training) | 0.0490 ± 0.0027 | **0.0427 ± 0.0016** | 0.6007 ± 0.0071 | +0.0016 ± 0.0024 |
+| C2 cold-CE only (128-d, no contrastive) | **0.0408 ± 0.0008** | **0.0371 ± 0.0005** | **0.6128 ± 0.0058** | **+0.3503 ± 0.0127** |
+| C3 vanilla SupCon (128-d, no speaker mask) | 0.0463 ± 0.0021 | **0.0400 ± 0.0038** | 0.6012 ± 0.0061 | +0.0489 ± 0.0039 |
+| **A6 speaker-masked SupCon (128-d)** | 0.0477 ± 0.0008 | 0.0410 ± 0.0024 | 0.5988 ± 0.0085 | +0.0594 ± 0.0065 |
+
+**Verdict: `bottleneck_explains_lr_drop`.** Three independent refutations of the head-only A6 mechanism:
+
+1. **Bottleneck alone explains the LR drop.** Random untrained projection drops LR to 0.0427 (within 0.0017 of A6's 0.0410). The 4096 → 128 + L2-norm bottleneck does essentially all of the LR-substrate de-confounding, independent of training.
+2. **Cold-CE Pareto-dominates A6 on every measured dimension.** Lower LR (0.0371 vs A6's 0.0410), lower MLP (0.0408 vs 0.0477), higher cold UAR (0.6128 vs 0.5988), and a much higher margin (+0.350 vs +0.059). Supervised cold pressure subsumes whatever the speaker-aware contrastive was supposed to provide.
+3. **Speaker-masking isn't just neutral — it's mildly harmful.** Vanilla SupCon (drop the `diff_speaker` constraint) gives LR=0.0400, slightly better than A6's 0.0410. The masking lever reduces the positive count and weakens the loss signal without buying any de-confounding back.
+
+**Implication for §4.9.2 Phase 2.** The original "A_strict_PASS / A_soft_PASS → escalate to (A-i) layer-weight-open" trigger is invalidated for the head-only PoC: there's no Phase 1 mechanism to escalate. **(A-i) layer-weight-open is not automatically dead** — opening the WavLM layer-weight subspace under combined cls + supcon loss tests a different mechanism (layer re-orientation, not projection re-shaping) — but it MUST run with the same control discipline (cold-CE-only at layer-weight-open, random-projection-at-layer-weight-open) before any verdict is locked. **(A-ii) full transformer fine-tune is doubly disqualified for now**: the head-only PoC's mechanism is illusory, and A-i needs its own controls before justifying multi-hour-to-day fine-tune spend.
+
+**Methodology lesson (M10 — see EXPLAINER.md §14).** *"Probe-substrate dimensionality is itself a confound for de-confounding measurements: comparing a probe trained on a high-dim baseline representation against the same probe trained on a low-dim post-projection representation conflates information loss from dimensionality reduction with de-confounding from the training objective. De-confounding rungs that introduce a dimensionality bottleneck must include a random-projection control at the same target dimensionality to disambiguate. Substrate-specific absolute thresholds calibrated against an undifferentiated baseline can fire false-positive de-confounding verdicts; future de-confounding rungs should anchor on **same-substrate relative drop** or use within-control comparison."*
+
+This generalises beyond URTIC. Anyone doing representation-level de-confounding on foundation-model features with a projection MLP should run a random-projection control at the same target dim before claiming mechanism activation.
+
+**Status.** A6 head-only PoC mechanism = LOCKED as illusory (bottleneck artefact). (A-i) layer-weight-open variant available IF the user wants to spend 2-4 hr GPU on it, but must include the same controls. Otherwise pivot to A7 (gradient-level adversary, the remaining unexplored de-confounding mechanism).
+
 #### 4.9.2 Phase 2 — conditional escalation (scoped, conditional on Phase 1)
 
 **Triggers (Phase 1 verdict → Phase 2 action):**

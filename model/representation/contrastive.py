@@ -92,6 +92,7 @@ def supcon_speaker_masked_loss(
     pseudo_speakers: torch.Tensor,
     temperature: float = 0.07,
     eps: float = 1e-12,
+    mask_speakers: bool = True,
 ) -> tuple[torch.Tensor, dict]:
     """Supervised contrastive loss with same-speaker same-class positives masked out.
 
@@ -117,6 +118,13 @@ def supcon_speaker_masked_loss(
     negatives (the standard SupCon denominator) would push same-speaker chunks
     apart, which is the OPPOSITE of speaker-invariance and anti-de-confounding.
 
+    Set `mask_speakers=False` for the vanilla SupCon control: positive set =
+    same_class & ~eye (regardless of speaker), denominator = ~eye. This is
+    used to disambiguate "speaker-masking activates de-confounding" from
+    "any contrastive class-pressure activates de-confounding" -- if vanilla
+    SupCon gives the same probe drop, the speaker-masking lever does no
+    additional work.
+
     Anchors with empty positive sets are excluded from the loss (their
     contribution would be 0/0). Count of excluded anchors is reported in stats
     as `n_anchors_excluded`.
@@ -136,7 +144,11 @@ def supcon_speaker_masked_loss(
     diff_spk   = pseudo_speakers.unsqueeze(0) != pseudo_speakers.unsqueeze(1)
     eye        = torch.eye(B, dtype=torch.bool, device=device)
 
-    pos_mask   = same_class & diff_spk & ~eye                              # [B, B]
+    if mask_speakers:
+        pos_mask = same_class & diff_spk & ~eye                            # [B, B]
+    else:
+        # Vanilla SupCon: positives are any same-class non-self pair.
+        pos_mask = same_class & ~eye                                       # [B, B]
     neg_mask   = (~same_class) & ~eye                                      # [B, B]
     denom_mask = pos_mask | neg_mask                                       # [B, B]
 
