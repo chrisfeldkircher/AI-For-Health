@@ -1070,7 +1070,41 @@ Track best train top-1 and best devel top-1 per architecture; report the train-v
 - **The remaining unexplored option is full transformer fine-tune** (A7 (A-ii) or A6 (A-ii)). At that scope the WavLM transformer can rearrange itself so the bottleneck doesn't dominate before the adversary acts. Cost: multi-hour-to-day GPU + risk of overfit on 8.5k chunks. Not in the time budget for the current paper.
 - **Alternative within budget: un-bottlenecked adversary.** Apply the DANN adversary directly at the 4096-d fused substrate (skip the projection MLP entirely). Tests "does adversary at the un-compressed substrate add value?" Same A2.5 anchor + layer-weights-open + 4096-d cold linear head + 4096-d → 1024 → 210 discriminator with GRL. Cost ~30-60 min. **Optional follow-up worth queuing if user wants one more A7 attempt before declaring closure.**
 
-**Or accept the three-level closure and write the negative-result methodology paper** anchored on M8 + M9 + M10 + M11 + M12 + the systematic three-level closure pattern. The paper's contribution becomes the *audit framework + four+ paper-relevant negative-control disciplines*, with the speaker shortcut being shown as mechanism-resistant on URTIC + frozen WavLM at the architectural levels and computational scopes tractable for a small-budget paralinguistic project. This is publishable as-is.
+**Or accept the three-level closure and write the negative-result methodology paper** anchored on M8 + M9 + M10 + M11 + M12 + M13 + M14 + the systematic three-level closure pattern. The paper's contribution becomes the *audit framework + six paper-relevant negative-control disciplines*, with the speaker shortcut being shown as mechanism-resistant on URTIC + frozen WavLM at the architectural levels and computational scopes tractable for a small-budget paralinguistic project. This is publishable as-is.
+
+#### 4.10.1.2 A7c — un-bottlenecked DANN on 4096-d substrate (DONE; M13 pre-flight fail-fast verdict)
+
+**Why this exists.** A7 PoC + disc-ceiling closed the 128-d projection scope (M10 returns at LW scope, M12 memorisation-dead). Option (a) — apply the adversary directly to the 4096-d fused substrate, skipping the projection MLP entirely — is the last A7-family variant tractable in the project's budget. Tests whether removing the bottleneck creates room for adversary signal that the 128-d post-projection scope didn't have. Two phases inside one cell, applying M13 (disc-ceiling-before-λ-sweep ordering):
+
+- **Phase (a-i)** — M13 pre-flight: 3 progressively-stronger discriminators (LR, MLP 4096→1024→210, MLP 4096→2048→1024→210) on the frozen 4096-d fused substrate.
+- **Phase (a-ii)** — adversarial λ-sweep (conditional on (a-i) passing): cold linear head + GRL + 4096→1024→210 discriminator, λ_max ∈ {0.0, 0.01, 0.03, 0.1, 0.2}, disc lr 3× head lr per DANN convention.
+
+**Phase (a-i) results (DONE; 1.70 min).**
+
+| arch | best train | best devel | memo gap |
+| ---- | ---------- | ---------- | -------- |
+| D1 LR | (n/a) | 0.0692 ± 0.0007 | (n/a) |
+| D2 MLP 4096→1024→210 | **1.0000** | 0.0855 ± 0.0027 | **+0.9145** |
+| D3 MLP 4096→2048→1024→210 | 0.9975 ± 0.0003 | 0.0832 ± 0.0014 | **+0.9142** |
+
+**Three findings:**
+
+1. **Devel top-1 IS higher at 4096-d than at 128-d** (0.083 vs 0.042) — the un-bottlenecked substrate retains more recoverable speaker info than the projection-shaped one. Numerically clears the 0.08 ceiling-high threshold.
+2. **But the memorisation gap is identical to the 128-d case (+0.91).** Train hits 100% perfect chunk-by-chunk fingerprinting, devel sits at 8%. The decision rule's memo-gap check fires first → **`memorisation_dead`** → fail-fast skip Phase (a-ii).
+3. **D2 ≈ D3 within noise (0.085 vs 0.083) — capacity isn't the limit.** Adding MLP depth (from 1024 to 2048+1024) doesn't recover more transferable speaker structure. The ~8% devel ceiling is the substrate's actual limit, not a discriminator-architecture issue.
+
+**Phase (a-ii) skipped** by the M13 fail-fast logic.
+
+**Final verdict: `a7c_dead_memorisation_dead`.** A7-family de-confounding is dead at every architectural and substrate scope tractable in the project's compute budget. Three-level closure is categorical:
+
+- Data-level (A5.5): M9 narrow-window-empty.
+- Representation head-only (A6 / A6b): M10 + M11 across 3 recipes.
+- Representation layer-weight-open + projection (A7 PoC): M10 + M12 memorisation-dead.
+- **Representation layer-weight-open + un-bottlenecked (A7c): M14 substrate-memorisation-dominated** (this section's result extends the closure to the no-projection case).
+
+**M14 (NEW methodology finding worth flagging in EXPLAINER §14.1):** *"Speaker-probe-as-de-confounding-measurement has a fundamental noise floor on small-data corpora with coarse pseudo-speaker labels. With ~40 chunks per pseudo-speaker, discriminator memorisation (individual-chunk fingerprinting) dominates over generalising speaker structure on the substrate, regardless of whether the substrate is bottlenecked or full-dim. Devel top-1 caps at ceiling × chance (~9% on URTIC at k=210), with 90%+ of train accuracy explained by memorisation. Anyone using speaker probes for de-confounding measurement on similar-scale corpora must (a) report the disc-ceiling number alongside the probe number, (b) report the memorisation gap, (c) treat probe top-1 as an upper bound on speaker leakage rather than a precise measurement."* Generalises beyond URTIC — applies to any small-data paralinguistic corpus with k speakers and ~k coarse-cluster labels.
+
+**Pivot decision: option (c) — write the negative-result methodology paper.** All within-budget options exhausted. The methodology framework (M8 + M9 + M10 + M11 + M12 + M13 + M14 + the systematic three-level closure pattern) is the paper's load-bearing contribution. Writeup begins now.
 
 **Engineering deliverables for Phase 1.**
 

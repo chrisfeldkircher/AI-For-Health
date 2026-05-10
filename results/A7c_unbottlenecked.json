@@ -1,0 +1,153 @@
+{
+  "rung_id": "A7c_unbottlenecked",
+  "description": "A7c -- un-bottlenecked DANN adversary on 4096-d fused substrate. Two phases: (a-i) M13 pre-flight disc-ceiling on the frozen 4096-d substrate (fail-fast if no signal); (a-ii) conditional adversarial lambda-sweep with cold linear head + GRL + 4096->1024->210 discriminator, lr_disc 3x lr_head per DANN convention, matched-control gate vs lambda=0. Last-shot test of whether removing the projection bottleneck creates room for adversary signal.",
+  "config": {
+    "fused_dim": 4096,
+    "n_speakers_disc": 210,
+    "ceiling_archs": [
+      "D1_LR",
+      "D2_4096_1024",
+      "D3_4096_2048_1024"
+    ],
+    "epochs_ceiling": 200,
+    "lr_ceiling": 0.001,
+    "ceiling_high": 0.08,
+    "ceiling_low": 0.04,
+    "memorisation_gap_threshold": 0.5,
+    "lambdas": [
+      0.0,
+      0.01,
+      0.03,
+      0.1,
+      0.2
+    ],
+    "epochs_adv": 20,
+    "lr_head_adv": 0.0001,
+    "lr_layer_w_adv": 1e-05,
+    "lr_disc_adv": 0.0003,
+    "weight_decay": 0.0001,
+    "n_speakers_per_batch": 8,
+    "chunks_per_speaker": 8,
+    "target_cold_fraction": 0.2,
+    "adv_disc_arch": {
+      "hidden": [
+        1024
+      ],
+      "dropout": 0.1
+    }
+  },
+  "split_seed": 42,
+  "seeds": [
+    42,
+    123,
+    7
+  ],
+  "n_clusters": 210,
+  "chance": 0.004761904761904762,
+  "a25_reference": {
+    "mlp_top1": 0.0501,
+    "lr_top1": 0.0725,
+    "uar": 0.6564
+  },
+  "phase_a_i": {
+    "results_by_arch": {
+      "D1_LR": [
+        {
+          "seed": 42,
+          "best_train_top1": NaN,
+          "best_devel_top1": 0.06940391829929136
+        },
+        {
+          "seed": 123,
+          "best_train_top1": NaN,
+          "best_devel_top1": 0.06825760733639016
+        },
+        {
+          "seed": 7,
+          "best_train_top1": NaN,
+          "best_devel_top1": 0.06982075864943726
+        }
+      ],
+      "D2_4096_1024": [
+        {
+          "seed": 42,
+          "best_train_top1": 1.0,
+          "best_devel_top1": 0.08170070499181747
+        },
+        {
+          "seed": 123,
+          "best_train_top1": 1.0,
+          "best_devel_top1": 0.08816172927618027
+        },
+        {
+          "seed": 7,
+          "best_train_top1": 1.0,
+          "best_devel_top1": 0.08649437129497528
+        }
+      ],
+      "D3_4096_2048_1024": [
+        {
+          "seed": 42,
+          "best_train_top1": 0.9978902953586498,
+          "best_devel_top1": 0.08315964788198471
+        },
+        {
+          "seed": 123,
+          "best_train_top1": 0.9970698546647914,
+          "best_devel_top1": 0.08493121713399887
+        },
+        {
+          "seed": 7,
+          "best_train_top1": 0.9974214721050164,
+          "best_devel_top1": 0.0815964937210083
+        }
+      ]
+    },
+    "aggregate_by_arch": {
+      "D1_LR": {
+        "best_train_top1": {
+          "mean": NaN,
+          "std": NaN,
+          "n": 0
+        },
+        "best_devel_top1": {
+          "mean": 0.06916076142837292,
+          "std": 0.0006609107124649298,
+          "n": 3
+        }
+      },
+      "D2_4096_1024": {
+        "best_train_top1": {
+          "mean": 1.0,
+          "std": 0.0,
+          "n": 3
+        },
+        "best_devel_top1": {
+          "mean": 0.08545226852099101,
+          "std": 0.00273869705571107,
+          "n": 3
+        }
+      },
+      "D3_4096_2048_1024": {
+        "best_train_top1": {
+          "mean": 0.9974605407094859,
+          "std": 0.0003360808433756436,
+          "n": 3
+        },
+        "best_devel_top1": {
+          "mean": 0.0832291195789973,
+          "std": 0.001362281125612778,
+          "n": 3
+        }
+      }
+    },
+    "strongest_devel": 0.0832291195789973,
+    "strongest_train": 0.9974605407094859,
+    "memorisation_gap": 0.9142314211304886,
+    "decision": "memorisation_dead",
+    "proceed_to_a_ii": false
+  },
+  "phase_a_ii": null,
+  "final_decision": "a7c_dead_memorisation_dead",
+  "elapsed_minutes": 1.6968986868858338
+}
