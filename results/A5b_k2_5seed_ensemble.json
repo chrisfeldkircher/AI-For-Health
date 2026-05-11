@@ -1,0 +1,86 @@
+{
+  "rung_id": "A5b_k2_5seed_ensemble",
+  "description": "A5b K=2 5-seed logit ensemble. Two variants tested: (1) mean-logit (linear average of per-seed K=2 fused logits at each seed's locked beta*); (2) mean-probability (average sigmoid then log back to logit). Both sweep tau fresh on train_threshold for the ensemble, evaluate on devel_test. Compared vs per-seed K=2 single mean (0.7037 +/- 0.0060) and the 2017 0.710 baseline target.",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "locked_betas_per_seed": {
+    "42": 8.0,
+    "123": 8.0,
+    "7": 6.0,
+    "999": 12.0,
+    "31337": 8.0
+  },
+  "per_seed_single": {
+    "42": {
+      "tau": -2.075,
+      "uar": 0.6941964244356786
+    },
+    "123": {
+      "tau": -0.34999999999999964,
+      "uar": 0.7094200871194085
+    },
+    "7": {
+      "tau": -2.15,
+      "uar": 0.7031904565153348
+    },
+    "999": {
+      "tau": -3.95,
+      "uar": 0.7083162719859779
+    },
+    "31337": {
+      "tau": 0.6500000000000004,
+      "uar": 0.7035026560117394
+    }
+  },
+  "per_seed_single_aggregate": {
+    "mean": 0.7037251792136279,
+    "std": 0.006013375122536977,
+    "n": 5
+  },
+  "ensemble_mean_logit": {
+    "tau": -1.375,
+    "uar_train_threshold": 0.6529159741857504,
+    "argmax_devel_test": {
+      "uar": 0.7032782336734487,
+      "recall_C": 0.7236580516898609,
+      "recall_NC": 0.6828984156570364,
+      "acc": 0.6871741397288843
+    },
+    "tau_devel_test": {
+      "uar": 0.7089999610908639,
+      "recall_C": 0.7912524850894632,
+      "recall_NC": 0.6267474370922647,
+      "acc": 0.6440041710114702
+    }
+  },
+  "ensemble_mean_probability": {
+    "tau": -0.47499999999999964,
+    "uar_train_threshold": 0.6533314627355334,
+    "argmax_devel_test": {
+      "uar": 0.7022918407541703,
+      "recall_C": 0.7256461232604374,
+      "recall_NC": 0.678937558247903,
+      "acc": 0.683837330552659
+    },
+    "tau_devel_test": {
+      "uar": 0.7041004207745141,
+      "recall_C": 0.757455268389662,
+      "recall_NC": 0.6507455731593662,
+      "acc": 0.6619395203336809
+    }
+  },
+  "best_ensemble": {
+    "name": "MEAN-LOGIT",
+    "uar": 0.7089999610908639,
+    "delta_vs_single_mean": 0.005274781877236068,
+    "delta_vs_target": -0.0010000389091360251
+  },
+  "target_baseline": 0.71,
+  "decision": "ensemble_helps_modestly",
+  "elapsed_minutes": 0.8928471485773722
+}
