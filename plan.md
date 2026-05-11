@@ -1382,6 +1382,34 @@ The full 88-d eGeMAPSv02 set wraps the audited G3 (14-d voice quality) + G6 (21-
 
 #### 4.11.2 Tier 2 — bigger conceptual payoff
 
+#### 4.11.2.1 K=3 with HuBERT-base as third logit source (Tier-2; cell appended, queued for user-run)
+
+**Why this exists.** With K=2 LOCKED at 0.7037 ± 0.0060 + 5-seed mean-logit ensemble at 0.7090 + K=3 G_egemaps_full FAIL (§4.11.1.5), the only A5b axis left to push past 0.7090 is a **structurally different second foundation model** alongside WavLM-Large. Reviewer recommendation: *"Try one more orthogonal logit source, probably classical OpenSMILE/ComParE or HuBERT/wav2vec2, not more adversarial work."* eGeMAPS ruled out (§4.11.1.5); HuBERT remains as the FM-diversity test.
+
+**Architecture decisions:**
+
+- **Model:** `facebook/hubert-base-ls960` (12 transformer layers + 1 input layer × 768-d hidden = 13 × 768). Cheaper than `hubert-large-ll60k` while still structurally distinct from WavLM (HuBERT uses cluster-based pretraining, WavLM uses masked-prediction-with-denoising).
+- **Pooling:** mean+std+skew+kurt per layer per chunk → `[13, 3072]` fp16 (mirrors WavLM cache structure).
+- **Cold-LR substrate:** layer-mean across 13 layers → 3072-d per chunk. Avoids overfit from a 40k-d full-stack LR probe at C=1.0 on 8.5k samples.
+- **M14 pre-flight (mandatory before the sweep, per the disc-ceiling discipline applied to standalone UAR):** if HuBERT mean-pooled standalone cold-LR UAR < 0.55 → skip the K=3 sweep (definite FAIL predicted, analogous to G2/G3/eGeMAPS_full pattern); ≥ 0.61 → admit plausible (analogous to G5/G1 interior-β admit); in between → run for confirmation.
+- **K=3 fusion** (if pre-flight passes): `A2.5_WavLM + G4_gi + G5_modulation + HuBERT_meanpooled_logit`. Extended β-sweep `{0..2, 2.5..16}`, per-seed argmax β* lock, 5 seeds {42, 123, 7, 999, 31337}.
+
+**Decision rule:**
+
+- **ADMIT K=3 with HuBERT** if mean UAR > K=2 LOCKED + 0.005 = **0.7087**.
+- Otherwise K=2 stays canonical. Either outcome is paper-relevant:
+  - **HuBERT admits** → multi-FM late fusion as a new architectural contribution; paper claim becomes "complementary FMs add measurable cold info beyond single-FM late fusion."
+  - **HuBERT no-admit** → WavLM substrate captures essentially all FM-recoverable cold information at this corpus scale; paper claim becomes "single-FM late fusion is sufficient on URTIC; multi-FM diversity doesn't add."
+  - **HuBERT pre-flight FAIL (standalone < 0.55)** → strongest version of "no-admit": M14 heuristic predicted the failure before the β-sweep ran. Validates the standalone-UAR predictor heuristic on a structurally-different substrate (not just handcrafted feature groups).
+
+**Cost when run:** ~30 min one-time HuBERT extraction (~19k chunks at ~0.1 s/chunk on GPU; only runs if cache missing) + ~5 min cold-LR probe + ~5 min K=3 sweep = **~40 min wall-clock**. Subsequent re-runs only need ~10 min (extraction is cached).
+
+**Dependencies (install before running):** `pip install transformers soundfile accelerate` if not already present in the env. The cell uses HuggingFace `AutoFeatureExtractor` + `AutoModel.from_pretrained("facebook/hubert-base-ls960", output_hidden_states=True)`.
+
+**Workflow note (per the auto-memory workflow rule):** the cell is appended at `run.ipynb` cells 106-107 (markdown intro + code body) for the user to run inside the notebook so outputs land in the notebook record. Not run via shell. Output: `results/A5b_k3_hubert_5seed.json` with extraction diagnostics + standalone UAR + M14 pre-flight verdict + K=3 sweep result if pre-flight passed.
+
+**Status: queued, awaiting user-run.** Plan §4.11.2.1 will be updated with full results table + verdict + cumulative-stack impact + ladder row + paper-framing implications once the user runs the cell and shares results. Either outcome strengthens the paper's framing.
+
 - **§4.11.2.1 A4 discrete audio tokens** (~3-5 days). HuBERT/EnCodec discrete token histograms as a separate feature stream — preserves syllable-rate/utterance-rhythm patterns that pooled WavLM stats average out. New G-group through A5a honesty audit + possible admission to A5b fusion. **Plausible upside: +0.005-0.020 → 0.696-0.711, plus a new architectural dimension for the paper.** Risk: tokens may carry speaker info (M10 returns).
 - **§4.11.2.2 Test-time augmentation** (~half-day). Score devel chunks under N perturbations (gain ±2dB, time-shift ±20ms, light noise) and average logits. Common +0.5-1pp lift in audio tasks.
 
