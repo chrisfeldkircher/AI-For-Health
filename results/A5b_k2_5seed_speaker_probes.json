@@ -1,0 +1,118 @@
+{
+  "rung_id": "A5b_k2_5seed_speaker_probes",
+  "description": "A5b K=2 speaker-probe gate completion (Tier-1 \u00a74.11.1.3). K=2 = A2.5 + G4_gi + G5_modulation locked at cold UAR 0.7037 +/- 0.0060 (5-seed). Two probes on the K=2 fusion: probe (i) LITERAL 3-d vector [logit_A2, z_logit_g4, z_logit_g5] (the tau-comparator substrate); probe (ii) BACKBONE-CONCAT pooled_4096 + G4_gi (7) + G5 (64) = 4167-d (the underlying representation). Gate = A2 LR-grouped + 1 sigma = 0.0780. 5 seeds {42, 123, 7, 999, 31337}.",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "gate_ceiling": 0.078,
+  "k1_reference": {
+    "probe_i_literal": {
+      "mean": 0.0119,
+      "std": 0.0015
+    },
+    "probe_ii_bb_concat": {
+      "mean": 0.0675,
+      "std": 0.0006
+    }
+  },
+  "runs": [
+    {
+      "seed": 42,
+      "probe_i_literal": {
+        "top1": 0.01853780462403666,
+        "nmi": 0.1961242960709445
+      },
+      "probe_ii_bb_concat": {
+        "top1": 0.07310976879816705,
+        "nmi": 0.44886988268661215,
+        "dim": 4167
+      }
+    },
+    {
+      "seed": 123,
+      "probe_i_literal": {
+        "top1": 0.01749635492605707,
+        "nmi": 0.19216370987188486
+      },
+      "probe_ii_bb_concat": {
+        "top1": 0.07206831910018746,
+        "nmi": 0.44943236652477286,
+        "dim": 4167
+      }
+    },
+    {
+      "seed": 7,
+      "probe_i_literal": {
+        "top1": 0.01853780462403666,
+        "nmi": 0.19337427144324273
+      },
+      "probe_ii_bb_concat": {
+        "top1": 0.07290147885857114,
+        "nmi": 0.4503831753254961,
+        "dim": 4167
+      }
+    },
+    {
+      "seed": 999,
+      "probe_i_literal": {
+        "top1": 0.018746094563632576,
+        "nmi": 0.19163106422965667
+      },
+      "probe_ii_bb_concat": {
+        "top1": 0.07310976879816705,
+        "nmi": 0.4504942988404783,
+        "dim": 4167
+      }
+    },
+    {
+      "seed": 31337,
+      "probe_i_literal": {
+        "top1": 0.01749635492605707,
+        "nmi": 0.19431519872010247
+      },
+      "probe_ii_bb_concat": {
+        "top1": 0.07310976879816705,
+        "nmi": 0.45121146764239944,
+        "dim": 4167
+      }
+    }
+  ],
+  "aggregate": {
+    "probe_i_literal": {
+      "top1": {
+        "mean": 0.018162882732764007,
+        "std": 0.0006143670570194815,
+        "n": 5
+      },
+      "nmi": {
+        "mean": 0.19352170806716626,
+        "std": 0.0017918930290674478,
+        "n": 5
+      },
+      "passes_gate": true
+    },
+    "probe_ii_bb_concat": {
+      "top1": {
+        "mean": 0.07285982087065195,
+        "std": 0.0004515618285498618,
+        "n": 5
+      },
+      "nmi": {
+        "mean": 0.45007823820395176,
+        "std": 0.0009256856031852169,
+        "n": 5
+      },
+      "passes_gate": true
+    }
+  },
+  "delta_vs_k1": {
+    "probe_i_literal": 0.006262882732764007,
+    "probe_ii_bb_concat": 0.005359820870651941
+  },
+  "decision": "k2_speaker_probes_PASS",
+  "elapsed_minutes": 1.4683469136555989
+}

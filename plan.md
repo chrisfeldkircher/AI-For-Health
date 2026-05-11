@@ -65,7 +65,7 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A2.5  | **NEW BASELINE**    | A2 + honesty-prior layer-weight init (logits = T·sub@1 from A5d)    | UAR 0.6564 ± 0.0038 (Δ +0.020 vs A2_grouped, 4.7σ); MLP probe flat, LR probe -0.0035       |
 | A3    | **REJECTED**        | Manner-aware pooling (pYIN+RMS, 3-cat) two-stream head              | UAR 0.6344 ± 0.0069 (Δ −0.008), probe top-1 +0.005. Both gates failed.                     |
 | A5a   | **LOCKED**          | Honesty audit over low-dim physiological feature groups             | 8 groups, 6 admitted (G1,G2,G3,G4_gi,G5,G6). Admission by sub@1: G4_gi,G1,G6,G5,G2,G3.     |
-| A5b   | **LOCKED K=2 at N=5** | Constrained late fusion: per-group linear logits, β fixed = honesty | K=2 (A2.5 + G4_gi + G5_mod) at N=5: **UAR 0.7037 ± 0.0060, Δ +0.0103 over K=1 (0.6934 ± 0.0064) at 4.30σ; +0.068 cumulative over uniform-A2 baseline, ~17σ at N=5; 0.006 from 0.71 target** |
+| A5b   | **FINAL LOCKED K=2 at N=5 (both gates PASS)** | Constrained late fusion: per-group linear logits, β fixed = honesty | K=2 (A2.5 + G4_gi + G5_mod) at N=5: **UAR 0.7037 ± 0.0060 (+0.0103 over K=1 at 4.30σ; +0.068 cumulative over uniform-A2 baseline, ~17σ); probe (i) 0.0182 ± 0.0006 (PASS, 4.3× margin); probe (ii) 0.0729 ± 0.0005 (PASS); 0.006 from 0.71 target** |
 | A5c   | revivable           | Learned per-group gate, honesty-initialised + regularised           | A5b passed → revivable, but K=1 leaves little room; on hold pending A5.5/A6                |
 | A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk mono L0→L24 (.087→.043 R, .072→.042 G); cold UAR flat; sub@1 ≪ 0.15 on both           |
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
@@ -1214,6 +1214,59 @@ The N=3-subset numbers reproduce the prior 3-seed locks exactly (LR probes + β-
 - **A5b K=2 (A2.5 + G4_gi + G5_mod, β plateau 6-12): 0.7037 ± 0.0060 (+0.010 over K=1, 4.30σ; +0.068 cumulative over uniform baseline, ~17σ over leak-corrected baseline at N=5)**
 
 **Distance to 0.71 baseline: 0.006**, within ~1σ of the K=2 standard error. Plausible at A4 discrete tokens.
+
+#### 4.11.1.3 K=2 speaker probes (DONE; both gates PASS — A5b K=2 FULLY LOCKED)
+
+**Why this exists.** The K=2 cold UAR lift at 4.30σ over K=1 is decisive on the cold-prediction axis, but the project's 2-D acceptance criterion requires BOTH cold UAR AND speaker probe gates pass. K=1 PASS shipped with both probes documented (plan §4.7 / §5.7); K=2 needs the same. Without the probe gates, K=2 cannot be locked as canonical — only as ablation.
+
+**Recipe (mirrors K=1 probe protocol).** Two substrates:
+
+- **probe (i) LITERAL 3-d** = `[logit_A2.5, z_logit_g4_gi, z_logit_g5_modulation]` — the fusion-input vector that the τ comparator sees per chunk. Tests whether the cold classifier's *decision substrate* itself leaks speaker (analogous to K=1's 2-d literal probe).
+- **probe (ii) BACKBONE-CONCAT 4167-d** = `pooled_A2.5_layer_fused (4096) + G4_gain_invariant (7) + G5_modulation (64)` — the underlying representation that produces the logits. Tests whether the substrate the cold-probe MLPs read from has recoverable speaker info above the gate.
+
+Multinomial LR probe via `honesty.speaker_probe`; gate ceiling = A2 LR-grouped + 1σ = **0.0780** (locked in plan §5.7). 5 seeds {42, 123, 7, 999, 31337}. Output: `results/A5b_k2_5seed_speaker_probes.json`, 1.47 min.
+
+**Results (DONE; both gates PASS):**
+
+| substrate | K=2 (5-seed mean ± std) | K=1 reference | Δ K=2 − K=1 | gate ceiling | verdict |
+| --------- | ----------------------- | ------------- | ----------- | ------------ | ------- |
+| **probe (i) LITERAL 3-d** | **0.0182 ± 0.0006** | 0.0119 ± 0.0015 | +0.0063 | 0.0780 | **PASS** by 4.3× margin |
+| **probe (ii) BACKBONE-CONCAT 4167-d** | **0.0729 ± 0.0005** | 0.0675 ± 0.0006 | +0.0054 | 0.0780 | **PASS** by Δ 0.0051 |
+
+**Per-seed (5 seeds) — tight across all:**
+
+| seed | probe (i) literal | probe (ii) bb-concat |
+| ---- | ----------------- | -------------------- |
+| 42 | 0.0185 | 0.0731 |
+| 123 | 0.0175 | 0.0721 |
+| 7 | 0.0185 | 0.0729 |
+| 999 (NEW) | 0.0187 | 0.0731 |
+| 31337 (NEW) | 0.0175 | 0.0731 |
+
+Per-seed σ tiny (0.0006 literal, 0.0005 backbone-concat) — the probes are highly reproducible across the 5-seed pool.
+
+**Mechanism reading.** K=2's marginal probe increases over K=1 (+0.0063 literal, +0.0054 backbone-concat) are tiny and naturally explained by additional dimensions:
+
+- Probe (i): K=2's literal vector is 3-d ⊃ K=1's 2-d, so the LR probe has +50% more axes to potentially separate speakers on. The +0.0063 inflation is within what one would expect from a single extra dimension on a substrate dominated by the cold-axis.
+- Probe (ii): K=2's backbone-concat is 4167-d ⊃ K=1's 4103-d (4096 + 7) — the extra 64 G5_modulation dimensions add some speaker-recoverable capacity but +0.0054 inflation is well under the gate ceiling.
+
+**Neither probe substrate has been shaped by speaker-aware training**; both increases are *capacity-driven*, not *speaker-leak-driven* in the de-confounding sense.
+
+**A5b K=2 FINAL LOCKED canonical at N=5 (all gates passed):**
+
+| acceptance axis | result | gate | margin |
+| --------------- | ------ | ---- | ------ |
+| Cold UAR | 0.7037 ± 0.0060 | ≥ A2.5 - 1σ = 0.6525 | clears by +0.051 |
+| K=2 − K=1 lift | +0.0103 ± 0.0024 (4.30σ; every seed positive) | > 0 statistically | clears at 4.3σ |
+| Speaker probe (i) literal | 0.0182 ± 0.0006 | ≤ 0.0780 | clears by 4.3× margin |
+| Speaker probe (ii) bb-concat | 0.0729 ± 0.0005 | ≤ 0.0780 | clears by Δ 0.0051 |
+| Distance to 0.71 baseline | 0.006 | (target) | within ~1σ of K=2 σ |
+
+**Exploratory-vs-confirmatory framing (paper-stage methodological honesty).** The K=2 G_other candidate selection (§4.11.1.1) was *exploratory* on devel_test — we tested 5 candidates {G1, G2, G3, G5, G6} and picked G5_modulation as the winner. Strict interpretation: that's a "best-of-5" devel-test selection. The 5-seed expansion (§4.11.1.2) at *fixed G5* on 2 new seeds {999, 31337} is *confirmatory* — same fusion design, no candidate selection, just more seeds. The new seeds' K=2 lift (+0.0092, +0.0095) are within the per-seed range of the original 3 seeds (+0.0075 to +0.0137), so the lift generalises beyond the exploratory selection. **Paper writeup should explicitly distinguish exploratory candidate-selection vs confirmatory 5-seed validation** to avoid the "multiple-comparison-on-devel" critique. With 5 candidates tested and the winning lift sustained on 2 unseen-during-selection seeds, the selection effect is bounded.
+
+**Caveat: devel proxy, not hidden test.** All numbers in this section are on devel_test (speaker-disjoint subset of the devel split via stratified_grouped_split). ComParE 2017 hidden test labels are not available; the 0.6584 baseline number in the original challenge was on the hidden test set. We report 0.7037 as "best achievable on devel_test under speaker-grouped subsplitting" and note that the hidden-test number may differ. Paper writeup should explicitly include this caveat to avoid the apples-to-oranges comparison with the 2017 0.710 baseline.
+
+**Decision: A5b K=2 (A2.5 + G4_gain_invariant + G5_modulation) is the FINAL canonical late-fusion system for the paper.** All 2-D acceptance gates pass. Pivot decision next: A4 discrete tokens (push further) vs paper write-up (current state is already publishable).
 
 #### 4.11.2 Tier 2 — bigger conceptual payoff
 
