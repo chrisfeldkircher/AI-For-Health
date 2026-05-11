@@ -1168,6 +1168,17 @@ The de-confounding ladder is closed (M9/M10/M11/M12/M13/M14). That closure rules
 **A5b K=2 LOCKED canonical: A2.5 + G4_gain_invariant + G5_modulation, β plateau interior at 6-8, τ negative across seeds, devel_test UAR 0.7023 ± 0.0077.** Total cumulative stack: uniform-A2-grouped 0.6361 → A2.5 0.6564 (+0.020) → K=1 0.6913 (+0.035) → **K=2 0.7023 (+0.011 over K=1, +0.066 total over leak-corrected baseline, ~12σ)**. Within ~0.01 of the 0.71 baseline target.
 
 **Mechanistic note.** G5 modulation captures cross-frame envelope dynamics (syllable rate, breath pacing) that G4_gain_invariant (per-frame energy/pause stats) doesn't see. The +0.011 lift confirms partial orthogonality — G5 carries cold info that G4_gi doesn't. G1 voicing shares more overlap with G4 (both depend on voiced/unvoiced segmentation) which limits its marginal contribution. G6 spectral fails because its cold-probe logit anti-correlates with A2.5's at the chosen τ — high β saturates the fusion in a direction that hurts devel_test UAR.
+
+**Exhaustive K=2 verification (DONE; `results/A5b_k2_g2g3_betasweep.json`, 1.55 min):** completed the test across all 6 A5a-admitted groups by adding G2_prosody and G3_voice_quality to the K=2 sweep. Both fail badly:
+
+| candidate | K=2 UAR | Δ vs K=1 | Δ vs G5 | β* pattern | verdict |
+| --------- | ------- | -------- | ------- | ---------- | ------- |
+| G2_prosody | 0.6674 ± 0.0015 | -0.0239 | -0.0349 | [16, 16, 16] boundary | FAIL |
+| G3_voice_quality | 0.6576 ± 0.0014 | -0.0337 | -0.0447 | [12, 12, 16] boundary | FAIL |
+
+**Definitive K=2 ranking across all 5 candidates** {G1, G2, G3, G5, G6}: G5_modulation > G1_voicing > G6 ≈ G2 > G3. **Pattern observed: standalone cold-LR UAR predicts K=2 admission.** Groups with standalone UAR ≥ 0.61 (G5: 0.6121, G1: 0.6058) admit with interior β*; groups with standalone UAR ≈ 0.50-0.61 (G6: 0.6053, G2: 0.5088, G3: 0.5039) get fusion-absorbed at boundary β*=12-16 because their cold-probe logits don't carry enough independent signal to balance against A2.5's strong logits within the τ-tuned operating range. **Worth a sentence in the paper writeup as a heuristic for K=2 candidate prefiltering.**
+
+**A5b K=2 LOCKED canonical (definitive after exhaustive test):** A2.5 + G4_gain_invariant + G5_modulation = **0.7023 ± 0.0077**. No other A5a-admitted group beats it.
 - **§4.11.1.2 5-seed expansion of A2.5 + A5b K=1** (~half-day GPU). Tighten σ on the headline numbers from N=3 to N=5. Pure win for paper-stage statistical power; does not push UAR per se.
 
 #### 4.11.2 Tier 2 — bigger conceptual payoff

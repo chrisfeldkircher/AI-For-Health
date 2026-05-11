@@ -164,6 +164,7 @@ results/
   A7c_unbottlenecked.json         A7c v1 (SUPERSEDED): un-bottlenecked DANN on 4096-d (3 archs × 3 seeds, 1.78 min); D3 best_devel=0.0841 → memorisation_dead via OVER-CONSERVATIVE memo-gap fail-fast (reviewer-flagged methodology error)
   A7c_v2_unbottlenecked.json      A7c v2 (CANONICAL after reviewer correction): regularised disc + low λ + corrected decision logic (9.44 min); Phase (a-i) PASSED; Phase (a-ii) all metrics flat across λ → B_dann_dead_substrate_resistant — DANN got a fair fight and still didn't shape the substrate
   A5b_k2_extended_betasweep.json  Tier-1 §4.11.1.1: A5b K=2 extended β-sweep on A2.5 anchor (3 candidates × 3 seeds, 1.66 min). G5_modulation winner: K=2 = (A2.5 + G4_gi + G5_mod) → UAR 0.7023 ± 0.0077, +0.011 over K=1 LOCKED. NEW canonical A5b.
+  A5b_k2_g2g3_betasweep.json      Tier-1 §4.11.1.1 (exhaustive completion): K=2 with G2_prosody and G3_voice_quality candidates. Both FAIL (G2 0.6674, G3 0.6576; both β*-pegged at boundary). G5_modulation stays definitive K=2 winner across all 5 tested candidates {G1, G2, G3, G5, G6}.
   A5d_layer_honesty.csv   per-layer cold + speaker probes on cached pooled[:, L, :] for L=0..24 (random splits)
   A5d_grouped_layer_honesty.csv   same per-layer probes on grouped splits
 ```
