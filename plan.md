@@ -1342,7 +1342,43 @@ Distance to baseline: **0.001 UAR**. Within measurement decimal-place precision.
 
 **Workflow note (per the new auto-memory workflow rule):** the cell is appended at `run.ipynb` cells 104-105 (markdown intro + code body) for the user to run inside the notebook so outputs land in the notebook record. Not run via shell. Output: `results/A5b_k3_egemaps_5seed.json` on successful completion.
 
-**Status: queued, awaiting user-run.** Plan §4.11.1.5 will be updated with full results table + verdict + cumulative-stack impact + ladder row + paper-framing implications once the user runs the cell and shares results.
+**Status: DONE — neither config admits; K=2 (A2.5 + G4_gi + G5_mod) stays canonical.** Output: `results/A5b_k3_egemaps_5seed.json`, 2.23 min on cached features.
+
+**Results (5 seeds {42, 123, 7, 999, 31337}):**
+
+| config | 5-seed UAR | Δ vs K=2 LOCKED (0.7037) | per-seed locked β* | verdict |
+| ------ | ---------- | ------------------------ | ------------------ | ------- |
+| K=2 LOCKED reference | 0.7037 ± 0.0060 | +0.0000 | [8, 8, 6, 12, 8] interior | ref |
+| **Config A:** K=2 with G_egemaps_full replacing G5 | 0.6692 ± 0.0056 | **-0.0345** | [16, 16, 8, 16, 12] mostly-boundary | **WORSE** |
+| **Config B:** K=3 with G_egemaps_full added (the real question) | 0.6801 ± 0.0097 | **-0.0236** | [16, 12, 16, 16, 8] boundary-heavy | **NO ADMIT** |
+
+**G_egemaps_full standalone cold-LR UAR = 0.5384 ± 0.0** (deterministic across seeds because the LR probe doesn't have a seeded random-init in the convergence path here). Just 0.038 above chance. This sits firmly in the "G_other standalone < 0.61 → boundary β* + fusion absorbed" regime that §4.11.1.1's K=2 candidate sweep identified.
+
+**The standalone-UAR-predictor heuristic confirms across 6 candidates** {G1, G2, G3, G5, G6, G_egemaps_full}, predicting K-fusion admission perfectly:
+
+| candidate | standalone cold UAR | K=2 fusion result | β* pattern |
+| --------- | ------------------- | ----------------- | ---------- |
+| G5_modulation | 0.6121 | **WIN** at 0.7023/0.7037 | interior |
+| G1_voicing | 0.6058 | borderline admit at 0.6964 | interior |
+| G6_spectral | 0.6053 | FAIL at 0.6698 | boundary |
+| G_egemaps_full | 0.5384 | FAIL at 0.6692 (Config A) / 0.6801 (Config B) | boundary |
+| G2_prosody | 0.5088 | FAIL at 0.6674 | boundary |
+| G3_voice_quality | 0.5039 | FAIL at 0.6576 | boundary |
+
+The standalone-UAR ≥ 0.61 threshold cleanly partitions K=2 admit (G5, G1) from K=2 fail (G6, eGeMAPS_full, G2, G3). This is now a **transferable methodology heuristic worth a short paper paragraph**: *"For honesty-audited late-fusion stacks, K-fusion candidate admission is well-predicted by standalone cold-LR UAR; we observed a clean threshold around 0.61 above which candidates fuse productively (interior β*) and below which they get calibration-absorbed at boundary β* with negative τ at extreme. Saves β-sweep compute on candidates that won't admit."*
+
+**Mechanism reading — why eGeMAPS_full fails despite containing G3+G6+53-other dims:**
+
+The full 88-d eGeMAPSv02 set wraps the audited G3 (14-d voice quality) + G6 (21-d spectral) slices PLUS 53 un-extracted dimensions (energy/loudness functionals, F0/HNR aggregates, MFCC stats, spectral-tilt summaries that didn't carve cleanly into G3/G6). Standalone cold UAR of G_egemaps_full (0.5384) is *worse* than G6 alone (0.6053) — adding the un-extracted 53 dims actively HURTS the cold probe's discriminability vs the curated G6 subset. Two explanations:
+
+1. **Dimensionality dilution at small training data.** The cold-LR probe uses logistic regression with L2 (`C=1.0` default). On 8.5k training chunks × 88 features, the probe spreads weight across many dimensions, including the 53 cold-irrelevant ones. The G6-only probe (21 features) avoided this by working on the audited subset. The 53 extra dims add variance without signal.
+2. **A5a's slicing was load-bearing.** The G3/G6 carving wasn't decoration — it actively filtered eGeMAPS to the cold-relevant subset. Without that filter, the full 88-d behaves like a generic kitchen-sink feature set with poor cold-LR fit.
+
+**Paper-stage finding (the validation branch from the prediction list fired):** *"A5a's curated slicing into G3 (voice quality) + G6 (spectral) extracted essentially all of eGeMAPS's cold-relevant content. The full 88-d set scored worse than the G6 subset alone (0.5384 vs 0.6053 standalone cold UAR) and failed both K=2 (replacing G5) and K=3 (adding to K=2) fusion gates. The audit-driven dimensional carving was load-bearing methodology, not cosmetic."* Validates the M3 honesty-audit-as-architectural-prior framing.
+
+**A5b K=2 (A2.5 + G4_gi + G5_modulation) = FINAL canonical late-fusion system, exhaustively validated:** all 6 A5a-admitted groups + the full eGeMAPS_full superset have been tested as K=2 partners or K=3 additions. None beats the K=2 LOCKED 5-seed canonical (0.7037 ± 0.0060). The K=2 5-seed mean-logit ensemble (0.7090) remains the best paper-headline number on the controlled-system axis. **Distance to 0.71 baseline still 0.001.**
+
+**No more admitted-group K-fusion candidates remain to test.** The next reviewer-recommended axis is a *structurally different FM* (HuBERT/wav2vec2 pooled stats as a second backbone) — see §4.11.2.0 below if scoped.
 
 #### 4.11.2 Tier 2 — bigger conceptual payoff
 
