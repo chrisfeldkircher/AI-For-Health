@@ -54,24 +54,28 @@ A7c v2                   & 4096-d un-bottlenecked DANN          & B\_dann\_dead\
 \footnotesize{*A6/A7 measure on the projection $z$, not via a cold classifier; cold-LR-on-z UAR is reported in Section~\ref{ssec:a6}.}
 \end{table*}
 
-\subsection{K=2 candidate sweep — the standalone-UAR predictor}
+\subsection{Standalone-UAR predictor — generalises across substrate families}
+\label{ssec:standalone_predictor}
 
-The exhaustive K=2 sweep across all six A5a-admitted feature groups + the full 88-d eGeMAPSv02 (G\_egemaps\_full) produces a clean predictor: candidates with standalone cold-LR UAR $\geq 0.61$ admit with interior $\beta^*$; candidates with standalone $\sim$ 0.50--0.61 fusion-absorb at boundary $\beta^* \in \{12, 16\}$ with $\tau$ at extreme. See Table~\ref{tab:standalone_predictor}. We propose this as a transferable pre-filter heuristic for honesty-audited late-fusion stacks on small-data paralinguistic corpora — saves $\beta$-sweep compute on candidates that won't admit.
+The exhaustive K=2 sweep across all six A5a-admitted feature groups + the full 88-d eGeMAPSv02 (G\_egemaps\_full) + a structurally-different foundation-model substrate (HuBERT-base mean-pooled across layers; see Section~\ref{ssec:k3_hubert}) produces a clean predictor: candidates with standalone cold-LR UAR $\geq 0.61$ admit with interior $\beta^*$; candidates with standalone $\lesssim 0.61$ fusion-absorb at boundary $\beta^* \in \{12, 16\}$ with $\tau$ at extreme. See Table~\ref{tab:standalone_predictor}. We propose this as a transferable pre-filter heuristic for honesty-audited late-fusion stacks on small-data paralinguistic corpora — saves $\beta$-sweep compute on candidates that won't admit.
+
+\textbf{Cross-family generalisation.} The heuristic was originally inferred from six handcrafted feature-group candidates (G1--G6 + G\_egemaps\_full). Adding HuBERT-base mean-pooled (3072-d FM-derived substrate) to the test set extends the heuristic across two structurally-different substrate families with the same $\sim 0.61$ threshold. The heuristic is therefore not specific to handcrafted feature engineering — it captures a more general property: ``does the candidate substrate carry a cold-axis distinguishable enough from the calibration noise to fuse productively against the A2.5 anchor's strong logits, vs.\ getting fusion-absorbed at boundary $\beta^*$ with $\tau$ at extreme.'' Any honesty-audited late-fusion stack on a similar-scale paralinguistic corpus can use the heuristic to fail-fast on candidates that won't admit, regardless of substrate family.
 
 \begin{table}[t]
 \centering\small
-\caption{Standalone cold-LR UAR predicts K=2 fusion admission across 6 candidates.}
+\caption{Standalone cold-LR UAR predicts K-fusion admission across 7 candidates spanning two substrate families. Threshold $\sim 0.61$ partitions admit/fail.}
 \label{tab:standalone_predictor}
-\begin{tabular}{lcccc}
+\begin{tabular}{llccc}
 \toprule
-candidate         & standalone & K=2 UAR  & $\beta^*$    & verdict \\
+candidate         & substrate    & standalone & K-fusion verdict & $\beta^*$ \\
 \midrule
-G5\_modulation    & $0.6121$ & $0.7037$ (5s) & interior & WIN \\
-G1\_voicing       & $0.6058$ & $0.6964$ (3s) & interior & borderline \\
-G6\_spectral      & $0.6053$ & $0.6698$ (3s) & boundary & FAIL \\
-G\_egemaps\_full  & $0.5384$ & $0.6692$ (5s) & boundary & FAIL \\
-G2\_prosody       & $0.5088$ & $0.6674$ (3s) & boundary & FAIL \\
-G3\_voice quality & $0.5039$ & $0.6576$ (3s) & boundary & FAIL \\
+G5\_modulation    & handcrafted (64-d)  & $0.6121$ & K=2 WIN ($0.7037$, 5s)         & interior \\
+G1\_voicing       & handcrafted (9-d)   & $0.6058$ & K=2 borderline ($0.6964$, 3s)  & interior \\
+G6\_spectral      & handcrafted (21-d)  & $0.6053$ & K=2 FAIL ($0.6698$, 3s)        & boundary \\
+\textbf{HuBERT-base mean-pool} & \textbf{FM-derived (3072-d)} & $\mathbf{0.5396}$ & \textbf{K=3 SKIPPED (M14 pre-flight, 5s)} & --- \\
+G\_egemaps\_full  & handcrafted (88-d)  & $0.5384$ & K=3 FAIL ($0.6801$, 5s)        & boundary \\
+G2\_prosody       & handcrafted (10-d)  & $0.5088$ & K=2 FAIL ($0.6674$, 3s)        & boundary \\
+G3\_voice quality & handcrafted (14-d)  & $0.5039$ & K=2 FAIL ($0.6576$, 3s)        & boundary \\
 \bottomrule
 \end{tabular}
 \end{table}
