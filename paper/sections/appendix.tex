@@ -1,0 +1,171 @@
+% =============================================================================
+% Supplementary appendix
+% Holds detail moved out of the main body per the load-bearing-arguments-only
+% main paper structure. Each appendix is referenced from the corresponding
+% main-body section via \ref{app:*}.
+% =============================================================================
+\appendix
+
+\section{K=2 candidate sweep --- per-candidate locked $\beta^*$}
+\label{app:k2_candidates}
+
+The exhaustive K=2 candidate sweep across the five $G_{\text{other}} \in \{G1, G2, G3, G5, G6\}$ groups (3 seeds at design stage; later expanded to 5 seeds at fixed $G5$, see Section~\ref{ssec:k2_5seed}) produced Table~\ref{tab:k2_candidates_app}. The standalone-UAR-predicts-K-fusion-admission heuristic (Section~\ref{ssec:standalone_predictor}, Table~\ref{tab:standalone_predictor}) is built on this sweep: candidates with standalone cold-LR UAR $\geq 0.61$ admit with interior $\beta^*$; candidates below that threshold get fusion-absorbed at boundary $\beta^* \in \{12, 16\}$. The K=2 UAR column here is the design-stage 3-seed lock; the 5-seed lock for the canonical winner ($G5$) is reported in Section~\ref{ssec:k2_5seed}.
+
+\begin{table}[t]
+\centering\small
+\caption{K=2 candidate sweep on the A2.5 anchor (3 seeds, locked $\beta$-sweep). $G5$ is the unique winner; $G1$ is borderline; $G6$/$G2$/$G3$ fail with boundary $\beta^*$.}
+\label{tab:k2_candidates_app}
+\begin{tabular}{lcccr}
+\toprule
+$G_{\text{other}}$ & K=2 UAR & $\Delta$ vs K=1 & locked $\beta^*$ & verdict \\
+\midrule
+G5 modulation     & $0.7023 \pm 0.0077$ & $+0.0110$ & $[8, 8, 6]$    & ADMIT \\
+G1 voicing        & $0.6964 \pm 0.0071$ & $+0.0051$ & $[6, 4, 6]$    & borderline \\
+G6 spectral       & $0.6698 \pm 0.0049$ & $-0.0215$ & $[16, 16, 16]$ & FAIL \\
+G2 prosody        & $0.6674 \pm 0.0015$ & $-0.0239$ & $[16, 16, 16]$ & FAIL \\
+G3 voice quality  & $0.6576 \pm 0.0014$ & $-0.0337$ & $[12, 12, 16]$ & FAIL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{K=3 extensions --- G\_egemaps\_full and HuBERT-base}
+\label{app:k3}
+
+\subsection{K=3 with full eGeMAPSv02 (G\_egemaps\_full)}
+\label{app:egemaps}
+
+Standalone cold-LR UAR for the full 88-d eGeMAPSv02 functional set is $0.5384$ (chance + 0.04). The K=3 sweep $\{$A2.5 + G4\_gi + G5\_modulation + G\_egemaps\_full$\}$ on the extended $\beta$-grid reaches devel\_test UAR $0.6801 \pm 0.0097$ at $N{=}5$ ($\Delta\,-0.0236$ vs K=2 LOCKED). Per-seed locked $\beta^*$ across seeds $\{42, 123, 7, 999, 31337\}$: $\{12, 16, 8, 16, 12\}$ --- boundary-heavy on the 4 of 5 seeds at $\beta^* \in \{12, 16\}$ extreme, with $\tau$ jointly at the extreme of its sweep. The pattern is the same fusion-absorption signature seen at K=2 for low-standalone-UAR candidates ($G2, G3, G6$ in Appendix~\ref{app:k2_candidates}): the late-fusion architecture detects the candidate's weak signal as ``noise to be silenced via the most extreme $\beta$/$\tau$ combination available.''
+
+The A5a curated slicing into G3 (voice quality, 14-d) + G6 (spectral, 21-d) had already extracted the cold-relevant content from eGeMAPS at the audit stage; the un-extracted 53 dimensions (LLD-mean/std descriptors of voicing-rate, jitter, shimmer derivatives that are dominated by speaker rather than cold variance per the A5d per-feature audit) add dimensionality dilution rather than incremental signal. We treat this as paper-stage validation of the A5a methodology: the audit-driven slicing was load-bearing, not cosmetic.
+
+\subsection{K=3 with HuBERT-base mean-pooled (M14 pre-flight skip)}
+\label{app:hubert}
+
+\textbf{Extraction protocol.} \texttt{facebook/hubert-base-ls960} (12 transformer layers + 1 input layer, 768-d hidden) without any fine-tuning. For each of the 19{,}101 train + devel chunks, frame-level activations from layers $L \in \{0, \dots, 12\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, giving a per-chunk fp16 tensor of shape $[13, 3072]$ ($13 \cdot 4 \cdot 768$). Cache lives at \texttt{cache/facebook\_hubert-base-ls960/pooled/\{stem\}.pt}. End-to-end extraction took 2.5 min on GPU at 133 chunks/sec --- 12$\times$ faster than initially budgeted because HuBERT-base is small and URTIC chunks are short. The cold-LR substrate is the layer-mean across 13 layers of the 4 stats, giving 3072-d per chunk; this avoids the overfit risk of a full-stack 39936-d LR at $C{=}1.0$ on the $\sim$8.5k train\_fit samples.
+
+\textbf{Standalone cold-LR result.} HuBERT mean-pooled standalone cold-LR UAR $= 0.5396$ at $\tau^* = -1.000$, threshold-at-best UAR $= 0.5152$. Sits firmly below the $0.55$ ``definite FAIL'' floor of the M14 standalone-UAR predictor (Section~\ref{ssec:standalone_predictor}). The K=3 sweep was \emph{skipped} per the M14 pre-flight discipline; the fail-fast mechanism saved $\sim 5$ min of compute on a configuration the heuristic predicted would fail. The HuBERT row in Table~\ref{tab:standalone_predictor} extends the standalone-UAR predictor across two substrate families (handcrafted + FM-derived) with the same $\sim 0.61$ admit threshold.
+
+\textbf{Mechanism hypotheses for HuBERT's failure.} Two competing explanations remain (deeper variants are out of scope for the frozen-backbone commitment): (i) \emph{layer-weighted softmax does the work} --- WavLM-A2.5's softmax layer-weights were trained on cold and concentrate on cold-relevant layers (top-5 in descending order: L0, L2, L5, L22, L6); HuBERT mean-pooled uniformly across all 13 layers dilutes the cold-relevant content with acoustic-detail/speaker layers. (ii) \emph{capacity dominates} --- WavLM-Large just has $\sim 3.5\times$ more pooled-stat capacity than HuBERT-base ($24 \cdot 1024 = 24576$ vs $13 \cdot 768 = 9984$ pre-stat dims). The cleaner tests would be HuBERT-base \emph{with} a learned layer-weighted softmax (an A2.5-style head trained on HuBERT pooled stats) vs HuBERT-large mean-pooled. Both remain future work (Section~\ref{sec:conc}).
+
+\textbf{Untested HuBERT variants.} (i) HuBERT-base with learned layer-weighted softmax (the cleaner test of hypothesis (i) above); (ii) HuBERT-large mean-pooled ($\sim 3.5\times$ more capacity than HuBERT-base, the cleaner test of hypothesis (ii)); (iii) HuBERT discrete-token histograms over the codebook (captures syllable-rate / utterance-rhythm patterns that pooled-stat representations average out); (iv) HuBERT with MLP head + nonlinear-calibrated logit ensemble. Per the cross-family-generalisation pattern in Section~\ref{ssec:standalone_predictor}, variant (i) is the highest-priority untested path because it most directly tests the layer-weighted-pooling-does-the-work hypothesis that distinguishes A2.5 from any naive use of a frozen FM substrate.
+
+\section{$\alpha$-axis sweep details for A5.5 (data-level mixup)}
+\label{app:a55}
+
+\subsection{Audio splicing v1 (M8 self-splice control)}
+
+Original A5.5 Plan A spliced anchor chunks with same-cold-different-pseudo-speaker partners using 200 ms crossfades, class-balanced augmentation, $K{=}3$ partners per anchor. A binary splice-detector probe (linear LR on per-layer pooled stats) reached UAR $0.998$ across every WavLM layer $L \in \{0, \dots, 24\}$ --- well above the 0.55 augmentation-class-detectability gate. The diagnostic ambiguity ``gate too strict'' vs ``splicer broken'' was resolved by a self-splice control: splicing within the same pseudo-speaker cluster (no cross-speaker mixing) gave UAR $0.990$, only $\Delta\,-0.008$ below the cross-speaker-splice number. The splicing operation itself accounts for $\sim 99\,\%$ of detectability; cross-speaker mixing accounts for $<1\,\%$. This rules out partner-selection refinements; the splice operation produces a signature regardless of who you splice with. We pivoted to embedding mixup (next subsection).
+
+\subsection{Embedding mixup --- both $\alpha$-axis endpoints fail differently}
+\label{app:a55_alpha}
+
+Plan B mixes WavLM pooled stats per chunk: $\tilde{X}_{\text{anchor}} = \alpha \cdot X_{\text{anchor}} + (1-\alpha) \cdot X_{\text{partner}}$ with partner = same-cold + different-pseudo-speaker, $K{=}3$ cached mixed variants per chunk, sampled per-epoch by a custom \texttt{MixupSampler}. Two $\alpha$-axis endpoints tested: \emph{conservative} $\alpha \sim U(0.70, 0.85)$ and \emph{aggressive} $\alpha \sim U(0.50, 0.70)$. Three seeds each.
+
+\begin{table}[t]
+\centering\small
+\caption{A5.5 $\alpha$-axis sweep at the embedding level. Both endpoints fail differently. M9 narrow-window-empty.}
+\label{tab:a55_alpha_app}
+\begin{tabular}{lcccc}
+\toprule
+$\alpha$ range & cold UAR & MLP probe & LR probe & verdict \\
+\midrule
+A2.5 ref       & $0.6564 \pm 0.0038$ & $0.0501$ & $0.0725$ & --- \\
+$U(0.70, 0.85)$ conservative & $0.6624 \pm 0.0031$ & $0.0506$ & $0.0723$ & PARTIAL \\
+$U(0.50, 0.70)$ aggressive   & $0.6397 \pm 0.0186$ & $0.0485$ & $0.0717$ & FAIL (d) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Conservative endpoint.} Small UAR lift ($+0.006$, $\sim 1.6\sigma$) without measurable probe drop. The augmentation activated weak regularization (recall pattern shifted to more cold-balanced) rather than de-confounding. cos(init, final) on the layer-weights $= 0.9999$ across seeds --- the optimizer didn't move the layer-weights from A2.5's converged state; the lift is MLP/classifier-level, not layer-weight refinement. The probe remained essentially unchanged ($0.0723$ vs A2.5's $0.0725$), so the small UAR lift is regularisation rather than de-confounding.
+
+\textbf{Aggressive endpoint.} cold UAR drops by $0.017$ ($\sigma$ explodes 6$\times$ to $0.0186$) AND the LR probe still doesn't drop ($0.0717$, only $\Delta\,-0.0008$). The $\alpha$-axis branch (d) verdict obtains: both endpoints fail differently; intermediate $\alpha \sim U(0.60, 0.80)$ can't escape --- gentler falls toward the conservative endpoint's null, stronger falls toward the aggressive endpoint's UAR damage. The $\alpha$-axis operating window for cross-speaker pooled-stat mixup on URTIC is therefore empty, not narrow (M9).
+
+\section{A6 PoC controls trajectory and A6b combined-loss $\lambda$-sweep}
+\label{app:a6}
+
+\subsection{A6 PoC initial result (pre-controls)}
+
+The original Phase 1 A6 PoC (speaker-masked SupCon on a fresh $4096 \to 512 \to 128$ L2-normalised projection on top of frozen A2.5 standardiser + softmax(layer\_weights)) produced an apparent striking LR-probe drop: $0.0725 \to 0.0410$ ($-43\,\%$ relative, $\sim 13\sigma$ on the LR seed-$\sigma$). MLP probe barely moved ($0.0501 \to 0.0477$). Class margin emerged ($+0.059$). Cold UAR took a hit ($0.5988$, borderline below the 0.60 floor). This appeared to be a partial PASS until the bottleneck-confound diagnostic (M10 in Section~\ref{ssec:a6}) dissolved the apparent mechanism.
+
+\subsection{A6b combined-loss $\lambda$-sweep --- monotonic null}
+\label{app:a6b}
+
+The surviving hypothesis after the M10 controls was ``contrastive as a regulariser on top of CE-anchored cold bottleneck.'' The combined-loss $\lambda$-sweep $L = L_{\text{cold-CE}} + \lambda \cdot L_{\text{SupCon-spkmasked}}$ over $\lambda \in \{0, 0.05, 0.1, 0.25, 0.5\}$ at 5 seeds gives Table~\ref{tab:a6b_lambda_app}.
+
+\begin{table}[t]
+\centering\small
+\caption{A6b combined-loss $\lambda$-sweep. $\lambda{=}0$ (pure cold-CE) is monotonically Pareto-best on every metric. Adding any positive $\lambda$ strictly worsens every measurement.}
+\label{tab:a6b_lambda_app}
+\begin{tabular}{lcccc}
+\toprule
+$\lambda$ & MLP probe & LR probe & cold UAR & class margin \\
+\midrule
+$0$    & $\mathbf{0.0408}$ & $\mathbf{0.0371}$ & $\mathbf{0.6128}$ & $\mathbf{+0.350}$ \\
+$0.05$ & $\sim 0.043$      & $\sim 0.039$      & $\sim 0.609$     & $\sim +0.265$ \\
+$0.1$  & $\sim 0.044$      & $\sim 0.040$      & $\sim 0.608$     & $\sim +0.193$ \\
+$0.25$ & $\sim 0.045$      & $\sim 0.041$      & $\sim 0.607$     & $\sim +0.146$ \\
+$0.5$  & $0.0462$          & $0.0419$          & $0.6005$         & $+0.107$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The endpoints ($\lambda{=}0$ and $\lambda{=}0.5$) are exact 5-seed numbers; the intermediate values are the monotone interpolation along the $\lambda$-axis from the per-$\lambda$ JSONs (\texttt{results/A6b\_phase1\_combined\_lambda\_sweep.json}) reported here as approximate to keep the table compact. Mechanism (4-step causal chain): (1) CE on the 128-d projection bottleneck produces sharply class-separated geometry where speaker info is mostly compressed away by the bottleneck itself; (2) adding SupCon class-pressure flattens within-class diversity --- CE already produced separation, contrastive adds no new structure; (3) the flattened diversity includes cold-relevant variation that helped CE generalise --- squeezing it out drops cold UAR; (4) SupCon's ``different cold class = separation'' regardless of speaker pulls same-speaker different-cold pairs apart, re-introducing speaker-correlated variance and raising the MLP probe (M11).
+
+\section{A7c disc-ceiling pre-flight and v1$\to$v2 progression}
+\label{app:a7c}
+
+\subsection{A7c v1 --- over-conservative fail-fast}
+
+The first A7c version applied an overly strict ordering rule: \texttt{if memo\_gap > 0.7: B\_mem\_dead before any other check}. This kills the rung at the disc-ceiling pre-flight stage if memo-gap is high, regardless of the actual devel speaker probe top-1. On URTIC at $k{=}210$ pseudo-speakers, memo-gap is $\sim 0.91$ at every substrate (see M14 in Section~\ref{ssec:a7}), so v1 fired the kill condition immediately and reported \texttt{B\_mem\_dead} without doing the $\lambda$-sweep. This is the wrong reason to kill the rung: the correct pre-flight is ``check whether the substrate has any speaker structure at all'' (devel top-1 vs HIGH threshold), not ``check whether the discriminator's training loss is suspicious''.
+
+\subsection{A7c v2 --- corrected M13 ordering}
+
+V2 reverses the check order: \texttt{if devel\_top1 > HIGH: proceed to $\lambda$-sweep regardless of memo\_gap}. The pre-flight result is unchanged from v1 (D3 MLP $4096 \to 2048 \to 1024 \to 210$ reaches train top-1 $1.0000$ / devel top-1 $0.0871$, memo gap $+0.91$), but v2 \emph{proceeds} to the $\lambda$-sweep because devel $0.0871 > 0.080$.
+
+\textbf{Regularised discriminator for v2.} To reduce the v1-style overfitting noise during adversarial training, the v2 discriminator adds dropout $0.3$ on the hidden layer and weight\_decay $10^{-3}$ on the AdamW optimiser. This brings the regularised disc's devel top-1 down to $\sim 0.071$ (from v1's $0.0871$) on the same substrate.
+
+\textbf{$\lambda$-sweep result (A7c v2).} Sweep $\lambda_{\max} \in \{0, 0.01, 0.03, 0.1\}$ with Ganin sigmoid ramp, 3 seeds per $\lambda$. cls UAR, MLP probe, LR probe, AND in-flight discriminator devel top-1 are \emph{all flat across $\lambda$ within seed noise of $\lambda{=}0$}. No probe drop, no UAR collapse, no discriminator unbalancing. Verdict: \texttt{B\_dann\_dead\_substrate\_resistant}. The DANN got a fair fight at every axis the v1 critique asked us to check (un-bottlenecked substrate; corrected ordering; regularised disc; lower-$\lambda$ sweep) and still didn't shape the substrate.
+
+The v1$\to$v2 worked example is itself the M13 paper-stage demonstration: the disc-ceiling pre-flight must be the first ordering axis, with devel-vs-HIGH checked before any memo-gap-as-kill condition. The v2 verdict is the closure number we cite (Table~\ref{tab:closure_full}); the v1 verdict was uninterpretable because v1 had the ordering wrong.
+
+\section{lr $\times$ init grid (A2.5 attractor analysis)}
+\label{app:lr_init_grid}
+
+The A2.5 lr stress test produces a clarification of the original ``flat landscape'' framing: the layer-weight subspace has gradient signal at lr$\times 10$ but not at lr$\times 1$. Specifically, $\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis is:
+
+\begin{table}[t]
+\centering\small
+\caption{$\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis (mean over 3 seeds at honest-prior init).}
+\label{tab:a25_lr_cos}
+\begin{tabular}{lc}
+\toprule
+lr scaling           & cos(init, final) \\
+\midrule
+lr$\times 1$ (default) & $0.9998$ \\
+lr$\times 3$           & $0.9961$ \\
+lr$\times 5$           & $0.9819$ \\
+lr$\times 10$          & $0.83$ \\
+lr$\times 100$         & $0.21$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The lr $\times$ init grid (uniform vs honest-prior $\times$ lr scaling $\in \{1, 3, 5, 10\}$, 3 seeds per cell, 24 retrains in total) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone:
+
+\begin{table}[t]
+\centering\small
+\caption{lr $\times$ init grid: A2.5 honest-prior init reaches a UAR plateau ($0.657$--$0.664$) at every tested lr; uniform init plateaus at a strictly lower band ($0.6447$--$0.6466$) at every tested lr. 3 seeds per cell. The honesty prior is a distinct attractor in the layer-weight subspace.}
+\label{tab:lr_init_grid}
+\begin{tabular}{lcc}
+\toprule
+lr scaling   & uniform init (3-seed mean) & honest-prior init (3-seed mean) \\
+\midrule
+lr$\times 1$  & $0.6463 \pm 0.0019$ & $0.6564 \pm 0.0038$ \\
+lr$\times 3$  & $0.6447 \pm 0.0023$ & $0.657\phantom{0} \pm 0.004\phantom{0}$ \\
+lr$\times 5$  & $0.6466 \pm 0.0021$ & $0.661\phantom{0} \pm 0.005\phantom{0}$ \\
+lr$\times 10$ & $0.6451 \pm 0.0030$ & $0.664\phantom{0} \pm 0.006\phantom{0}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We report A2.5-default (honest-prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence for the M5 (originally ``flat landscape,'' now ``constrained-recipe attractor'') discipline: the honest-prior advantage is not an artefact of the prior happening to land near a wider-basin attractor that uniform init reaches at higher lr; it is a strictly distinct attractor that uniform init cannot reach at any tested lr.

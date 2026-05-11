@@ -21,9 +21,9 @@ The K=2 G\_other candidate selection (Section~\ref{ssec:k2}) tested 5 candidates
 
 The K=2 5-seed mean-logit ensemble is a single-number evaluation, not $\sigma$-bearing. The $\sigma$-bearing canonical headline stays the per-seed K=2 single mean (0.7037 $\pm$ 0.0060). The ensemble is a paper-supplementary ablation row showing $+0.005$ UAR from averaging at 5$\times$ inference cost. Per-seed single is the deployment-relevant number; the ensemble is the upper bound on this stack.
 
-\subsection{Methodological honesty about lr × init grid}
+\subsection{Methodological honesty about lr $\times$ init grid}
 
-The A2.5 lr stress test produced a clarification of the original ``flat landscape'' claim: the layer-weight subspace has gradient signal at lr$\times 10$ (cos(init, final) drops to 0.83 at lr$\times 10$, 0.21 at lr$\times 100$). The lr × init grid (uniform vs honest-prior $\times$ lr$\times \{3, 5, 10\}$, 18 retrains, 3 seeds each) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone — uniform plateaus at UAR 0.6447--0.6466 across all tested lr while honesty-prior reaches 0.657--0.664 at every lr. We report A2.5-default (honest-prior + lr$\times 0.1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak — a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence.
+The A2.5 lr stress test produced a clarification of the original ``flat landscape'' claim: the layer-weight subspace has gradient signal at lr$\times 10$ ($\cos(\text{init}, \text{final})$ drops to $0.83$ at lr$\times 10$, $0.21$ at lr$\times 100$). The lr $\times$ init grid (uniform vs honest-prior $\times$ lr$\times \{1, 3, 5, 10\}$, 24 retrains, 3 seeds per cell) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone --- uniform plateaus at UAR $0.6447$--$0.6466$ across all tested lr while honesty-prior reaches $0.657$--$0.664$ at every lr. We report A2.5-default (honest-prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence; the per-cell numbers and the cosine table across the lr-axis are in Appendix~\ref{app:lr_init_grid}.
 
 \subsection{Limitations}
 
