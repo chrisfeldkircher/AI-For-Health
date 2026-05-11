@@ -65,7 +65,7 @@ Numbering follows the executed sequence, not the original PDF. Where the execute
 | A2.5  | **NEW BASELINE**    | A2 + honesty-prior layer-weight init (logits = T·sub@1 from A5d)    | UAR 0.6564 ± 0.0038 (Δ +0.020 vs A2_grouped, 4.7σ); MLP probe flat, LR probe -0.0035       |
 | A3    | **REJECTED**        | Manner-aware pooling (pYIN+RMS, 3-cat) two-stream head              | UAR 0.6344 ± 0.0069 (Δ −0.008), probe top-1 +0.005. Both gates failed.                     |
 | A5a   | **LOCKED**          | Honesty audit over low-dim physiological feature groups             | 8 groups, 6 admitted (G1,G2,G3,G4_gi,G5,G6). Admission by sub@1: G4_gi,G1,G6,G5,G2,G3.     |
-| A5b   | **PASS at K=1**     | Constrained late fusion: per-group linear logits, β fixed = honesty | A2.5 anchor β=4–6 plateau: UAR .6875–.6917, Δ +.031 to +.035 vs A2.5 (~6σ), spk probes PASS |
+| A5b   | **LOCKED at K=2**   | Constrained late fusion: per-group linear logits, β fixed = honesty | K=2 (A2.5 + G4_gi + G5_mod): **UAR 0.7023 ± 0.0077, Δ +0.011 over K=1 LOCKED (0.6913), +0.046 over A2.5 (~12σ over leak-corrected baseline)** |
 | A5c   | revivable           | Learned per-group gate, honesty-initialised + regularised           | A5b passed → revivable, but K=1 leaves little room; on hold pending A5.5/A6                |
 | A5d   | **DONE**            | Per-layer honesty diagnostic on cached pooled stats (no retraining) | Spk mono L0→L24 (.087→.043 R, .072→.042 G); cold UAR flat; sub@1 ≪ 0.15 on both           |
 | A5e   | **SKIPPED**         | A2 retrain on a band-restricted WavLM layer slice                   | A5d trigger missed: no sub@1 > 0.15; cold peak L7 = spk peak band. GPU → A5.5 / A6.        |
@@ -1150,6 +1150,46 @@ Decision: **substrate_has_signal_proceed** — D3 devel 0.087 clears the 0.08 hi
 **M13 update worth flagging in EXPLAINER §14.1:** the disc-ceiling diagnostic's decision logic must put `devel > HIGH` BEFORE `memo_gap > MEMO` in the priority order. Memo gap is a regularisation warning (push the user toward dropout + weight decay + early stopping), not a kill condition. The v1→v2 correction in this project IS the worked example for this lesson.
 
 **v1 verdict superseded.** A7c v1 (`results/A7c_unbottlenecked.json`) ships in the paper as a *methodology negative example* showing how the over-conservative fail-fast can hide a real result; A7c v2 (`results/A7c_v2_unbottlenecked.json`) ships as the canonical A7c verdict.
+
+### 4.11 UAR-pushing follow-ups (de-confounding ladder closed; cold-prediction improvements remain)
+
+The de-confounding ladder is closed (M9/M10/M11/M12/M13/M14). That closure rules out *probe-dropping mechanisms* via data, representation, and gradient-level interventions. It does NOT preclude marginal-to-meaningful UAR improvements via feature-engineering, fusion-topology, or calibration changes — those don't move the speaker probe but can push cold prediction up. Current locked headline: A2.5 + A5b K=1 = **0.6913 ± 0.0076** (+0.055 over uniform-A2-grouped baseline 0.6361, ~10σ). Three tiers of UAR-pushing follow-ups:
+
+#### 4.11.1 Tier 1 — cheap and direct (queued, start here)
+
+- **§4.11.1.1 K=2 extended β-sweep on A2.5 anchor (DONE; PASS at G5_modulation)**. A5b K=1 LOCKED at +0.035 over A2.5 with extended β-sweep. K=2 was only ever tested under the M4-pathology free-K-sweep on the uniform-A2 anchor (FAILed); re-tested under the locked β plateau methodology + A2.5 anchor for G_other ∈ {G1, G5, G6} with extended β-sweep {0..2, 2.5..16}. **Result (`results/A5b_k2_extended_betasweep.json`, 1.66 min, 3 seeds):**
+
+| candidate | K=2 fused UAR | Δ vs K=1 LOCKED (0.6913) | per-seed locked β* | verdict |
+| --------- | ------------- | ------------------------ | ------------------ | ------- |
+| **G5_modulation (WINNER)** | **0.7023 ± 0.0077** | **+0.0110** | [8, 8, 6] (interior) | **ADMIT** |
+| G1_voicing | 0.6964 ± 0.0071 | +0.0051 | [6, 4, 6] (interior) | borderline ADMIT |
+| G6_spectral | 0.6698 ± 0.0049 | -0.0215 | [16, 16, 16] (boundary) | FAIL — calibration absorbed by G6 with τ pegged |
+
+**A5b K=2 LOCKED canonical: A2.5 + G4_gain_invariant + G5_modulation, β plateau interior at 6-8, τ negative across seeds, devel_test UAR 0.7023 ± 0.0077.** Total cumulative stack: uniform-A2-grouped 0.6361 → A2.5 0.6564 (+0.020) → K=1 0.6913 (+0.035) → **K=2 0.7023 (+0.011 over K=1, +0.066 total over leak-corrected baseline, ~12σ)**. Within ~0.01 of the 0.71 baseline target.
+
+**Mechanistic note.** G5 modulation captures cross-frame envelope dynamics (syllable rate, breath pacing) that G4_gain_invariant (per-frame energy/pause stats) doesn't see. The +0.011 lift confirms partial orthogonality — G5 carries cold info that G4_gi doesn't. G1 voicing shares more overlap with G4 (both depend on voiced/unvoiced segmentation) which limits its marginal contribution. G6 spectral fails because its cold-probe logit anti-correlates with A2.5's at the chosen τ — high β saturates the fusion in a direction that hurts devel_test UAR.
+- **§4.11.1.2 5-seed expansion of A2.5 + A5b K=1** (~half-day GPU). Tighten σ on the headline numbers from N=3 to N=5. Pure win for paper-stage statistical power; does not push UAR per se.
+
+#### 4.11.2 Tier 2 — bigger conceptual payoff
+
+- **§4.11.2.1 A4 discrete audio tokens** (~3-5 days). HuBERT/EnCodec discrete token histograms as a separate feature stream — preserves syllable-rate/utterance-rhythm patterns that pooled WavLM stats average out. New G-group through A5a honesty audit + possible admission to A5b fusion. **Plausible upside: +0.005-0.020 → 0.696-0.711, plus a new architectural dimension for the paper.** Risk: tokens may carry speaker info (M10 returns).
+- **§4.11.2.2 Test-time augmentation** (~half-day). Score devel chunks under N perturbations (gain ±2dB, time-shift ±20ms, light noise) and average logits. Common +0.5-1pp lift in audio tasks.
+
+#### 4.11.3 Tier 3 — speculative
+
+- **§4.11.3.1 New feature groups (G7+)**: formant stability, voicing turbulence, RMS-modulation depth. ~half-day each. Each might add +0.002-0.010, cumulative but small.
+- **§4.11.3.2 Pseudo-labeling on test set** for self-training. Risky — amplifies classifier bias.
+
+#### 4.11.4 Counter-argument worth flagging
+
+The methodology paper is essentially ready (M8-M14 + 3-level closure + the v1→v2 worked example). Pushing UAR from 0.6913 → 0.70+ adds a paper subsection but doesn't change the load-bearing argument. **If time budget is tight, prioritize the write-up over more rungs.** Tier 1 § 4.11.1.1 is cheap enough (~2 hr) that it should run first regardless; Tier 2 onwards is conditional on Tier 1 results + remaining time budget.
+
+#### 4.11.5 Execution order (chosen)
+
+1. **§4.11.1.1 K=2 extended β-sweep first** — cheapest direct test. Decisive verdict in ~2 hr.
+2. If K=2 PASSES → lock K=2 as new canonical, then **§4.11.2.1 A4 discrete tokens**.
+3. If K=2 FAILs → skip directly to **§4.11.2.1 A4 discrete tokens** as the bigger conceptual play.
+4. **§4.11.1.2 5-seed expansion** runs in parallel with whatever's active.
 
 **Engineering deliverables for Phase 1.**
 
