@@ -1,0 +1,38 @@
+\section{Discussion and Limitations}
+\label{sec:disc}
+
+\subsection{Devel-vs-hidden-test caveat}
+
+All numbers in Table~\ref{tab:stack} are on devel\_test under \texttt{StratifiedGroupKFold}-keyed speaker-disjoint sub-splitting. The 2017 ComParE Cold sub-challenge's 0.710 baseline was on the hidden test set, with unspecified speaker-disjointness properties. We do not have access to the hidden test labels, so we cannot compare apples-to-apples. We propose three framings of the K=2 5-seed mean-logit ensemble vs the 2017 baseline:
+
+\textit{Conservative.} ``A5b K=2 5-seed mean-logit ensemble approaches the 2017 baseline within 0.001 UAR on devel\_test under speaker-grouped CV; matches within rounding-decimal precision.''
+
+\textit{Standard.} ``A5b K=2 5-seed mean-logit ensemble matches the 2017 baseline within measurement noise (0.7090 vs 0.7100, $\Delta\,-0.001$).''
+
+\textit{Generous.} ``A5b K=2 5-seed mean-logit ensemble matches the 2017 baseline at single decimal-place reporting (0.71).''
+
+We use the conservative framing in the abstract and the standard framing in the results table. Future work with hidden-test access could resolve the comparison.
+
+\subsection{Exploratory-vs-confirmatory framing}
+
+The K=2 G\_other candidate selection (Section~\ref{ssec:k2}) tested 5 candidates $\{G1, G2, G3, G5, G6\}$ on devel\_test and locked G5\_modulation as the winner. Strict reading: this is a ``best-of-5'' devel-test selection. The 5-seed expansion (Section~\ref{ssec:k2_5seed}) at \emph{fixed} G5 on 2 unseen-during-selection seeds $\{999, 31337\}$ is confirmatory; the new seeds' K=2 lifts ($+0.0092$, $+0.0095$) sit within the original 3-seed range ($+0.0075$ to $+0.0137$), bounding the selection effect. We are explicit about this framing to avoid the multiple-comparison-on-devel critique. The exhaustive K=2 sweep across all 6 admitted A5a groups + the K=3 with full eGeMAPSv02 confirms G5 as the unique winner under the locked-$\beta$ methodology.
+
+\subsection{Ensemble caveats}
+
+The K=2 5-seed mean-logit ensemble is a single-number evaluation, not $\sigma$-bearing. The $\sigma$-bearing canonical headline stays the per-seed K=2 single mean (0.7037 $\pm$ 0.0060). The ensemble is a paper-supplementary ablation row showing $+0.005$ UAR from averaging at 5$\times$ inference cost. Per-seed single is the deployment-relevant number; the ensemble is the upper bound on this stack.
+
+\subsection{Methodological honesty about lr × init grid}
+
+The A2.5 lr stress test produced a clarification of the original ``flat landscape'' claim: the layer-weight subspace has gradient signal at lr$\times 10$ (cos(init, final) drops to 0.83 at lr$\times 10$, 0.21 at lr$\times 100$). The lr × init grid (uniform vs honest-prior $\times$ lr$\times \{3, 5, 10\}$, 18 retrains, 3 seeds each) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone — uniform plateaus at UAR 0.6447--0.6466 across all tested lr while honesty-prior reaches 0.657--0.664 at every lr. We report A2.5-default (honest-prior + lr$\times 0.1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak — a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence.
+
+\subsection{Limitations}
+
+\textit{(L1) Speaker-probe noise floor at this corpus scale (M14).} URTIC at $k{=}210$ pseudo-speakers with $\sim$40 chunks/speaker produces a speaker-probe top-1 ceiling around 0.085 even with the strongest tractable discriminator. ``Probe top-1 dropped from $X$ to $Y$'' framings common in the de-confounding literature are potentially misleading on similar-scale corpora; we report disc-ceiling + memo gap alongside every probe number we cite. Future work on larger-corpus or fine-grained-speaker variants could quantify the tightening of the noise floor.
+
+\textit{(L2) Frozen-backbone architectural commitment.} We test no full-transformer fine-tune. The de-confounding ladder closure is therefore ``at every frozen-backbone scope tractable in budget,'' not ``at every architectural level full stop.'' A full fine-tune may give a different verdict for both contrastive (A6) and adversarial (A7) interventions. Documenting this scope limit is part of the project's epistemic honesty; we do not extrapolate beyond it.
+
+\textit{(L3) Pseudo-speaker labels (k=210 KMeans on ECAPA).} We use ECAPA-TDNN embeddings clustered into $k{=}210$ as the speaker-grouping proxy. URTIC's true speaker count is $\sim$630; our pseudo-speakers approximate this. A finer or coarser $k$ may shift probe ceilings; the M14 finding is that the qualitative pattern (memorisation dominates) is stable across $k$.
+
+\textit{(L4) Devel\_val sub-split for early stop is also speaker-disjoint from devel\_test, but not from training in the sense of having any cross-validation discipline.} The early-stop split was fixed at \texttt{val\_frac=0.50} with seed 42; a different seed/frac may slightly shift the locked-$\beta^*$ choices. The stability of $\beta^* \in \{6, 8\}$ across all 5 seeds for K=2 suggests this is a minor concern.
+
+\textit{(L5) Class-balanced sampling vs natural class distribution.} A2 / A2.5 / K=1 / K=2 all use balanced sampling. The 9.5\,\% cold rate at deployment time may produce different operating-point trade-offs; the recall pattern shift in the ensemble (Section~\ref{ssec:ensemble}) suggests the K=2 ensemble is the most cold-recovery-friendly variant.

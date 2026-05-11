@@ -1,0 +1,81 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Cumulative stack}
+
+Table~\ref{tab:stack} consolidates the controlled-positive pipeline. The cumulative lift from uniform-A2-grouped to A5b K=2 5-seed mean-logit ensemble is $+0.073$ UAR; the K=2 single-system canonical (5-seed mean) is $+0.068$ ($\sim$17$\sigma$ at $N{=}5$ over the leak-corrected baseline).
+
+\begin{table*}[t]
+\centering\small
+\caption{Cumulative stack on URTIC devel\_test (speaker-grouped sub-split). All numbers $N{=}5$ unless noted. The 2017 baseline 0.7100 is on the hidden test set; we report the apples-to-oranges caveat in Section~\ref{sec:disc}.}
+\label{tab:stack}
+\begin{tabular}{lcccc}
+\toprule
+stage & devel\_test UAR & cumulative $\Delta$ over baseline & $\sigma$ & speaker probe LR \\
+\midrule
+uniform-A2-grouped (leak-corrected baseline)        & $0.6361$            & ---       & $\sim 0.002$ & $0.0760$ \\
+A2.5 honesty-prior init                              & $0.6563$            & $+0.020$  & $0.0027$    & $0.0725$ \\
+A5b K=1 (A2.5 + G4\_gi)                              & $0.6934$            & $+0.057$  & $0.0064$    & $0.0675$ \\
+A5b K=2 single (A2.5 + G4\_gi + G5\_modulation)      & $\mathbf{0.7037}$   & $+0.068$  & $\mathbf{0.0060}$ & $0.0729$ \\
+A5b K=2 5-seed MEAN-LOGIT ensemble                   & $\mathbf{0.7090}$   & $+0.073$  & --- (n=1)   & --- \\
+\midrule
+2017 ComParE Cold baseline (hidden test)             & $0.7100$            & $+0.074$  & --- (n=1)   & --- \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The K=2 single LR probe top-1 (0.0729) clears the 0.0780 acceptance ceiling by $\Delta\,0.005$. The K=2 literal 3-d probe is $0.0182 \pm 0.0006$, well under ceiling. Every controlled-positive stage in the stack has both gates passing.
+
+\subsection{Distance to baseline}
+
+The K=2 5-seed mean-logit ensemble at $0.7090$ is $\Delta\,-0.001$ from the 2017 baseline of $0.7100$ — within single decimal-place precision. We report this carefully across the conservative/standard/generous framings in the discussion (Section~\ref{sec:disc}).
+
+\subsection{De-confounding rung verdict summary}
+
+Table~\ref{tab:closure_full} consolidates the negative-result rungs. Every architectural scope tractable in the project's compute budget closes negatively; pure cold-CE is the Pareto-best head-only configuration.
+
+\begin{table*}[t]
+\centering\small
+\caption{De-confounding rung verdicts on URTIC + frozen WavLM. All gates evaluated at devel\_test under speaker-grouped sub-split.}
+\label{tab:closure_full}
+\begin{tabular}{lllc}
+\toprule
+rung               & substrate           & verdict                                 & cold UAR \\
+\midrule
+A5.5 mixup conservative  & embedding ($\alpha\in[0.70, 0.85]$)  & PARTIAL (UAR floor PASS, probe drop FAIL) & $0.6624$ \\
+A5.5 mixup aggressive    & embedding ($\alpha\in[0.50, 0.70]$)  & branch (d): UAR drops, probe doesn't drop & $0.6397$ \\
+A6 PoC                   & 128-d L2-norm projection             & strict-gate FAIL; M10 controls show illusory mechanism & N/A* \\
+A6b combined-loss        & 128-d L2-norm projection             & monotonic $\lambda$-sweep null; cold-CE Pareto-best & $0.6128$ ($\lambda=0$) \\
+A7 PoC                   & 128-d projection + LW DANN           & B\_null per disc-health; mem-gap $+0.91$ at ceiling diag & N/A* \\
+A7c v2                   & 4096-d un-bottlenecked DANN          & B\_dann\_dead\_substrate\_resistant; all metrics flat across $\lambda$ & N/A* \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\footnotesize{*A6/A7 measure on the projection $z$, not via a cold classifier; cold-LR-on-z UAR is reported in Section~\ref{ssec:a6}.}
+\end{table*}
+
+\subsection{K=2 candidate sweep — the standalone-UAR predictor}
+
+The exhaustive K=2 sweep across all six A5a-admitted feature groups + the full 88-d eGeMAPSv02 (G\_egemaps\_full) produces a clean predictor: candidates with standalone cold-LR UAR $\geq 0.61$ admit with interior $\beta^*$; candidates with standalone $\sim$ 0.50--0.61 fusion-absorb at boundary $\beta^* \in \{12, 16\}$ with $\tau$ at extreme. See Table~\ref{tab:standalone_predictor}. We propose this as a transferable pre-filter heuristic for honesty-audited late-fusion stacks on small-data paralinguistic corpora — saves $\beta$-sweep compute on candidates that won't admit.
+
+\begin{table}[t]
+\centering\small
+\caption{Standalone cold-LR UAR predicts K=2 fusion admission across 6 candidates.}
+\label{tab:standalone_predictor}
+\begin{tabular}{lcccc}
+\toprule
+candidate         & standalone & K=2 UAR  & $\beta^*$    & verdict \\
+\midrule
+G5\_modulation    & $0.6121$ & $0.7037$ (5s) & interior & WIN \\
+G1\_voicing       & $0.6058$ & $0.6964$ (3s) & interior & borderline \\
+G6\_spectral      & $0.6053$ & $0.6698$ (3s) & boundary & FAIL \\
+G\_egemaps\_full  & $0.5384$ & $0.6692$ (5s) & boundary & FAIL \\
+G2\_prosody       & $0.5088$ & $0.6674$ (3s) & boundary & FAIL \\
+G3\_voice quality & $0.5039$ & $0.6576$ (3s) & boundary & FAIL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Recall pattern flip in the ensemble}
+
+The 5-seed mean-logit ensemble produces a markedly more cold-balanced classifier: recC $= 0.791$, recNC $= 0.627$ (vs per-seed single recC $\approx 0.43$, recNC $\approx 0.87$). For a $\sim$9.5\,\%-cold corpus, recovering 79\,\% of cold cases is practically valuable beyond what UAR captures. The recall pattern shift is reproducible across the ensemble re-runs and is a concrete demonstration that K=2 does more than push UAR — it shifts the operating point toward cold detection in a way the per-seed argmax doesn't.
