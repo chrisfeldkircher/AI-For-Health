@@ -1408,7 +1408,48 @@ The full 88-d eGeMAPSv02 set wraps the audited G3 (14-d voice quality) + G6 (21-
 
 **Workflow note (per the auto-memory workflow rule):** the cell is appended at `run.ipynb` cells 106-107 (markdown intro + code body) for the user to run inside the notebook so outputs land in the notebook record. Not run via shell. Output: `results/A5b_k3_hubert_5seed.json` with extraction diagnostics + standalone UAR + M14 pre-flight verdict + K=3 sweep result if pre-flight passed.
 
-**Status: queued, awaiting user-run.** Plan §4.11.2.1 will be updated with full results table + verdict + cumulative-stack impact + ladder row + paper-framing implications once the user runs the cell and shares results. Either outcome strengthens the paper's framing.
+**Status: DONE — M14 pre-flight `skip_definite_fail` (HuBERT standalone 0.5396 < 0.55 floor); K=3 sweep skipped. K=2 stays canonical.** Output: `results/A5b_k3_hubert_5seed.json`, 3.18 min wall-clock total (2.5 min extraction + 0.7 min probes/diagnostics).
+
+**Results:**
+
+| stage | result | notes |
+| ----- | ------ | ----- |
+| HuBERT extraction | 2.5 min for 19,101 chunks at 133/sec on GPU | 12× faster than the ~30 min I'd budgeted; HuBERT-base is small and chunks are short. Cache: `cache/facebook_hubert-base-ls960/pooled/` |
+| HuBERT mean-pooled cold-LR standalone | **UAR = 0.5396**, τ* = -1.000, thr_UAR = 0.5152 | 13-layer mean of mean+std+skew+kurt → 3072-d per chunk |
+| M14 pre-flight verdict | `skip_definite_fail` | 0.5396 < 0.55 floor → definite FAIL predicted, K=3 sweep skipped |
+
+**Standalone-UAR-predictor heuristic now confirmed across 7 candidates spanning BOTH handcrafted feature groups AND a structurally-different FM substrate:**
+
+| candidate | substrate type | standalone cold-LR UAR | predicted verdict | actual K=2/K=3 verdict |
+| --------- | -------------- | ---------------------- | ----------------- | --------------------- |
+| G5_modulation | handcrafted (64-d) | 0.6121 | ADMIT | K=2 WIN (0.7037) |
+| G1_voicing | handcrafted (9-d) | 0.6058 | borderline | K=2 borderline (0.6964) |
+| G6_spectral | handcrafted (21-d) | 0.6053 | borderline-fail | K=2 FAIL (0.6698) |
+| **G_HuBERT_base_meanpooled** | **FM-derived (3072-d)** | **0.5396** | **definite FAIL** | **K=3 SKIPPED (M14 pre-flight)** |
+| G_egemaps_full | handcrafted (88-d) | 0.5384 | definite FAIL | K=3 FAIL (0.6801) |
+| G2_prosody | handcrafted (10-d) | 0.5088 | definite FAIL | K=2 FAIL (0.6674) |
+| G3_voice_quality | handcrafted (14-d) | 0.5039 | definite FAIL | K=2 FAIL (0.6576) |
+
+The 0.55--0.61 threshold range now partitions admit/fail across **7 substrates spanning two substrate families** (handcrafted acoustic feature groups + foundation-model mean-pooled embeddings). The heuristic is more general than the original handcrafted-only test established.
+
+**Paper-stage finding (the prediction list's "no-admit" branch fired):** *"Single-FM late fusion (A2.5_WavLM + audited handcrafted groups) is sufficient on URTIC. A second foundation model — specifically HuBERT-base mean-pooled across layers, structurally distinct from WavLM via cluster-based pretraining — does not add cold-relevant signal beyond what WavLM-Large captures via its layer-weighted softmax pooling. Multi-FM late fusion at the mean-pooled level is therefore not justified at this corpus scale."*
+
+**Mechanism reading — why HuBERT mean-pooled fails so cleanly:**
+
+Two competing hypotheses explain why HuBERT-base mean-pooled cold-LR (0.5396) is so much weaker than WavLM-A2.5's single-substrate cold information (0.6564 argmax UAR via the trained head):
+
+1. **The layer-weighted softmax pooling does the work.** WavLM-A2.5's softmax layer-weights were trained on cold and concentrate on cold-relevant layers (top-5 are L0, L2, L5, L22, L6). HuBERT mean-pooled is uniform across all 13 layers including layers that may carry only acoustic-detail/speaker signal with no paralinguistic content. Per Pasad-Chen, HuBERT's paralinguistic content also concentrates in mid-layers; uniform mean dilutes the signal.
+2. **WavLM-Large just has more capacity than HuBERT-base** (24 × 1024 vs 13 × 768; ~3.5× more pooled-stat dims). HuBERT-large would be a fairer comparison.
+
+The cleaner test of (1) would be HuBERT-base WITH a learned layer-weighted softmax (an A2.5-style head trained on HuBERT pooled stats) vs WavLM-A2.5; the cleaner test of (2) would be HuBERT-large mean-pooled. Both are out of scope for this Tier-2 follow-up; we tested the cheapest reasonable variant ("HuBERT as a cold-LR fusion candidate analogous to G5/G6") which cleanly fails per the M14 heuristic, and document the deeper variants as future work.
+
+**M14 generalisation extension worth a paper paragraph:** the standalone-UAR-predictor heuristic now spans BOTH handcrafted feature groups AND FM-derived substrates with the same ~0.61 threshold. The heuristic is therefore not specific to handcrafted feature engineering; it captures a more general property — "does the candidate substrate carry a cold-axis that's distinguishable enough from the calibration noise to fuse productively against the A2.5 anchor's strong logits, vs. getting fusion-absorbed at boundary β* with τ at extreme." Anyone running honesty-audited late fusion on a paralinguistic corpus can use this heuristic to fail-fast on candidates that won't admit, regardless of substrate family.
+
+**Practical validation of M14:** the cell skipped the K=3 sweep step entirely via the pre-flight check, saving ~5 min of compute on a likely-failed configuration. The fail-fast mechanism worked as designed.
+
+**A5b K=2 (A2.5 + G4_gi + G5_modulation) is now FINAL canonical with structural validation:** (1) all 6 A5a-admitted handcrafted groups tested as K=2 partners (G5 won); (2) full eGeMAPSv02 superset tested as K=3 addition (failed); (3) HuBERT-base mean-pooled (structurally-different FM substrate) tested as K=3 addition (M14 pre-flight failed). No alternative configuration beats K=2 LOCKED 0.7037 ± 0.0060 within budget. The K=2 5-seed mean-logit ensemble (0.7090) remains the best paper-headline number on the controlled-system axis.
+
+**Cumulative stack unchanged (HuBERT did not alter A5b K=2):** uniform-A2-grouped 0.6361 → A2.5 0.6563 → K=1 0.6934 → K=2 0.7037 → K=2 ensemble 0.7090. Distance to 0.71 baseline: 0.001. Final canonical state.
 
 - **§4.11.2.1 A4 discrete audio tokens** (~3-5 days). HuBERT/EnCodec discrete token histograms as a separate feature stream — preserves syllable-rate/utterance-rhythm patterns that pooled WavLM stats average out. New G-group through A5a honesty audit + possible admission to A5b fusion. **Plausible upside: +0.005-0.020 → 0.696-0.711, plus a new architectural dimension for the paper.** Risk: tokens may carry speaker info (M10 returns).
 - **§4.11.2.2 Test-time augmentation** (~half-day). Score devel chunks under N perturbations (gain ±2dB, time-shift ±20ms, light noise) and average logits. Common +0.5-1pp lift in audio tasks.

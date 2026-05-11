@@ -1,0 +1,65 @@
+{
+  "rung_id": "A5b_k3_hubert_5seed",
+  "description": "K=3 = (A2.5_WavLM + G4_gain_invariant + G5_modulation + HuBERT_base_meanpooled) extended beta-sweep on A2.5 anchor, 5 seeds, with M14 pre-flight check on HuBERT standalone cold-LR UAR. HuBERT-base-ls960 pooled stats (13 layers x 3072-d) loaded from cache (extracted inline if missing); cold-LR substrate is 13-layer mean -> 3072-d per chunk. Tests whether structurally-different FM (cluster-based pretraining vs WavLM's masked-prediction-with-denoising) adds cold-prediction signal beyond the K=2 LOCKED canonical (0.7037 +/- 0.0060).",
+  "split_seed": 42,
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "split_sizes": {
+    "train_fit": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "beta_grid": [
+    0.0,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.5,
+    2.0,
+    2.5,
+    3.0,
+    4.0,
+    6.0,
+    8.0,
+    12.0,
+    16.0
+  ],
+  "k2_locked_reference": {
+    "mean": 0.7037,
+    "std": 0.006
+  },
+  "k3_admission_threshold": 0.7087,
+  "hubert_backbone": "facebook_hubert-base-ls960",
+  "hubert_dim_per_chunk_after_meanpool": 3072,
+  "hubert_standalone": {
+    "tau": -1.0,
+    "uar_train_threshold": 0.5152111976862144,
+    "uar_devel_test": 0.5395865719013042,
+    "recall_C": 0.9582504970178927,
+    "recall_NC": 0.12092264678471575
+  },
+  "m14_pre_flight": {
+    "definite_fail_floor": 0.55,
+    "admit_plausible_floor": 0.61,
+    "verdict": "skip_definite_fail",
+    "skipped_k3_sweep": true
+  },
+  "k3_sweep": {
+    "ran": false,
+    "per_seed_runs": null,
+    "locked_aggregate": null,
+    "delta_vs_k2_locked": null,
+    "admit_k3": false
+  },
+  "decision": "k3_hubert_skipped_definite_fail",
+  "elapsed_minutes": 3.182897635300954
+}
