@@ -1106,6 +1106,51 @@ Track best train top-1 and best devel top-1 per architecture; report the train-v
 
 **Pivot decision: option (c) — write the negative-result methodology paper.** All within-budget options exhausted. The methodology framework (M8 + M9 + M10 + M11 + M12 + M13 + M14 + the systematic three-level closure pattern) is the paper's load-bearing contribution. Writeup begins now.
 
+#### 4.10.1.3 A7c v2 — corrected re-run after methodological critique (DONE; supersedes v1 closure)
+
+**Why this exists.** A reviewer of A7c v1 correctly identified that my fail-fast logic was over-conservative: I let `memo_gap > 0.5` override `devel > HIGH (0.08)`, but devel = 0.084 > 0.08 (~17.5× chance) means the substrate HAS transferable speaker signal — the huge memo gap is a *regularisation* issue (under-regularised discriminator memorises easily) not a "substrate dead" verdict. The reviewer's recommended recipe: heavier disc regularisation (dropout 0.3-0.5, weight_decay 1e-3), early-stop on devel speaker top-1, lower λ range `{0.0, 0.001, 0.003, 0.01, 0.03, 0.1}`, and corrected fail-fast logic where memo gap is a *warning* not a kill condition.
+
+**Three corrections applied in v2:**
+
+1. **Decision logic FIXED.** New order: `devel > HIGH → proceed (regardless of memo gap; print warning if gap > 0.5)`, then check `devel ≤ LOW → dead`, then memo-gap-as-kill only in the ambiguous range `[LOW, HIGH]`. v2 phase (a-i) PASSED with substrate_has_signal_proceed.
+2. **Discriminator REGULARISED.** Dropout 0.3 (was 0.1), weight_decay 1e-3 (was 1e-4) on the discriminator only, 30 epochs (was 20) to give the regularised disc time to converge. Per-epoch devel speaker top-1 logged for in-flight M12 check at proper resolution (was only end-of-training).
+3. **λ range LOWERED.** `{0.0, 0.001, 0.003, 0.01, 0.03, 0.1}` — finer at the low end and capped at 0.1 (v1's 0.2 was already past the useful operating range).
+
+**Phase (a-i) results (DONE; corrected logic):**
+
+| arch | best train | best devel | memo gap |
+| ---- | ---------- | ---------- | -------- |
+| D1 LR | (n/a) | 0.0692 ± 0.0007 | (n/a) |
+| D2 MLP 4096→1024→210 (dropout 0.3) | 0.9984 ± 0.0004 | 0.0856 ± 0.0012 | +0.9128 |
+| D3 MLP 4096→2048→1024→210 (dropout 0.3) | 0.9935 ± 0.0006 | 0.0871 ± 0.0004 | +0.9065 |
+
+Decision: **substrate_has_signal_proceed** — D3 devel 0.087 clears the 0.08 high threshold (~17.5× chance); memo gap +0.906 logged as a regularisation warning, not a kill condition.
+
+**Phase (a-ii) results (DONE; regularised disc + low λ; matched-control gate vs λ=0):**
+
+| λ_max | cls UAR | MLP probe | LR probe | disc train | disc devel | disc best |
+| ----- | ------- | --------- | -------- | ---------- | ---------- | --------- |
+| 0.0 (matched) | 0.6072 ± 0.0042 | 0.0962 ± 0.0019 | 0.0694 ± 0.0009 | 0.977 | 0.080 | 0.085 |
+| 0.001 | 0.6073 ± 0.0046 | 0.0967 ± 0.0020 | 0.0694 ± 0.0009 | 0.977 | 0.081 | 0.081 |
+| 0.003 | 0.6080 ± 0.0032 | 0.0968 ± 0.0023 | 0.0703 ± 0.0019 | 0.976 | 0.077 | 0.084 |
+| 0.01 | 0.6076 ± 0.0039 | 0.0960 ± 0.0019 | 0.0698 ± 0.0004 | 0.978 | 0.082 | 0.082 |
+| 0.03 | 0.6085 ± 0.0039 | 0.0960 ± 0.0024 | 0.0694 ± 0.0014 | 0.981 | 0.082 | 0.086 |
+| 0.1 | 0.6078 ± 0.0036 | 0.0955 ± 0.0016 | 0.0688 ± 0.0006 | 0.978 | 0.079 | 0.083 |
+
+**Verdict: `B_dann_dead_substrate_resistant`.** Three findings:
+
+1. **Cls UAR, MLP probe, LR probe ALL FLAT across λ ∈ [0.0, 0.1]** — every metric within seed noise of λ=0. No detectable adversary effect on any measurable axis.
+2. **Disc devel (the M12 in-flight check) ALSO flat across λ** — the discriminator's devel accuracy stays at ~8% regardless of λ_max. GRL is mechanically active but isn't preventing the discriminator from learning generalising speaker structure. The adversary's pressure is being absorbed by the layer-weights without affecting the substrate's speaker info.
+3. **The regularised discriminator works as designed** — train accuracy 98% (vs 100% in v1), so dropout 0.3 + weight_decay 1e-3 is mildly preventing memorisation. But the devel ceiling stays at ~8%, confirming the substrate's actual speaker recoverability.
+
+**Mechanism reading.** Even with: (a) un-bottlenecked 4096-d substrate, (b) regularised discriminator that the M13 pre-flight confirms can recover generalisable speaker signal at ~8% devel, (c) low λ range chosen to avoid v1's destabilisation, (d) per-epoch in-flight disc-devel tracking confirming the discriminator stays informative throughout training — the adversary STILL doesn't shape the substrate. The cold gradient dominates the layer-weight updates; the GRL signal is too small to outweigh it; even when GRL is mechanically active, the layer-weight updates don't move enough to change the substrate's speaker-recoverability properties.
+
+**This is a STRONGER closure than v1's `memorisation_dead` verdict.** v1 was the methodologically wrong call (memo-gap-as-fail-fast was over-conservative). v2 gives DANN a fair fight at every axis the reviewer recommended fixing, AND DANN still doesn't move any measurable substrate property. **Substrate-resistant** is the correct categorical verdict for A7c.
+
+**M13 update worth flagging in EXPLAINER §14.1:** the disc-ceiling diagnostic's decision logic must put `devel > HIGH` BEFORE `memo_gap > MEMO` in the priority order. Memo gap is a regularisation warning (push the user toward dropout + weight decay + early stopping), not a kill condition. The v1→v2 correction in this project IS the worked example for this lesson.
+
+**v1 verdict superseded.** A7c v1 (`results/A7c_unbottlenecked.json`) ships in the paper as a *methodology negative example* showing how the over-conservative fail-fast can hide a real result; A7c v2 (`results/A7c_v2_unbottlenecked.json`) ships as the canonical A7c verdict.
+
 **Engineering deliverables for Phase 1.**
 
 - New module: `model/representation/adversary.py` — `GradReverse` autograd function (forward = identity, backward = -λ * grad), `SpeakerDiscriminator` MLP, λ_adv sigmoid scheduler.
