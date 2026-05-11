@@ -1318,6 +1318,32 @@ Both evaluate at devel_test. Output: `results/A5b_k2_5seed_ensemble.json`, 0.89 
 
 Distance to baseline: **0.001 UAR**. Within measurement decimal-place precision. Methodology framework + 7 paper-ready M-disciplines + this near-baseline positive result — paper is comprehensively positioned.
 
+#### 4.11.1.5 K=3 with G_egemaps_full (Tier-1 add; cell appended, queued for user-run)
+
+**Why this exists.** With K=2 LOCKED at 0.7037 ± 0.0060 + 5-seed mean-logit ensemble at 0.7090, the next cheap follow-up is whether the FULL 88-d eGeMAPSv02 functional set adds cold-prediction signal that the existing K=2 (G4_gi + G5_modulation) doesn't already capture. The original A5a slicing carved out G3 (voice quality, 14-d) and G6 (spectral, 21-d) from eGeMAPS; the remaining 53 dimensions (88 - 14 - 21) have never been tested as a single cold-probe input. Reviewer recommendation: *"Try one more orthogonal logit source, probably classical OpenSMILE/ComParE or HuBERT/wav2vec2."*
+
+**Recipe — two configurations** (5 seeds {42, 123, 7, 999, 31337}, extended β grid {0..2, 2.5..16}, per-seed argmax β* lock):
+
+- **Config A — K=2 replacement:** `A2.5 + G4_gi + G_egemaps_full`. Does eGeMAPS_full beat G5_modulation as the K=2 partner? Probably not (G5 won the exhaustive K=2 candidate sweep with G6/G2/G3 all failing at β*=boundary), but a clean comparison.
+- **Config B — K=3 addition (the real question):** `A2.5 + G4_gi + G5_modulation + G_egemaps_full`. Does eGeMAPS_full add value on top of the existing K=2 LOCKED canonical?
+
+**Decision rule:**
+
+- **ADMIT K=3** if Config B mean UAR > K=2 LOCKED 5-seed (0.7037) + 0.005 = **0.7087**.
+- If Config A beats K=2 LOCKED by ≥ 0.005, flag for potential G_other replacement (unlikely given prior K=2 candidate sweep).
+- Otherwise K=2 (A2.5 + G4_gi + G5_mod) stays canonical.
+
+**Mechanism predictions worth flagging in the paper writeup either way:**
+
+- **If K=3 admits**: the un-extracted 53 eGeMAPS dimensions carry cold info partially orthogonal to G4_gi + G5_modulation. Paper would report this as "the full eGeMAPS-functional substrate retains marginal cold-relevant info beyond the curated G3/G6 slices we admitted from it" — a methodological note about A5a slicing decisions.
+- **If K=3 fails**: A5a's slicing into G3 (voice quality) + G6 (spectral) captured ~all of eGeMAPS's cold-relevant content. Paper would report this as a *validation* of the A5a admission methodology — the audited slices weren't leaving cold info on the table.
+
+**Cost: ~3-5 min on cached features.** Loads eGeMAPSv02 from existing cache without invoking opensmile (the 88-d `.npy` files are on disk from prior G3/G6 extraction). 5 seeds × 2 configs × 16-β sweep; main cost is loading A2.5 heads + computing logits per seed.
+
+**Workflow note (per the new auto-memory workflow rule):** the cell is appended at `run.ipynb` cells 104-105 (markdown intro + code body) for the user to run inside the notebook so outputs land in the notebook record. Not run via shell. Output: `results/A5b_k3_egemaps_5seed.json` on successful completion.
+
+**Status: queued, awaiting user-run.** Plan §4.11.1.5 will be updated with full results table + verdict + cumulative-stack impact + ladder row + paper-framing implications once the user runs the cell and shares results.
+
 #### 4.11.2 Tier 2 — bigger conceptual payoff
 
 - **§4.11.2.1 A4 discrete audio tokens** (~3-5 days). HuBERT/EnCodec discrete token histograms as a separate feature stream — preserves syllable-rate/utterance-rhythm patterns that pooled WavLM stats average out. New G-group through A5a honesty audit + possible admission to A5b fusion. **Plausible upside: +0.005-0.020 → 0.696-0.711, plus a new architectural dimension for the paper.** Risk: tokens may carry speaker info (M10 returns).
