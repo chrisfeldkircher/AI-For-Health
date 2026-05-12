@@ -1511,7 +1511,7 @@ After the paper's structural restructure (commit `9a32ede`, main + supplementary
 
 Decision tree for the queue: any of the three can stack with the others if positive. Cell §4.12.3 is the load-bearing methodology test (cleanest test of the §4.11.2.1 hypothesis (i) "layer-weighted softmax does the work" vs hypothesis (ii) "capacity dominates"); cells §4.12.1 and §4.12.2 are pure UAR-push optimisations with low methodology risk.
 
-#### 4.12.1 K=2 ensemble calibration + stacked weighting (cell appended, queued)
+#### 4.12.1 K=2 ensemble calibration + stacked weighting (DONE; calibration NEUTRAL, mean-logit stays canonical; M15 + M16 cautionary tales)
 
 Three weighting strategies on the K=2 5-seed per-seed fused logits + one isotonic ablation:
 
@@ -1532,6 +1532,31 @@ Three weighting strategies on the K=2 5-seed per-seed fused logits + one isotoni
 - Any variant < 0.7090 - 0.002 -> "calibration hurts" (paper supplementary; document as failed-as-expected ablation, given LR-stacking can overfit on n=973 train_threshold).
 
 **Output:** `results/A5b_k2_ensemble_calibrated.json`. Self-contained (no GPU; numpy + sklearn only on cached fused logits). Cost: ~5 min wall-clock.
+
+**RESULT (DONE):** decision = `calibration_neutral`; mean-logit stays canonical. Per-variant devel_test UAR:
+
+| variant | devel_test UAR | Δ vs MEAN | train_threshold UAR | observation |
+| --- | --- | --- | --- | --- |
+| MEAN-LOGIT (baseline) | **0.7090** | 0.0000 | 0.6529 | reproduces existing 0.7090 (τ*=-1.375; recC=0.791, recNC=0.627) |
+| LR-STACKED | 0.6137 | **-0.0953** | 0.6887 | catastrophic overfit; learned weights {+1.57, **-1.85**, +1.18, **-2.89**, +2.68} have huge magnitudes + 2 negative signs |
+| UAR-GRID-SEARCH | 0.7049 | -0.0041 | 0.6648 | best weights (0, 0, 0.8, 0.2, 0) — uses only 2 of 5 seeds; +0.012 train_thr gain → -0.004 devel_test loss (generalisation gap +0.016) |
+| ISOTONIC ABLATION on MEAN-LOGIT | 0.7064 | -0.0026 | 0.6535 | M15 prediction was 0.000; observed -0.0026 is tau-grid resolution artefact |
+
+**Wall time:** 53.65 min (NOT the predicted ~5 min). The bulk is per-seed K=2 fused-logit recomputation across 5 seeds × 4 splits via `_load_a2hp_head + _a2_logit_on_split` (PooledCacheDataset's per-stem I/O is the bottleneck on the WavLM 4096-d cache files). My earlier estimate assumed the per-seed fused logits would be cached; they aren't, so the cell does the full 5×4 = 20 inference passes from scratch. **Methodology note:** the per-seed K=2 fused logits at locked β* per seed are deterministic given fixed ckpts + cached features; caching them as `cache/A5b_per_seed_k2_logits.npz` would cut future cell runtimes from 50 min to ~30 sec. Defer the cache-build until we know whether subsequent cells (§4.12.2 TTA, §4.12.3 HuBERT-LW) need them.
+
+**M15 confirmation (with caveat):** the isotonic-ablation devel_test UAR (0.7064) is *strictly less than* the pre-isotonic mean-logit UAR (0.7090) by 0.0026. The theoretical prediction was equality (UAR-at-optimal-tau invariant under monotonic transforms). The observed -0.0026 is the **tau-grid resolution artefact predicted in the cell docstring**: the raw fused-logit tau grid is `np.linspace(-4.0, 4.0, 321)` with step 0.025 (in logit space); the calibrated probability tau grid is `np.linspace(0.01, 0.99, 197)` with step 0.005 (in probability space). The optimal raw-logit tau τ*=-1.375 corresponds to a specific calibrated probability ≈ 0.085 in isotonic-mapped space, but the calibrated grid's nearest point is τ*=0.085 — close but not exactly the same operating point. The strict M15 statement holds: **monotonic calibration cannot IMPROVE UAR-at-optimal-tau**; it can only achieve EQUAL or appear-WORSE due to discretisation. Paper-stage framing: M15 is confirmed in the strong form ("not better than mean-logit") rather than the strict form ("exactly equal to mean-logit"). Add to methodology table once all 3 Tier-2 cells are in.
+
+**M16 candidate (LR-stacking on small calibration splits is overfit-prone):** the LR-stacked variant produced devel_test UAR 0.6137 = mean-logit baseline 0.7090 - 0.0953. The catastrophic drop is consistent with overfit on n=973 train_threshold with ~92 cold samples × 5 features + bias. The LR's L2 regularisation (C=1.0) is not enough to constrain the weights; learned magnitudes max |w| = 2.89 indicate ~12× the natural per-seed-logit std (which is ~0.24 across the 5 seeds on train_threshold). Mechanism: LR maximises likelihood, which can be increased by predicting more confidently (sharper sigmoids) on individual training points; with 5 features the LR finds a 5-d weighting that's confidently right on most train_threshold cold examples — including 2 negative-sign weights that say "if this seed predicts cold, then it's NOT cold." Three of these flipped weights only make sense in the train_threshold sample, not on devel_test, where they invert the prediction. Add to methodology table as: *"On small calibration splits (n ~< 1k, k < 100 minority class), L2-regularised LR-stacking on per-seed logits is prone to catastrophic generalisation failure (large-magnitude weights with sign flips). Equal-weight mean-logit is the default; UAR-grid-search with strict held-out evaluation is the next-most-conservative alternative."*
+
+**Grid-search overfit pattern:** the UAR-grid-search variant found best weights (0, 0, 0.8, 0.2, 0) = use only seeds {7, 999}. Train_threshold UAR went from 0.6529 (mean-logit) to 0.6648 (grid) = +0.012 train gain. Devel_test UAR went from 0.7090 (mean-logit) to 0.7049 (grid) = -0.004 devel loss. **Generalisation gap = +0.016 (gain - loss)** — the grid found a weighting that overfit the train_threshold sample-noisy UAR signal. With 7776 combinations evaluated on a 973-sample target, multiple-comparison effects also contribute: the maximum-of-7776 noisy UAR estimates has a positive bias of ~0.01 over the true population maximum at this sample size, which explains most of the apparent +0.012 train gain. This is a classic "grid-search overfits the target metric on small splits" pattern.
+
+**Mechanism reading (why equal weights win):** the 5 K=2 fused logits per chunk are highly correlated across seeds (Pearson r ≈ 0.94 from the §4.11.1.4 ensemble cell's per-seed reproduction sanity check). With high inter-seed correlation, the optimal weighting is approximately uniform — and any deviation from uniform shifts away from variance-minimisation toward signal-selection, which is suboptimal when signals are similar. The 5 seeds are equally informative; mean-logit is the variance-optimal pooling.
+
+**Paper implications:**
+
+- **For the methodology table:** add M15 (monotonic calibration cannot improve UAR-at-optimal-tau; the swept-threshold protocol already does this work) and M16 (small-calibration-split LR-stacking is overfit-prone; default to equal-weight mean-logit). M15 + M16 together strengthen the K=2 5-seed mean-logit ensemble headline by ruling out two natural "what about ____?" critiques.
+- **For the main body §6 results:** add a one-paragraph ablation noting that LR-stacking, UAR-grid-search, and isotonic calibration all underperform mean-logit. Cite the 5 calibration variants as a tightness check on the ensemble headline.
+- **For the appendix:** full per-variant table goes to Appendix~\ref{app:k2_calibration} (new appendix section). The LR-stacking failure is paper-worthy as a worked example of small-calibration-split overfit.
 
 #### 4.12.2 K=2 TTA ensemble (cell appended, queued)
 

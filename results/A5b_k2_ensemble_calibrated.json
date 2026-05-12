@@ -1,0 +1,76 @@
+{
+  "rung_id": "A5b_k2_ensemble_calibrated",
+  "description": "A5b K=2 5-seed ensemble \u2014 calibration / stacked weighting ablations. Three weighted variants (mean-logit baseline; LR-stacked; UAR-grid-search) and one isotonic ablation on the best of the three. The isotonic arm is the M15-candidate 'monotonic calibration cannot improve UAR-at-optimal-tau' test \u2014 by construction it should be a null, since UAR at swept-tau is invariant under any monotonic calibration of the underlying score.",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "locked_betas_per_seed": {
+    "42": 8.0,
+    "123": 8.0,
+    "7": 6.0,
+    "999": 12.0,
+    "31337": 8.0
+  },
+  "ref_mean_logit_uar": 0.709,
+  "ref_per_seed_single": 0.7037,
+  "target_baseline": 0.71,
+  "mean_logit": {
+    "tau": -1.375,
+    "uar_train_threshold": 0.6529159741857504,
+    "devel_test_uar": 0.7089999610908639,
+    "recall_C": 0.7912524850894632,
+    "recall_NC": 0.6267474370922647
+  },
+  "lr_stacked": {
+    "weights": [
+      1.5705196300773099,
+      -1.85150834578023,
+      1.1773452821196742,
+      -2.889207516608503,
+      2.6779922434999883
+    ],
+    "intercept": -0.2688256110528313,
+    "tau": -0.32499999999999973,
+    "uar_train_threshold": 0.6887289287949753,
+    "devel_test_uar": 0.6137186665653794,
+    "recall_C": 0.6461232604373758,
+    "recall_NC": 0.5813140726933831
+  },
+  "uar_grid_search": {
+    "n_combinations": 7775,
+    "n_skipped_zero": 1,
+    "best_weights": [
+      0.0,
+      0.0,
+      0.8,
+      0.2,
+      0.0
+    ],
+    "best_train_thr_uar": 0.664841035160044,
+    "tau": -2.95,
+    "devel_test_uar": 0.7048596121314981,
+    "recall_C": 0.8190854870775348,
+    "recall_NC": 0.5906337371854613
+  },
+  "isotonic_ablation": {
+    "applied_on": "MEAN-LOGIT",
+    "pre_iso_uar": 0.7089999610908639,
+    "tau": 0.08499999999999999,
+    "uar_train_threshold": 0.6534933413912931,
+    "devel_test_uar": 0.7064217676235226,
+    "delta_vs_pre_iso": -0.0025781934673413387,
+    "verdict": "lift_or_drop_unexpected"
+  },
+  "best_overall": {
+    "name": "MEAN-LOGIT",
+    "uar": 0.7089999610908639,
+    "delta_vs_mean": 0.0,
+    "delta_vs_target": -0.0010000389091360251
+  },
+  "decision": "calibration_neutral",
+  "elapsed_minutes": 53.64692879915238
+}
