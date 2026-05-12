@@ -1703,6 +1703,76 @@ Also report: `delta vs HuBERT mean-pooled standalone (0.5396)` (the §4.11.2.1 n
 - **Stacking upside:** if all three give modest positive lifts: calibration +0.003, TTA +0.005, HuBERT-A2.5 K=3 +0.010 -> cumulative ~0.727 (clearly past 0.710 baseline + interpretable lift over no-aug per-seed-single 0.7037). Compositional lifts would need a final all-three-stacked run to confirm the additivity isn't double-counting any variance reduction.
 - **Methodology contribution:** §4.12.3 is the cleanest test of the layer-weighted-pooling hypothesis from §4.11.2.1 -- whichever way it lands, it's a paper-grade result for the M14 cross-family discussion. §4.12.1's M15 ablation is a paper-grade result for the methodology table if it confirms.
 
+### 4.13 Robustness verification (no hidden-test access; reflection-driven)
+
+After §4.12 closures (calibration neutral, TTA hurts, HuBERT-A2.5 K=3 no-admit), the user-shared reflection raised a load-bearing concern: we have used `devel_test` for many decisions (K=2 candidate selection, β locks, M14 thresholds, calibration verdicts, TTA verdict, HuBERT-LW verdict). Each devel-side peek erodes its independence as a proxy for hidden-test UAR. Without hidden-test access (the ComParE 2017 hidden test labels are not publicly available), the right move before paper submission is to switch to a **robustness-first verification plan** rather than chasing devel-only micro-gains.
+
+Two cells appended to run.ipynb to verify the canonical 0.7090 result without new model training. Both reuse the cached A2.5 head ckpts + locked β* per seed:
+
+| sub-section | cell | cost | mechanism | what it tests |
+| --- | --- | --- | --- | --- |
+| §4.13.1 | shadow-split robustness harness | ~5-6 min | re-evaluate K=2 single + ensemble under 10 different (devel_val, devel_test) partitions of the existing devel split | does 0.7090 hold across devel partitions, or is it specific to SPLIT_SEED=42? |
+| §4.13.2 | speaker-level logit smoothing | ~5-6 min | per-pseudo-speaker mean smoothing of the ensemble logit; α-sweep on smoothed train_threshold UAR; pick best α; eval on smoothed devel_test | does aggregating per-chunk predictions across same-speaker chunks reduce noise and improve UAR? |
+
+Both cells are pure verification / post-processing — no new training. LoRA / classical SVM baseline alignment / further architecture experiments are explicitly **not** included; the user's robustness-first framing argues against any change that's calibrated on devel-only signal.
+
+#### 4.13.1 Shadow-split robustness harness (cell appended, queued)
+
+**Goal:** distinguish "genuine architectural lift" from "lucky devel split." Re-evaluates the canonical K=2 5-seed mean-logit ensemble + per-seed-single canonical under N=10 different (devel_val, devel_test) partitions of the devel split via different `StratifiedGroupKFold` seeds. Train_fit + train_threshold kept FIXED at canonical SPLIT_SEED=42 (so per-seed A2.5 head ckpts and locked β* per seed are unchanged) — pure devel-side overfit check.
+
+**Optimization:** per-seed A2.5 / G4 / G5 logits computed ONCE on all 9596 devel chunks (one inference pass per seed, ~1 min/seed = ~5 min total), then partitioned per shadow_seed by file index. Per-seed locked τ also computed once on the unchanged `train_threshold`. The shadow-split sweep is then just numpy slicing + per-shadow `evaluate_at_tau` — ~30 sec for 10 shadow splits. Total ~5-6 min vs ~50 min for naive re-inference per shadow split.
+
+**Decision rule:**
+
+- canonical 0.7090 within $\pm 1\sigma$ of shadow-mean → `robust_canonical_within_1sigma`. 0.7090 generalises across devel partitions; safe as paper headline.
+- canonical 0.7090 within $\pm 2\sigma$ of shadow-mean → `marginal_canonical_within_2sigma`. Mild devel-split sensitivity; recalibrate framing slightly ("0.7090 on canonical, [shadow_min, shadow_max] across 10 splits").
+- canonical 0.7090 outside $\pm 2\sigma$ → `fragile_canonical_outside_2sigma`. Recalibrate paper headline framing more aggressively; the canonical split was lucky.
+
+**Output:** `results/A5b_k2_shadow_splits.json`. Per-shadow per-seed UAR + per-shadow ensemble UAR + aggregate (mean ± std + min/max) across 10 shadow splits + decision verdict.
+
+**Shadow seeds chosen:** {1, 2, 3, 5, 11, 17, 23, 31, 53, 99} — distinct from canonical 42; spread across the integer range to avoid hash-prefix collisions; deterministic per-seed StratifiedGroupKFold gives different partitions per seed.
+
+#### 4.13.2 Speaker-level logit smoothing (cell appended, queued)
+
+**Goal:** test whether per-pseudo-speaker mean smoothing of the K=2 ensemble logit reduces per-chunk noise enough to improve UAR. URTIC labels are per-recording (a person either has a cold during the recording or doesn't), so per-chunk K=2 fused-logit predictions can be noisy in ways that should average out across the chunks of the same speaker.
+
+**Math:** for each chunk i with pseudo-speaker s_i, replace ensemble_logit_i with `smoothed_i = α · ensemble_logit_i + (1 - α) · mean_ensemble_logit_{s_i}`. Speaker-mean computed within the same split (no cross-split leakage). α=1.0 = no smoothing (reproduces 0.7090); α=0.0 = full smoothing (every chunk = speaker mean); intermediate = partial. Smooth-then-ensemble == ensemble-then-smooth (both linear), so we ensemble first and smooth after.
+
+**Sweep:** α ∈ {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0} (14 values, dense near 1.0 and 0.0). Per-α: smooth train_threshold + devel_test logits, sweep τ on smoothed train_threshold, eval at locked τ on smoothed devel_test. **Best α picked by train_threshold UAR (NOT by devel_test UAR — avoids the multiple-comparison-on-devel pattern).**
+
+**Decision rule:**
+
+- best α devel_test UAR ≥ 0.710 → `smoothing_crosses_baseline`.
+- best α devel_test UAR > 0.7090 + 0.003 → `smoothing_helps_robustly`.
+- |best α devel_test UAR - 0.7090| ≤ 0.002 → `smoothing_neutral` (per-chunk K=2 already captures speaker-level signal).
+- best α devel_test UAR < 0.7090 - 0.002 → `smoothing_hurts` (per-chunk noise was carrying useful signal averaged out by speaker-mean).
+
+**Reproduction sanity check:** α=1.0 row should reproduce 0.7090 exactly (no-op for α=1.0). Drift > 0.002 = pipeline regression.
+
+**Monotonicity diagnostic:** report n_increasing / n_decreasing steps in the α-sorted devel_test UAR sequence. Smooth monotonic = clean trade-off; many sign-flips = noisy interaction (suggests smoothing isn't really doing anything informative).
+
+**Output:** `results/A5b_k2_speaker_smoothing.json`. Per-α devel_test UAR + best-α lock + decision + monotonicity diagnostic.
+
+**Expected lift:** +0 to +0.005. The per-chunk K=2 already includes the per-seed-mean ensemble averaging which captures most of the variance reduction; speaker-level smoothing adds an additional axis (across chunks of the same speaker) that may or may not reduce remaining noise. Either outcome paper-relevant.
+
+#### 4.13.3 Run order + post-cell decision tree
+
+1. **Run §4.13.1 first** (shadow-split harness). Decisive verdict in ~6 min.
+   - If `robust_canonical_within_1sigma`: lock the headline as "0.7090 robust across 10 shadow splits"; proceed to §4.13.2.
+   - If `marginal` or `fragile`: stop the pure-UAR-push axis; recalibrate paper framing; report shadow distribution alongside canonical 0.7090.
+2. **Run §4.13.2** if shadow-split harness was robust. ~6 min.
+   - If `smoothing_crosses_baseline` or `smoothing_helps_robustly`: lock the smoothed ensemble as the new canonical; update paper §4 method + §6 results.
+   - If `smoothing_neutral`: document as a paper-supplementary ablation; mean-logit at 0.7090 stays canonical.
+   - If `smoothing_hurts`: document as a failed-as-expected ablation; suggests per-chunk K=2 already captures the speaker-level signal.
+3. **Then truly stop and write.** No LoRA, no classical SVM (deferred to §08 future work), no further sweeps.
+
+**Paper implications when results land:**
+
+- Add a paragraph to §6 results / §7 discussion noting the shadow-split robustness check (paper-grade defence against the "you overfit devel" critique).
+- If speaker smoothing helps: add a small subsection in §4 method noting the α-locked smoothed ensemble.
+- If speaker smoothing is neutral/hurts: brief mention in §6 results / appendix as a tested-and-rejected variant.
+- M18 candidate (if shadow-split robustness check is paper-grade): "shadow-split harness on the cached canonical-pipeline logits is a cheap robustness check that distinguishes architectural lift from devel-split overfit; should be reported alongside the canonical headline number on any small-data corpus where the held-out test set is unavailable."
+
 ---
 
 ## 5. A5 — feature enhancement + honesty-audited late fusion
