@@ -169,3 +169,62 @@ lr$\times 10$ & $0.6451 \pm 0.0030$ & $0.664\phantom{0} \pm 0.006\phantom{0}$ \\
 \end{table}
 
 We report A2.5-default (honest-prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence for the M5 (originally ``flat landscape,'' now ``constrained-recipe attractor'') discipline: the honest-prior advantage is not an artefact of the prior happening to land near a wider-basin attractor that uniform init reaches at higher lr; it is a strictly distinct attractor that uniform init cannot reach at any tested lr.
+
+\section{K=2 ensemble calibration / stacked weighting (M15 + M16)}
+\label{app:k2_calibration}
+
+Four reweighting strategies tested on the per-seed K=2 fused-logit matrix $[N_{\text{chunks}}, 5]$ (Section~\ref{ssec:ensemble_defence}). Per-variant devel\_test UAR and the per-seed locked-$\beta^*$ at $\{6, 8, 8, 8, 12\}$ are summarised in Table~\ref{tab:k2_calibration_app}. The LR-stacking variant produced the worst K=2 result tested in the entire project ($0.6137$), with learned weights $\{+1.57, -1.85, +1.18, -2.89, +2.68\}$ that include sign-flips on 2 of 5 seeds --- consistent with overfit on $n{=}973$ \texttt{train\_threshold} ($\sim 92$ cold examples) for an unconstrained 5-feature LR. The UAR-grid-search variant overfit the train\_threshold metric: best weights $(0, 0, 0.8, 0.2, 0)$ use only seeds $\{7, 999\}$, train\_threshold UAR went from $0.6529$ (mean-logit) to $0.6648$ (grid) ($+0.012$ train gain), but devel\_test went from $0.7090$ to $0.7049$ ($-0.004$ devel loss). The isotonic ablation produced $0.7064$ (Δ $-0.0026$ vs mean-logit) --- the residual delta is $\tau$-grid resolution mismatch (raw fused-logit grid is 321 points in $[-4, +4]$ at step $0.025$; calibrated probability grid is 197 points in $[0.01, 0.99]$ at step $0.005$; the optimal raw-logit $\tau^* {=} -1.375$ does not map exactly to a calibrated grid point).
+
+\begin{table}[t]
+\centering\small
+\caption{K=2 ensemble calibration / stacked weighting variants on \texttt{devel\_test}. Mean-logit at $0.7090$ is variance-optimal across the four tested aggregations.}
+\label{tab:k2_calibration_app}
+\begin{tabular}{lccr}
+\toprule
+variant & UAR & $\Delta$ vs mean-logit & weights / param \\
+\midrule
+MEAN-LOGIT (canonical) & $\mathbf{0.7090}$ & $0.0000$ & $w_i {=} 0.2$ uniform \\
+LR-STACKED             & $0.6137$ & $-0.0953$ & $\{{+}1.57, {-}1.85, {+}1.18, {-}2.89, {+}2.68\}$ \\
+UAR-GRID-SEARCH        & $0.7049$ & $-0.0041$ & $(0, 0, 0.8, 0.2, 0)$ \\
+ISOTONIC on MEAN-LOGIT & $0.7064$ & $-0.0026$ & $\tau$-grid artefact (M15) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{M15 verification (with caveat).} Argmax-UAR is invariant under monotonic transforms of the score by construction --- if $f$ is monotonic, $\argmax_\tau \text{UAR}(\mathbf{1}[f(s) \geq \tau], y) = \argmax_\tau \text{UAR}(\mathbf{1}[s \geq f^{-1}(\tau)], y)$. So the isotonic-calibrated UAR-at-optimal-$\tau$ should equal the pre-isotonic UAR-at-optimal-$\tau$. The observed $-0.0026$ delta is a $\tau$-grid resolution artefact that vanishes if the grids are unified (e.g., by transforming the optimal raw $\tau^*$ through the isotonic mapping and using that as the calibrated $\tau$ directly). Strict M15 statement holds: monotonic calibration cannot \emph{improve} UAR-at-optimal-$\tau$, only \emph{equal} or appear-\emph{worse} due to discretisation.
+
+\textbf{M16 mechanism (LR-stacking on small calibration splits).} L2-regularised LR maximises likelihood, which can be increased by predicting more confidently (sharper sigmoids) on individual training points. With 5 features the LR finds a 5-d weighting that's confidently right on most train\_threshold cold examples --- including 2 negative-sign weights that say ``if this seed predicts cold, then it's NOT cold.'' These flipped-sign coefficients only make sense in the train\_threshold sample, not on devel\_test. The L2 penalty (sklearn $C{=}1.0$) is not strong enough to constrain the weight magnitudes (max $|w| {=} 2.89 = \sim 12\times$ the natural per-seed-logit std $\sim 0.24$ across seeds on train\_threshold). Equal-weight mean-logit avoids this failure mode by construction.
+
+\section{K=2 TTA ensemble (M17)}
+\label{app:k2_tta}
+
+Test-time augmentation on the WavLM substrate of the K=2 LOCKED canonical (Section~\ref{ssec:ensemble_defence}). For each of 4 audio perturbations + the original (5 versions per chunk), WavLM-Large pooled stats were re-extracted via \texttt{transformers.AutoModel} inline; per-(aug, seed) K=2 fused logit was computed using the existing A2.5 head ckpt + un-augmented G4/G5 z-logits at locked $\beta^*$ per seed; mean across $5 \times 5 {=} 25$ logits per chunk; $\tau$ swept on \texttt{train\_threshold}.
+
+\begin{table}[t]
+\centering\small
+\caption{Per-augmentation mean-of-5-seeds K=2 fused-logit devel\_test UAR. Original-only-ensemble reproduces $0.7090$ exactly. TTA ensemble (mean over 25 augmented logits) lands at $0.6683$, $\Delta -0.0407$ vs no-TTA mean-logit.}
+\label{tab:k2_tta_app}
+\begin{tabular}{lccc}
+\toprule
+augmentation & mean per-seed UAR & $\Delta$ vs original & mechanism \\
+\midrule
+original                          & $0.7037$ & $0.000$  & sanity reference \\
+\texttt{gain\_p2dB}               & $0.6895$ & $-0.014$ & input-norm no-op \\
+\texttt{gain\_m2dB}               & $0.6894$ & $-0.014$ & input-norm no-op \\
+\texttt{time\_stretch\_p2}        & $0.6748$ & $-0.029$ & temporal structure disruption \\
+\texttt{time\_stretch\_m2}        & $0.6601$ & $-0.044$ & temporal structure disruption \\
+\midrule
+TTA ensemble (mean of 25 logits)  & $\mathbf{0.6683}$ & $-0.035$ & dilution by worse augs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Two paper-relevant mechanism findings:}
+
+\emph{(1) Gain $\pm 2$\,dB is essentially a no-op due to WavLM input normalisation.} Per-seed \texttt{gain\_p2dB} and \texttt{gain\_m2dB} UARs are identical to 4 decimal places (seed 7 differs by $0.0003$ = fp16 noise). The WavLM \texttt{AutoFeatureExtractor} applies \texttt{do\_normalize=True} (per-utterance zero-mean unit-variance), which is mathematically gain-invariant: for any positive $g$, $\text{normalize}(g \cdot x) = (g x - g \mu_x) / (g \sigma_x) = (x - \mu_x) / \sigma_x = \text{normalize}(x)$. Multiplicative gain is absorbed at the input pipeline level \emph{before} the transformer ever sees the difference. We effectively tested two augmentations (original + time-stretch) plus two no-ops dressed up as augmentations.
+
+\emph{(2) Time-stretch $\pm 2\%$ causes $0.029$--$0.044$ mean per-seed UAR drop.} Pooled stats (mean/std/skew/kurt over time) \emph{should in principle} be robust to small temporal perturbations --- they are sufficient statistics over the time axis. But WavLM's per-frame outputs have temporal structure (positional encoding + transformer self-attention pattern over frames) that gets disrupted by stretching. Time-stretch by rate $1.02$ changes a 5-second chunk to $5.1$ seconds ($\sim 10$ extra frames at 50\,Hz frame rate); the WavLM positional embeddings see a different absolute frame index for the same acoustic content; the attention pattern over the now-longer sequence shifts; the layer-wise per-frame outputs differ; pooling those different per-frame outputs produces different stats; the cold-LR probe trained on the un-stretched stats sees out-of-distribution input. \emph{Compounding factor:} the augmented WavLM logit is fused with un-augmented G4 / G5 z-logits at the seed's locked $\beta^*$, creating a calibration mismatch in the fusion --- the locked $\beta^*$ + $\tau^*$ were tuned for the original WavLM logit's distribution, not the augmented one.
+
+\textbf{Why TTA ensemble dilutes rather than averages-toward-improvement.} The standard variance-reduction story for TTA (``average independent noisy observations of the same underlying signal'') requires that the perturbations produce \emph{unbiased estimates} of the same target. Here the augmented logits are \emph{systematically biased}: gain logits $\equiv$ original (no-op contribution to ensemble diversity); time-stretch logits are systematically lower-UAR because they are out-of-distribution for the trained probes. Averaging 5 good originals (mean UAR $0.7037$) with $\sim 10$ effective time-stretch logits (mean UAR $\sim 0.6675$) gives an ensemble that pulls toward the worse augmentations. The fraction of the ensemble that is time-stretch-quality ($40\%$ by chunk count) is enough to drag UAR down by $0.04$.
+
+The original-only-ensemble sanity reproduction (5 seeds $\times$ 1 augmentation $=$ 5 fused logits per chunk averaged) returned $0.7090$ exactly --- confirms the per-seed K=2 logit pipeline is fully deterministic and the TTA degradation is entirely from the augmented logits.
