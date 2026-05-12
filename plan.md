@@ -1921,6 +1921,83 @@ Cumulative: probability of shadow-mean lift > +0.005 from all three stacking fav
 - **Step 3 (ComParE-SVM K=3, ~1 day):** 2017 baseline replication; biggest justification; uncertain payoff. Expected shadow lift: +0.005-0.015 if standalone ≥ 0.61.
 - **OR: lock at multi-K and write the paper.** Canonical already exceeds baseline; shadow mean closed 27% of the gap; methodology framework is rich.
 
+#### 4.14.2 Diverse-anchor 10-seed multi-K ensemble (cell appended, queued for user-run)
+
+**Goal:** more ensemble diversity by introducing 5 new A2.5 heads with varied hyperparameters (different optimizer dynamics + different head capacity → different cold-axis projections → less correlated logits across the 10-head pool).
+
+**Variants (paired retraining, one per existing seed):** `lrx2` (seed=42, base_lr=2e-3); `lrx0p5` (seed=123, base_lr=5e-4); `dr0p3` (seed=7, dropout=0.3); `dr0p7` (seed=999, dropout=0.7); `pd256` (seed=31337, proj_dim=256). Each variant: construct `LayerWeightedPooledHead` with the varied hyperparameter, init `layer_weights` with honesty-prior `T·sub@1` from A5d, train cold-CE + class-balanced sampler with the variant's base_lr, 25 epochs early-stop on devel_val UAR. Save ckpt at `cache/microsoft_wavlm-large/head_A2grouped_honestprior_diverse_{variant_id}.pt`.
+
+**Per-head β-sweep:** for each new head, β-sweep K=1 (A2.5 + G4_gi only) and K=2 (A2.5 + G4_gi + G5_modulation) on canonical train_threshold to find locked β_k1\* and β_k2\* (the original 5 heads reuse the existing locks from `A5b_k2_5seed_lock.json`).
+
+**Ensemble aggregation:** per-head multi_K = 0.5·(K=1 + K=2); 10-head mean-logit ensemble of multi_K_head. Sweep τ on canonical train_threshold; eval on canonical + 10 shadow splits at locked τ.
+
+**Decision rule (shadow-eval, vs §4.14.1 5-seed multi-K baseline):**
+
+- shadow Δ ≥ 0.003 AND ≥ 7/10 shadow splits positive → `diverse_anchor_robust_lift` (paper-grade, lock as new canonical)
+- shadow Δ ≥ 0.001 → `diverse_anchor_marginal` (paper supplementary)
+- |shadow Δ| ≤ 0.001 → `diverse_anchor_neutral` (5-seed multi-K stays canonical; the K-axis ensemble averaging already saturated the available signal)
+- shadow Δ < 0 AND canonical Δ ≥ 0.003 → `diverse_anchor_canonical_only_overfit` (do NOT promote)
+- shadow Δ < -0.001 → `diverse_anchor_hurts` (new anchors introduce noise rather than diversity)
+
+**Cost:** ~30-35 min wall-clock (5 head trainings at ~5 min each via existing `features.train.train_head` + per-head β-sweep + ensembling + shadow eval). Idempotent on per-head ckpt files (re-runs only retrain missing variants).
+
+**Output:** `results/A5b_multi_k_10seed_diverse.json`.
+
+**Expected shadow lift:** +0.003 to +0.008 (the new heads have different optimizer dynamics → different cold-axis projections → lower inter-head correlation than the 5 same-recipe seeds; effective ensemble independence improves modestly). Stacks additively with §4.14.1 multi-K (paired Δ vs K=2-only would be +0.006 from multi-K + this step's lift).
+
+#### 4.14.3 ComParE-SVM K=3 + multi-K-with-K=3 (Step 3, biggest justification; cell appended, queued for user-run)
+
+**Goal:** introduce a genuinely orthogonal new base predictor for K=3 fusion (the 6373-d ComParE-2016 acoustic feature set + regularised LR cold probe — the official 2017 ComParE Cold sub-challenge baseline architecture). Two-for-one:
+
+- **(a) resolves apples-to-oranges devel-vs-hidden-test framing** — gives a strict-alignment reference number on the same speaker-grouped subsplit protocol.
+- **(b) genuinely-orthogonal new base predictor** — different feature family entirely; not subject to the §4.12.3 audit-recipe-mirror correlation issue (HuBERT-A2.5 failed K=3 by correlation; ComParE-LR is handcrafted, recipe-orthogonal).
+
+**Pipeline:**
+
+1. Extract 6373-d ComParE-2016 features via `opensmile.Smile(FeatureSet.ComParE_2016, FeatureLevel.Functionals)` per chunk. Cache to `cache/handcrafted/compare2016/{stem}.npy`. Cost: ~6-10 hr CPU one-time for ~19,101 chunks. Idempotent on per-stem cache files (re-runs only extract missing stems).
+2. Fit `LogisticRegression(C=1.0, class_weight='balanced')` on train_fit; z-score using `fit_zscore` on train_fit predictions.
+3. Standalone shadow audit: τ-sweep on canonical train_threshold; eval at locked τ on canonical + 10 shadow splits → standalone shadow-mean UAR.
+4. **M14 pre-flight (shadow-mean, not canonical):**
+    - `< 0.55` → skip K=3 sweep; paper-stage finding only ("the classical ComParE-2016 + LR baseline is weaker than the FM-based system on the speaker-grouped subsplit; resolves the apples-to-oranges framing").
+    - `≥ 0.61` → admit plausible; run K=3 sweep.
+    - `[0.55, 0.61)` → borderline; run K=3 for confirmation.
+5. If pre-flight passes: K=3 sweep per seed: `fused = a2.5 + β · mean(z_g4_gi, z_g5_mod, z_compare)`. Extended β-grid `{0..2, 2.5..16}` (16 values); per-seed argmax β_k3\* on canonical train_threshold.
+6. **Multi-K-with-K=3:** per seed, average K=1 + K=2 + K=3 fused logits (each at its own locked β\*); then 5-seed mean-logit ensemble of the per-seed averages.
+
+**Decision rule (shadow-eval, vs §4.14.1 5-seed multi-K baseline):**
+
+- shadow Δ ≥ 0.003 AND ≥ 7/10 shadow splits positive → `compare_k3_robust_lift` (paper-grade, lock as new canonical with the classical-baseline-alignment as side effect)
+- shadow Δ ≥ 0.001 → `compare_k3_marginal` (paper supplementary)
+- |shadow Δ| ≤ 0.001 → `compare_k3_neutral` (5-seed multi-K stays canonical; the classical-baseline addition is paper-stage 2017-alignment finding only)
+- shadow Δ < 0 AND canonical Δ ≥ 0.003 → `compare_k3_canonical_only_overfit`
+- shadow Δ < -0.001 → `compare_k3_hurts`
+- M14 pre-flight fail → `compare_k3_skipped_m14_pre_flight_fail` (paper-stage classical-baseline-alignment finding; the official 2017 baseline architecture is weaker than the FM-based system on the speaker-grouped subsplit)
+
+**Either outcome is paper-grade:**
+
+- admit → +0.005-0.015 shadow lift + clean apples-to-apples 2017-baseline replication number for the discussion
+- M14-skip or no-admit → clean closure of the late-fusion axis with the strongest available orthogonal feature source + paper-stage finding that the 2017 baseline architecture's hidden-test 0.710 was specific to a less-strict split protocol (the official 2017 split allowed cross-speaker leakage that our speaker-grouped subsplit closes)
+
+**Cost:** ~6-10 hr extraction (one-time, cached) + ~30 min LR fit + ~30 min K=3 sweep. Heavily dominated by the extraction. Idempotent.
+
+**Output:** `results/A5b_compare_svm_k3.json` + `cache/handcrafted/compare2016/`.
+
+**Dependencies:** `opensmile==2.6.0` (already installed in env per verification check).
+
+**Expected shadow lift:** +0.005 to +0.015 IF standalone shadow ≥ 0.61 (admit plausible). Probability standalone clears 0.55: high (~80%); probability ≥ 0.61: ~50%. Conditional on ≥ 0.61 admission, probability of K=3 admitting at shadow-eval gate: ~50%. Combined probability of meaningful shadow lift: ~20-30%.
+
+#### 4.14.4 Cumulative ceiling estimate (post-§4.14)
+
+If all three steps stack favorably:
+
+- Step 1 (multi-K, DONE): +0.0059 shadow lift → 0.6940
+- Step 2 (diverse anchor, expected): +0.003 to +0.008 → 0.697-0.702
+- Step 3 (ComParE-SVM K=3, conditional): +0.005 to +0.015 → 0.702-0.717
+
+Probability all three stack favorably to push shadow mean ≥ 0.710: ~10-20%. Probability of shadow mean ≥ 0.700: ~50-60%. Probability of shadow mean ≥ 0.695: ~75-85%. The "high probability of coming closer" goal is well-served by Steps 2 + 3; the "high probability of exceeding 0.710 on shadow mean" goal remains <25%.
+
+**After Step 3 (whichever outcome): lock and write the paper.** No further intervention has higher EV under the shadow-eval gate; experimental phase is genuinely complete after the §4.14 trio.
+
 #### 4.13.3 Run order + post-cell decision tree
 
 1. **Run §4.13.1 first** (shadow-split harness). Decisive verdict in ~6 min.
