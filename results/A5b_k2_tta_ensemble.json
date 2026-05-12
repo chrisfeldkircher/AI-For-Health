@@ -1,0 +1,65 @@
+{
+  "rung_id": "A5b_k2_tta_ensemble",
+  "description": "A5b K=2 5-seed TTA ensemble. 4 audio augmentations + original = 5 versions per chunk; each forwarded through the existing 5 A2.5 head ckpts -> per-aug per-seed A2.5 logit -> K=2 fusion with un-augmented G4_gi + G5_modulation z-logits. Mean across 5 augs x 5 seeds = 25 fused logits per chunk. tau swept on train_threshold. Tests whether WavLM-substrate input perturbation reduces noise enough to lift the K=2 ensemble's 0.7090 toward 0.710 baseline. G4/G5 are NOT re-extracted because G4 is gain-invariant by design and G5 modulation is fairly robust to small temporal jitter (the cost-benefit doesn't justify re-extracting them).",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "augmentations": {
+    "original": {
+      "kind": "none"
+    },
+    "time_stretch_p2": {
+      "kind": "time_stretch",
+      "rate": 1.02
+    },
+    "time_stretch_m2": {
+      "kind": "time_stretch",
+      "rate": 0.98
+    },
+    "gain_p2dB": {
+      "kind": "gain",
+      "gain_db": 2.0
+    },
+    "gain_m2dB": {
+      "kind": "gain",
+      "gain_db": -2.0
+    }
+  },
+  "locked_betas_per_seed": {
+    "42": 8.0,
+    "123": 8.0,
+    "7": 6.0,
+    "999": 12.0,
+    "31337": 8.0
+  },
+  "ref_no_tta_ensemble_uar": 0.709,
+  "ref_per_seed_single": 0.7037,
+  "target_baseline": 0.71,
+  "extraction_minutes_per_aug": {
+    "time_stretch_p2": 10.233944420019785,
+    "time_stretch_m2": 10.592638758818309,
+    "gain_p2dB": 5.626975742975871,
+    "gain_m2dB": 5.5159559607505795
+  },
+  "original_only_reproduction": {
+    "tau": -1.375,
+    "devel_test_uar": 0.7089999610908639,
+    "delta_vs_ref_0p7090": -3.89091360242233e-08
+  },
+  "tta_ensemble": {
+    "tau": 1.6750000000000007,
+    "uar_train_threshold": 0.6459713798536617,
+    "argmax_devel_test_uar": 0.6664273445996898,
+    "tau_devel_test_uar": 0.6682854874480979,
+    "recall_C": 0.6401590457256461,
+    "recall_NC": 0.6964119291705498,
+    "delta_vs_no_tta": -0.04071451255190206,
+    "delta_vs_target": -0.04171451255190206
+  },
+  "decision": "tta_hurts",
+  "elapsed_minutes": 39.87705876429876
+}
