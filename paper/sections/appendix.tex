@@ -258,3 +258,44 @@ WavLM-A2.5 (LW + honesty prior)     & $\sim 0.656$                   & $+0.034$ 
 \paragraph{K=3 fusion result.} Per-seed standalone HuBERT-A2.5 is bimodal: 3 seeds clear $0.61$ (seed 7 $0.6547$, seed 42 $0.6475$, seed 999 $0.6191$); 2 seeds below (seed 123 $0.5888$, seed 31337 $0.5982$). The 5-seed mean ($0.6217$) crosses the M14 threshold by a thin margin and per-seed variance ($\sigma {=} 0.0291$) is the limiting factor. K=3 fusion (A2.5\_WavLM $+$ G4\_gi $+$ G5\_modulation $+$ HuBERT-A2.5) at extended $\beta$-grid $\{0..2, 2.5..16\}$, per-seed locked $\beta^* {=} \{16, 16, 6, 16, 16\}$ (4 of 5 boundary-pegged), 5-seed mean $0.6955 \pm 0.0083$ ($\Delta -0.008$ vs K=2 LOCKED). Per-seed deltas $\{-0.020, -0.003, -0.013, -0.004, -0.001\}$: 4 of 5 within K=2 $\sigma$ envelope (essentially neutral); 1 noticeably worse.
 
 \paragraph{Boundary-condition mechanism.} Standalone cleared $0.61$ but K=3 didn't admit. The mechanism is \emph{logit correlation, not individual weakness}: HuBERT-A2.5 logit is highly correlated with WavLM-A2.5 logit by construction. Both heads are trained via the same recipe (per-layer cold + speaker probes $\to$ sub@1 $\to$ LW softmax with honesty prior $\to$ cold-CE training); both end up concentrating on cold-relevant layers and producing similar cold-axis predictions per chunk. The K-fusion architecture detects the redundancy and pegs $\beta^*$ at boundary 16 with $\tau$ at extreme --- the same fusion-absorption signature seen for the K=3 G\_egemaps\_full failure (boundary $\beta^* +$ extreme $\tau$ for a low-standalone-UAR candidate), but here the candidate is individually strong and yet still fails the fusion. The audit recipe discovers similar cold-axis projections regardless of which FM substrate it's applied to, because cold-relevant layers in any speech FM end up encoding similar acoustic cues (voice quality, breathing patterns, modulation rate). The standalone-UAR-predictor heuristic should be augmented with a logit-correlation check (or an early-fusion baseline) before committing $\beta$-sweep compute to a candidate that's structurally similar to the anchor.
+
+\section{Shadow-split robustness analysis (M18)}
+\label{app:k2_shadow}
+
+Per-shadow-seed table for the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:shadow_robustness}) under 10 alternative \texttt{(devel\_val, devel\_test)} partitions of the devel split. Training-side splits (\texttt{train\_fit}, \texttt{train\_threshold}) and locked hyperparameters (per-seed $\beta^*$, per-seed $\tau^*$, ensemble $\tau^*$, K=2 group selection) all kept FIXED at canonical SPLIT\_SEED=42; only the devel partition varies.
+
+\begin{table}[t]
+\centering\small
+\caption{Per-shadow-seed K=2 5-seed mean-logit ensemble UAR. Mean / std / range / canonical $z$-score in last rows.}
+\label{tab:shadow_per_seed}
+\begin{tabular}{rrrrrr}
+\toprule
+shadow seed & N\_test & N\_test\_cold & per-seed mean & ensemble UAR & ensemble (recC, recNC) \\
+\midrule
+$1$  & $4798$ & $507$ & $0.6995$ & $0.7031$ & --- \\
+$2$  & $4805$ & $512$ & $0.6916$ & $0.6930$ & --- \\
+$3$  & $4806$ & $511$ & $0.6952$ & $0.6983$ & --- \\
+$5$  & $4789$ & $500$ & $0.6859$ & $0.6877$ & --- \\
+$11$ & $4786$ & $500$ & $0.7001$ & $\mathbf{0.7042}$ & --- (high) \\
+$17$ & $4798$ & $504$ & $0.6868$ & $0.6893$ & --- \\
+$23$ & $4798$ & $508$ & $0.6458$ & $\mathbf{0.6443}$ & --- (low outlier) \\
+$31$ & $4809$ & $512$ & $0.6837$ & $0.6853$ & --- \\
+$53$ & $4807$ & $511$ & $0.6840$ & $0.6856$ & --- \\
+$99$ & $4788$ & $499$ & $0.6870$ & $0.6910$ & --- \\
+\midrule
+shadow mean    & --- & --- & $0.6860$ & $0.6882$ & --- \\
+shadow std     & --- & --- & $0.0153$ & $0.0169$ & --- \\
+shadow range   & --- & --- & $[0.6458, 0.7001]$ & $[0.6443, 0.7042]$ & --- \\
+\midrule
+canonical (split=42)        & $4795$ & --- & $0.7037$ & $\mathbf{0.7090}$ & $(0.791, 0.627)$ \\
+canonical $z$-score         & --- & --- & $+1.16\sigma$ & $+1.24\sigma$ & --- \\
+canonical $\Delta$ vs shadow mean & --- & --- & $+0.0177$ & $+0.0208$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Verdict.} \texttt{marginal\_canonical\_within\_2sigma}. The canonical mean-logit ensemble UAR ($0.7090$) sits at $z {=} +1.24\sigma$ above the shadow mean ($0.6882$); within the $\pm 2\sigma$ envelope but above $\pm 1\sigma$. Mild but real partition-specific lift, consistent with cumulative implicit fit through the per-seed locked $\beta^*$ on canonical \texttt{train\_threshold}, the ensemble locked $\tau^*$ on canonical \texttt{train\_threshold}, the K=2 G\_other selection on canonical \texttt{devel\_test} from §\ref{ssec:k2}, and the M14 admission threshold calibrated on the canonical sweep. None of these decisions violated the pre-registered protocol; the canonical split was fixed before any rung optimisation; the shadow distribution makes the irreducible single-partition noise quantitatively visible.
+
+\paragraph{Mean-logit ensemble lift transfers across partitions.} Ensemble UAR exceeds per-seed-single 5-seed-mean UAR on 9 of 10 shadow splits (by $\Delta {+}0.001$ to ${+}0.004$). The single exception is shadow\_seed=23 where the ensemble ($0.6443$) is essentially equal to the per-seed-single mean ($0.6458$, $\Delta {-}0.0015$ within numerical noise). The canonical $\Delta {+}0.0053$ is the high end of the ensemble lift distribution; the shadow-mean ensemble lift is roughly half that magnitude on average. Confirms the §\ref{ssec:ensemble} ensemble averaging mechanism is not a canonical-split artifact, while also showing it has its own partition-specific component.
+
+\paragraph{shadow\_seed=23 outlier note.} The lowest shadow split ($0.6443$, $\sim 2.6\sigma$ below shadow mean) is the most extreme of the 10 splits. With $\sigma_{\text{shadow}} \sim 0.017$ and $N{=}10$ shadow splits, the most extreme is expected to be $\sim 1.8\sigma$ from the mean by extreme-value statistics; observing $-2.6\sigma$ once is plausible but slightly outside the 90\% confidence interval. A targeted per-pseudo-speaker diagnostic (cell §4.13.1.1 in the project repository) checks whether shadow\_seed=23 has structurally harder cold cases (concentrated voice-quality outliers, specific cold-speaker clusters in the test fold) or just statistical fluctuation; the verdict feeds back into the partition-variance framing of Section~\ref{sec:disc} as either a single-outlier paper-stage caveat or a structural-difficulty paper-relevant finding.

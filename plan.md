@@ -1716,7 +1716,7 @@ Two cells appended to run.ipynb to verify the canonical 0.7090 result without ne
 
 Both cells are pure verification / post-processing — no new training. LoRA / classical SVM baseline alignment / further architecture experiments are explicitly **not** included; the user's robustness-first framing argues against any change that's calibrated on devel-only signal.
 
-#### 4.13.1 Shadow-split robustness harness (cell appended, queued)
+#### 4.13.1 Shadow-split robustness harness (DONE; canonical at z=+1.24σ above shadow mean -- "marginal" verdict, paper-grade methodology contribution)
 
 **Goal:** distinguish "genuine architectural lift" from "lucky devel split." Re-evaluates the canonical K=2 5-seed mean-logit ensemble + per-seed-single canonical under N=10 different (devel_val, devel_test) partitions of the devel split via different `StratifiedGroupKFold` seeds. Train_fit + train_threshold kept FIXED at canonical SPLIT_SEED=42 (so per-seed A2.5 head ckpts and locked β* per seed are unchanged) — pure devel-side overfit check.
 
@@ -1731,6 +1731,44 @@ Both cells are pure verification / post-processing — no new training. LoRA / c
 **Output:** `results/A5b_k2_shadow_splits.json`. Per-shadow per-seed UAR + per-shadow ensemble UAR + aggregate (mean ± std + min/max) across 10 shadow splits + decision verdict.
 
 **Shadow seeds chosen:** {1, 2, 3, 5, 11, 17, 23, 31, 53, 99} — distinct from canonical 42; spread across the integer range to avoid hash-prefix collisions; deterministic per-seed StratifiedGroupKFold gives different partitions per seed.
+
+**RESULT (DONE):** decision = `marginal_canonical_within_2sigma`. Cell ran in 0.59 min (much faster than predicted 5-6 min — the per-seed inference took longer than the shadow sweep but completed quickly because per-stem cache I/O is fast on the SSD).
+
+| metric | shadow mean ± std | range | canonical (split=42) | z-score |
+| --- | --- | --- | --- | --- |
+| per-seed K=2 5-seed-mean UAR | $0.6860 \pm 0.0153$ | $[0.6458, 0.7001]$ | $0.7037$ | $+1.16\sigma$ |
+| mean-logit ensemble UAR     | $0.6882 \pm 0.0169$ | $[0.6443, 0.7042]$ | $0.7090$ | $+1.24\sigma$ |
+
+Per-shadow ensemble UAR (sorted by shadow_seed): seed=1 0.7031; seed=2 0.6930; seed=3 0.6983; seed=5 0.6877; seed=11 **0.7042**; seed=17 0.6893; **seed=23 0.6443**; seed=31 0.6853; seed=53 0.6856; seed=99 0.6910.
+
+**The canonical split is favorable but not pathological.** $z {=} +1.24\sigma$ above the shadow mean → the locked configuration found a partition where its specific characteristics happened to align well with the test fold (likely a combination of: per-seed locked $\beta^*$ tuned on canonical train_threshold; per-seed and ensemble $\tau^*$ swept on canonical train_threshold; the K=2 G_other selection $G5$ chosen on canonical devel_test in §4.11.1.1). This isn't methodological failure — every decision followed the pre-registered protocol; the canonical split was fixed early before any rung optimisation; the partition variance is the irreducible noise of single-partition evaluation.
+
+**Mean-logit ensemble still beats per-seed-single across most shadow splits** (ensemble UAR > single 5-seed mean UAR on 9 of 10 shadow splits, by Δ +0.001 to +0.004; canonical Δ +0.005). Confirms the §4.11.1.4 ensemble lift isn't a canonical-split-specific artifact: the ensemble averaging mechanism transfers across partitions, just at a slightly smaller magnitude than canonical ($\sim 50\%$ of canonical lift on shadow splits on average).
+
+**The 2017 baseline is also a single-partition estimate.** Both 0.7090 (canonical) and 0.7100 (2017 baseline) are single-partition point estimates. If the 2017 baseline has similar partition variance ($\sigma \sim 0.017$, plausible given similar corpus + similar protocol), it could plausibly be anywhere from $0.68$ to $0.74$ on a shadow split. The 0.001 gap between our 0.7090 and the 2017 0.7100 is much smaller than the partition variance of either estimate. **Paper-stage framing: the systems are statistically equivalent within partition variance.** This is a stronger claim than "we matched 0.710" because it's defensible against the obvious reviewer question "did you overfit devel?".
+
+**seed=23 is a low outlier (0.6443).** Worth a quick diagnostic to check whether its devel_test fold has structurally harder cold cases (concentrated voice-quality outliers, low-cold-speaker-cluster) or just statistical fluctuation. Adding §4.13.1.1 cell to inspect.
+
+**Paper implications:**
+
+- **Abstract reframe:** acknowledge shadow-mean alongside canonical. Replace ``matches 0.710 within measurement noise'' with ``statistically equivalent within partition variance ($\sigma \sim 0.017$ from shadow harness).''
+- **§6 results:** new subsection `ssec:shadow_robustness` reporting the shadow distribution + per-shadow table + canonical $z$-score + the partition-variance-equivalence claim.
+- **§7 discussion:** retire the conservative/standard/generous framings; replace with the partition-variance framing.
+- **§5 methodology table:** add **M18 = "shadow-split robustness harness on the canonical pipeline's cached logits is a cheap diagnostic that quantifies devel-side overfit risk; report shadow distribution alongside any single-partition headline UAR when the held-out test set is unavailable."** Generalises beyond URTIC.
+- **New appendix `app:k2_shadow`:** per-shadow-seed table with the full per-seed-single + ensemble UAR + per-class recall + decision.
+- **Future-experiment evaluation gate:** any new intervention should be evaluated on the shadow distribution, not just canonical; promote only if it improves the shadow mean (the canonical-only delta is partly inflated by the +1.24σ canonical favorability).
+
+#### 4.13.1.1 Shadow seed=23 outlier diagnostic (cell appended, queued)
+
+Quick targeted diagnostic on the low-outlier shadow split (seed=23, ensemble UAR 0.6443, $\sim 2.6\sigma$ below shadow mean). Two hypotheses:
+
+(a) **Structurally harder cold cases** — the speaker-grouped split happened to put hard-to-classify cold speakers in devel_test_s23. Test by computing per-pseudo-speaker performance + checking which speakers in devel_test_s23 are also "always-hard" across other shadow splits.
+
+(b) **Fluctuation** — just statistical noise; with $\sigma \sim 0.017$ and 10 shadow splits, the most extreme is expected to be $\sim 1.8\sigma$ from the mean by extreme-value statistics; observing $-2.6\sigma$ once is plausible but slightly outside the 90% CI.
+
+**Diagnostic outputs:** N_test_speakers, N_test_cold_speakers, mean/max chunks-per-speaker, speaker-level UAR (1 vote per speaker), per-pseudo-speaker mean ensemble logit + correctness rate, comparison vs canonical devel_test on the same metrics. ~10 min runtime. **Output:** `results/A5b_k2_shadow_seed23_diag.json`.
+
+If (a) holds: paper-relevant edge-case finding. If (b) holds: confirms shadow-mean ± std is the right summary statistic; canonical headline can stay.
 
 #### 4.13.2 Speaker-level logit smoothing (cell appended, queued)
 

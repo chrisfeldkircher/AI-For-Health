@@ -1,17 +1,13 @@
 \section{Discussion and Limitations}
 \label{sec:disc}
 
-\subsection{Devel-vs-hidden-test caveat}
+\subsection{Devel-vs-hidden-test caveat --- partition-variance equivalence framing}
 
-All numbers in Table~\ref{tab:stack} are on devel\_test under \texttt{StratifiedGroupKFold}-keyed speaker-disjoint sub-splitting. The 2017 ComParE Cold sub-challenge's 0.710 baseline was on the hidden test set, with unspecified speaker-disjointness properties. We do not have access to the hidden test labels, so we cannot compare apples-to-apples. We propose three framings of the K=2 5-seed mean-logit ensemble vs the 2017 baseline:
+All numbers in Table~\ref{tab:stack} are on the canonical \texttt{devel\_test} under \texttt{StratifiedGroupKFold}-keyed speaker-disjoint sub-splitting at SPLIT\_SEED=42. The 2017 ComParE Cold sub-challenge's $0.710$ baseline was on the hidden test set, with unspecified speaker-disjointness properties. We do not have access to the hidden test labels, so we cannot compare apples-to-apples directly.
 
-\textit{Conservative.} ``A5b K=2 5-seed mean-logit ensemble approaches the 2017 baseline within 0.001 UAR on devel\_test under speaker-grouped CV; matches within rounding-decimal precision.''
+The §\ref{ssec:shadow_robustness} shadow-split robustness analysis quantifies the canonical-split-specific lift: the locked configuration's mean-logit ensemble UAR varies from $0.6443$ to $0.7042$ across 10 alternative \texttt{(devel\_val, devel\_test)} partitions of the devel split (mean $0.6882$, $\sigma_{\text{shadow}} = 0.0169$); the canonical $0.7090$ sits at $z {=} +1.24\sigma$ above this distribution. Both our $0.7090$ canonical number and the 2017 hidden-test baseline $0.7100$ are single-partition point estimates; if the 2017 baseline has comparable partition variance ($\sigma_{2017} \sim 0.017$ is plausible given similar corpus and protocol), it could plausibly land anywhere in $[0.68, 0.74]$ on a different partition.
 
-\textit{Standard.} ``A5b K=2 5-seed mean-logit ensemble matches the 2017 baseline within measurement noise (0.7090 vs 0.7100, $\Delta\,-0.001$).''
-
-\textit{Generous.} ``A5b K=2 5-seed mean-logit ensemble matches the 2017 baseline at single decimal-place reporting (0.71).''
-
-We use the conservative framing in the abstract and the standard framing in the results table. Future work with hidden-test access could resolve the comparison.
+\textbf{We adopt the partition-variance equivalence framing as the canonical paper headline:} \emph{the $0.001$ UAR gap between our canonical $0.7090$ and the 2017 baseline $0.7100$ is much smaller than the partition variance ($\sigma \sim 0.017$) of either single-partition estimate; we consider the systems statistically equivalent within partition variance.} This is stronger and more defensible than the previously-listed conservative / standard / generous framings because it (a) acknowledges and quantifies the canonical favorability ($+1.24\sigma$, $\Delta\,+0.021$ over the shadow mean); (b) attributes the comparison's uncertainty to the right source (single-partition noise, not measurement error); (c) preempts the obvious reviewer question ``did you overfit devel?'' by reporting the shadow distribution alongside the canonical headline. Future work with hidden-test access could resolve the comparison directly; until then, the shadow distribution is the right uncertainty unit for the canonical-vs-baseline gap.
 
 \subsection{Exploratory-vs-confirmatory framing}
 
