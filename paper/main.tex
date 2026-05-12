@@ -1,14 +1,14 @@
 % =============================================================================
 % Honesty-Audited Late Fusion for Cold Detection on URTIC
-% TUM Hauptseminar IEEE-style template (latex8.sty / latex8.bst)
+% IEEE Conference style (IEEEtran v1.8b), TUM Hauptseminar paper-stage
 % =============================================================================
-\documentclass[10pt,twocolumn]{article}
-\usepackage{latex8}
-\usepackage{times}
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts % allow \thanks{} in author block
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{array}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 
@@ -19,19 +19,27 @@
 \newcommand{\etc}{etc.\ }
 \newcommand{\etal}{\emph{et al.}\ }
 
+% Math operators that LaTeX doesn't provide by default
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
 % Locked-style table column types
 \newcolumntype{R}{>{\raggedleft\arraybackslash}p{1.6cm}}
 
 \title{Honesty-Audited Late Fusion for Cold Detection:\\
 A Methodology Framework with Categorical De-Confounding Closure on URTIC}
 
-\author{Christoph Feldkircher\\
-Technical University of Munich\\
-{\tt\small <email@tum.de>}\\
+\author{\IEEEauthorblockN{Christoph Feldkircher}
+\IEEEauthorblockA{Technical University of Munich\\
+\texttt{<email@tum.de>}}
 % --- TUM Hauptseminar (paper-stage placeholder) ---
 }
 
 \begin{document}
+% Loosen line-breaking to avoid the IEEE 2-column squeeze pushing overfull boxes
+% past the margin (especially long monospace paths and bin-comma-separated numbers).
+\sloppy
+\setlength{\emergencystretch}{3em}
 \maketitle
 \thispagestyle{empty}
 
@@ -55,7 +63,7 @@ We present a controlled-system pipeline for the ComParE 2017 Cold sub-challenge 
 \input{sections/appendix}
 
 % =============================================================================
-\bibliographystyle{latex8}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}

@@ -1,3 +1,4 @@
+%!TEX root = ../main.tex
 % =============================================================================
 % Supplementary appendix
 % Holds detail moved out of the main body per the load-bearing-arguments-only
@@ -11,7 +12,7 @@
 
 The exhaustive K=2 candidate sweep across the five $G_{\text{other}} \in \{G1, G2, G3, G5, G6\}$ groups (3 seeds at design stage; later expanded to 5 seeds at fixed $G5$, see Section~\ref{ssec:k2_5seed}) produced Table~\ref{tab:k2_candidates_app}. The standalone-UAR-predicts-K-fusion-admission heuristic (Section~\ref{ssec:standalone_predictor}, Table~\ref{tab:standalone_predictor}) is built on this sweep: candidates with standalone cold-LR UAR $\geq 0.61$ admit with interior $\beta^*$; candidates below that threshold get fusion-absorbed at boundary $\beta^* \in \{12, 16\}$. The K=2 UAR column here is the design-stage 3-seed lock; the 5-seed lock for the canonical winner ($G5$) is reported in Section~\ref{ssec:k2_5seed}.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{K=2 candidate sweep on the A2.5 anchor (3 seeds, locked $\beta$-sweep). $G5$ is the unique winner; $G1$ is borderline; $G6$/$G2$/$G3$ fail with boundary $\beta^*$.}
 \label{tab:k2_candidates_app}
@@ -26,7 +27,7 @@ G2 prosody        & $0.6674 \pm 0.0015$ & $-0.0239$ & $[16, 16, 16]$ & FAIL \\
 G3 voice quality  & $0.6576 \pm 0.0014$ & $-0.0337$ & $[12, 12, 16]$ & FAIL \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \section{K=3 extensions --- G\_egemaps\_full and HuBERT-base}
 \label{app:k3}
@@ -41,7 +42,7 @@ The A5a curated slicing into G3 (voice quality, 14-d) + G6 (spectral, 21-d) had 
 \subsection{K=3 with HuBERT-base mean-pooled (M14 pre-flight skip)}
 \label{app:hubert}
 
-\textbf{Extraction protocol.} \texttt{facebook/hubert-base-ls960} (12 transformer layers + 1 input layer, 768-d hidden) without any fine-tuning. For each of the 19{,}101 train + devel chunks, frame-level activations from layers $L \in \{0, \dots, 12\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, giving a per-chunk fp16 tensor of shape $[13, 3072]$ ($13 \cdot 4 \cdot 768$). Cache lives at \texttt{cache/facebook\_hubert-base-ls960/pooled/\{stem\}.pt}. End-to-end extraction took 2.5 min on GPU at 133 chunks/sec --- 12$\times$ faster than initially budgeted because HuBERT-base is small and URTIC chunks are short. The cold-LR substrate is the layer-mean across 13 layers of the 4 stats, giving 3072-d per chunk; this avoids the overfit risk of a full-stack 39936-d LR at $C{=}1.0$ on the $\sim$8.5k train\_fit samples.
+\textbf{Extraction protocol.} \texttt{facebook/hubert-base-ls960} (12 transformer layers + 1 input layer, 768-d hidden) without any fine-tuning. For each of the 19{,}101 train + devel chunks, frame-level activations from layers $L \in \{0, \dots, 12\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, giving a per-chunk fp16 tensor of shape $[13, 3072]$ ($13 \cdot 4 \cdot 768$). Cache lives at \path|cache/facebook_hubert-base-ls960/pooled/{stem}.pt|. End-to-end extraction took 2.5 min on GPU at 133 chunks/sec --- 12$\times$ faster than initially budgeted because HuBERT-base is small and URTIC chunks are short. The cold-LR substrate is the layer-mean across 13 layers of the 4 stats, giving 3072-d per chunk; this avoids the overfit risk of a full-stack 39936-d LR at $C{=}1.0$ on the $\sim$8.5k train\_fit samples.
 
 \textbf{Standalone cold-LR result.} HuBERT mean-pooled standalone cold-LR UAR $= 0.5396$ at $\tau^* = -1.000$, threshold-at-best UAR $= 0.5152$. Sits firmly below the $0.55$ ``definite FAIL'' floor of the M14 standalone-UAR predictor (Section~\ref{ssec:standalone_predictor}). The K=3 sweep was \emph{skipped} per the M14 pre-flight discipline; the fail-fast mechanism saved $\sim 5$ min of compute on a configuration the heuristic predicted would fail. The HuBERT row in Table~\ref{tab:standalone_predictor} extends the standalone-UAR predictor across two substrate families (handcrafted + FM-derived) with the same $\sim 0.61$ admit threshold.
 
@@ -61,7 +62,7 @@ Original A5.5 Plan A spliced anchor chunks with same-cold-different-pseudo-speak
 
 Plan B mixes WavLM pooled stats per chunk: $\tilde{X}_{\text{anchor}} = \alpha \cdot X_{\text{anchor}} + (1-\alpha) \cdot X_{\text{partner}}$ with partner = same-cold + different-pseudo-speaker, $K{=}3$ cached mixed variants per chunk, sampled per-epoch by a custom \texttt{MixupSampler}. Two $\alpha$-axis endpoints tested: \emph{conservative} $\alpha \sim U(0.70, 0.85)$ and \emph{aggressive} $\alpha \sim U(0.50, 0.70)$. Three seeds each.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{A5.5 $\alpha$-axis sweep at the embedding level. Both endpoints fail differently. M9 narrow-window-empty.}
 \label{tab:a55_alpha_app}
@@ -74,7 +75,7 @@ $U(0.70, 0.85)$ conservative & $0.6624 \pm 0.0031$ & $0.0506$ & $0.0723$ & PARTI
 $U(0.50, 0.70)$ aggressive   & $0.6397 \pm 0.0186$ & $0.0485$ & $0.0717$ & FAIL (d) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \textbf{Conservative endpoint.} Small UAR lift ($+0.006$, $\sim 1.6\sigma$) without measurable probe drop. The augmentation activated weak regularization (recall pattern shifted to more cold-balanced) rather than de-confounding. cos(init, final) on the layer-weights $= 0.9999$ across seeds --- the optimizer didn't move the layer-weights from A2.5's converged state; the lift is MLP/classifier-level, not layer-weight refinement. The probe remained essentially unchanged ($0.0723$ vs A2.5's $0.0725$), so the small UAR lift is regularisation rather than de-confounding.
 
@@ -92,7 +93,7 @@ The original Phase 1 A6 PoC (speaker-masked SupCon on a fresh $4096 \to 512 \to 
 
 The surviving hypothesis after the M10 controls was ``contrastive as a regulariser on top of CE-anchored cold bottleneck.'' The combined-loss $\lambda$-sweep $L = L_{\text{cold-CE}} + \lambda \cdot L_{\text{SupCon-spkmasked}}$ over $\lambda \in \{0, 0.05, 0.1, 0.25, 0.5\}$ at 5 seeds gives Table~\ref{tab:a6b_lambda_app}.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{A6b combined-loss $\lambda$-sweep. $\lambda{=}0$ (pure cold-CE) is monotonically Pareto-best on every metric. Adding any positive $\lambda$ strictly worsens every measurement.}
 \label{tab:a6b_lambda_app}
@@ -107,7 +108,7 @@ $0.25$ & $\sim 0.045$      & $\sim 0.041$      & $\sim 0.607$     & $\sim +0.146
 $0.5$  & $0.0462$          & $0.0419$          & $0.6005$         & $+0.107$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 The endpoints ($\lambda{=}0$ and $\lambda{=}0.5$) are exact 5-seed numbers; the intermediate values are the monotone interpolation along the $\lambda$-axis from the per-$\lambda$ JSONs (\texttt{results/A6b\_phase1\_combined\_lambda\_sweep.json}) reported here as approximate to keep the table compact. Mechanism (4-step causal chain): (1) CE on the 128-d projection bottleneck produces sharply class-separated geometry where speaker info is mostly compressed away by the bottleneck itself; (2) adding SupCon class-pressure flattens within-class diversity --- CE already produced separation, contrastive adds no new structure; (3) the flattened diversity includes cold-relevant variation that helped CE generalise --- squeezing it out drops cold UAR; (4) SupCon's ``different cold class = separation'' regardless of speaker pulls same-speaker different-cold pairs apart, re-introducing speaker-correlated variance and raising the MLP probe (M11).
 
@@ -133,7 +134,7 @@ The v1$\to$v2 worked example is itself the M13 paper-stage demonstration: the di
 
 The A2.5 lr stress test produces a clarification of the original ``flat landscape'' framing: the layer-weight subspace has gradient signal at lr$\times 10$ but not at lr$\times 1$. Specifically, $\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis is:
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{$\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis (mean over 3 seeds at honest-prior init).}
 \label{tab:a25_lr_cos}
@@ -148,11 +149,11 @@ lr$\times 10$          & $0.83$ \\
 lr$\times 100$         & $0.21$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 The lr $\times$ init grid (uniform vs honest-prior $\times$ lr scaling $\in \{1, 3, 5, 10\}$, 3 seeds per cell, 24 retrains in total) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone:
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{lr $\times$ init grid: A2.5 honest-prior init reaches a UAR plateau ($0.657$--$0.664$) at every tested lr; uniform init plateaus at a strictly lower band ($0.6447$--$0.6466$) at every tested lr. 3 seeds per cell. The honesty prior is a distinct attractor in the layer-weight subspace.}
 \label{tab:lr_init_grid}
@@ -166,16 +167,16 @@ lr$\times 5$  & $0.6466 \pm 0.0021$ & $0.661\phantom{0} \pm 0.005\phantom{0}$ \\
 lr$\times 10$ & $0.6451 \pm 0.0030$ & $0.664\phantom{0} \pm 0.006\phantom{0}$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 We report A2.5-default (honest-prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence for the M5 (originally ``flat landscape,'' now ``constrained-recipe attractor'') discipline: the honest-prior advantage is not an artefact of the prior happening to land near a wider-basin attractor that uniform init reaches at higher lr; it is a strictly distinct attractor that uniform init cannot reach at any tested lr.
 
 \section{K=2 ensemble calibration / stacked weighting (M15 + M16)}
 \label{app:k2_calibration}
 
-Four reweighting strategies tested on the per-seed K=2 fused-logit matrix $[N_{\text{chunks}}, 5]$ (Section~\ref{ssec:ensemble_defence}). Per-variant devel\_test UAR and the per-seed locked-$\beta^*$ at $\{6, 8, 8, 8, 12\}$ are summarised in Table~\ref{tab:k2_calibration_app}. The LR-stacking variant produced the worst K=2 result tested in the entire project ($0.6137$), with learned weights $\{+1.57, -1.85, +1.18, -2.89, +2.68\}$ that include sign-flips on 2 of 5 seeds --- consistent with overfit on $n{=}973$ \texttt{train\_threshold} ($\sim 92$ cold examples) for an unconstrained 5-feature LR. The UAR-grid-search variant overfit the train\_threshold metric: best weights $(0, 0, 0.8, 0.2, 0)$ use only seeds $\{7, 999\}$, train\_threshold UAR went from $0.6529$ (mean-logit) to $0.6648$ (grid) ($+0.012$ train gain), but devel\_test went from $0.7090$ to $0.7049$ ($-0.004$ devel loss). The isotonic ablation produced $0.7064$ (Δ $-0.0026$ vs mean-logit) --- the residual delta is $\tau$-grid resolution mismatch (raw fused-logit grid is 321 points in $[-4, +4]$ at step $0.025$; calibrated probability grid is 197 points in $[0.01, 0.99]$ at step $0.005$; the optimal raw-logit $\tau^* {=} -1.375$ does not map exactly to a calibrated grid point).
+Four reweighting strategies tested on the per-seed K=2 fused-logit matrix $[N_{\text{chunks}}, 5]$ (Section~\ref{ssec:ensemble_defence}). Per-variant devel\_test UAR and the per-seed locked-$\beta^*$ at $\{6, 8, 8, 8, 12\}$ are summarised in Table~\ref{tab:k2_calibration_app}. The LR-stacking variant produced the worst K=2 result tested in the entire project ($0.6137$), with learned weights $\{+1.57, -1.85, +1.18, -2.89, +2.68\}$ that include sign-flips on 2 of 5 seeds --- consistent with overfit on $n{=}973$ \texttt{train\_threshold} ($\sim 92$ cold examples) for an unconstrained 5-feature LR. The UAR-grid-search variant overfit the train\_threshold metric: best weights $(0, 0, 0.8, 0.2, 0)$ use only seeds $\{7, 999\}$, train\_threshold UAR went from $0.6529$ (mean-logit) to $0.6648$ (grid) ($+0.012$ train gain), but devel\_test went from $0.7090$ to $0.7049$ ($-0.004$ devel loss). The isotonic ablation produced $0.7064$ ($\Delta$ $-0.0026$ vs mean-logit) --- the residual delta is $\tau$-grid resolution mismatch (raw fused-logit grid is 321 points in $[-4, +4]$ at step $0.025$; calibrated probability grid is 197 points in $[0.01, 0.99]$ at step $0.005$; the optimal raw-logit $\tau^* {=} -1.375$ does not map exactly to a calibrated grid point).
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{K=2 ensemble calibration / stacked weighting variants on \texttt{devel\_test}. Mean-logit at $0.7090$ is variance-optimal across the four tested aggregations.}
 \label{tab:k2_calibration_app}
@@ -189,7 +190,7 @@ UAR-GRID-SEARCH        & $0.7049$ & $-0.0041$ & $(0, 0, 0.8, 0.2, 0)$ \\
 ISOTONIC on MEAN-LOGIT & $0.7064$ & $-0.0026$ & $\tau$-grid artefact (M15) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \textbf{M15 verification (with caveat).} Argmax-UAR is invariant under monotonic transforms of the score by construction --- if $f$ is monotonic, $\argmax_\tau \text{UAR}(\mathbf{1}[f(s) \geq \tau], y) = \argmax_\tau \text{UAR}(\mathbf{1}[s \geq f^{-1}(\tau)], y)$. So the isotonic-calibrated UAR-at-optimal-$\tau$ should equal the pre-isotonic UAR-at-optimal-$\tau$. The observed $-0.0026$ delta is a $\tau$-grid resolution artefact that vanishes if the grids are unified (e.g., by transforming the optimal raw $\tau^*$ through the isotonic mapping and using that as the calibrated $\tau$ directly). Strict M15 statement holds: monotonic calibration cannot \emph{improve} UAR-at-optimal-$\tau$, only \emph{equal} or appear-\emph{worse} due to discretisation.
 
@@ -200,7 +201,7 @@ ISOTONIC on MEAN-LOGIT & $0.7064$ & $-0.0026$ & $\tau$-grid artefact (M15) \\
 
 Test-time augmentation on the WavLM substrate of the K=2 LOCKED canonical (Section~\ref{ssec:ensemble_defence}). For each of 4 audio perturbations + the original (5 versions per chunk), WavLM-Large pooled stats were re-extracted via \texttt{transformers.AutoModel} inline; per-(aug, seed) K=2 fused logit was computed using the existing A2.5 head ckpt + un-augmented G4/G5 z-logits at locked $\beta^*$ per seed; mean across $5 \times 5 {=} 25$ logits per chunk; $\tau$ swept on \texttt{train\_threshold}.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{Per-augmentation mean-of-5-seeds K=2 fused-logit devel\_test UAR. Original-only-ensemble reproduces $0.7090$ exactly. TTA ensemble (mean over 25 augmented logits) lands at $0.6683$, $\Delta -0.0407$ vs no-TTA mean-logit.}
 \label{tab:k2_tta_app}
@@ -217,7 +218,7 @@ original                          & $0.7037$ & $0.000$  & sanity reference \\
 TTA ensemble (mean of 25 logits)  & $\mathbf{0.6683}$ & $-0.035$ & dilution by worse augs \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \textbf{Two paper-relevant mechanism findings:}
 
@@ -240,7 +241,7 @@ A2.5-style head trained on HuBERT-base pooled stats with the same recipe as WavL
 
 \paragraph{Hypothesis decomposition.} Total gap to close: HuBERT mean-pooled $0.5396$ $\to$ WavLM-A2.5 $\sim 0.656$ $= 0.116$.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{HuBERT-base hypothesis decomposition. Layer-weighted softmax buys $\sim 71\%$ of the gap; capacity buys $\sim 29\%$. Both contribute; neither dominates.}
 \label{tab:hubert_decomp}
@@ -253,7 +254,7 @@ HuBERT-A2.5 (LW + honesty prior)    & $\mathbf{0.6217 \pm 0.0291}$  & $+0.082$ (
 WavLM-A2.5 (LW + honesty prior)     & $\sim 0.656$                   & $+0.034$ ($\approx 29\%$) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{K=3 fusion result.} Per-seed standalone HuBERT-A2.5 is bimodal: 3 seeds clear $0.61$ (seed 7 $0.6547$, seed 42 $0.6475$, seed 999 $0.6191$); 2 seeds below (seed 123 $0.5888$, seed 31337 $0.5982$). The 5-seed mean ($0.6217$) crosses the M14 threshold by a thin margin and per-seed variance ($\sigma {=} 0.0291$) is the limiting factor. K=3 fusion (A2.5\_WavLM $+$ G4\_gi $+$ G5\_modulation $+$ HuBERT-A2.5) at extended $\beta$-grid $\{0..2, 2.5..16\}$, per-seed locked $\beta^* {=} \{16, 16, 6, 16, 16\}$ (4 of 5 boundary-pegged), 5-seed mean $0.6955 \pm 0.0083$ ($\Delta -0.008$ vs K=2 LOCKED). Per-seed deltas $\{-0.020, -0.003, -0.013, -0.004, -0.001\}$: 4 of 5 within K=2 $\sigma$ envelope (essentially neutral); 1 noticeably worse.
 
@@ -264,7 +265,7 @@ WavLM-A2.5 (LW + honesty prior)     & $\sim 0.656$                   & $+0.034$ 
 
 Per-shadow-seed table for the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:shadow_robustness}) under 10 alternative \texttt{(devel\_val, devel\_test)} partitions of the devel split. Training-side splits (\texttt{train\_fit}, \texttt{train\_threshold}) and locked hyperparameters (per-seed $\beta^*$, per-seed $\tau^*$, ensemble $\tau^*$, K=2 group selection) all kept FIXED at canonical SPLIT\_SEED=42; only the devel partition varies.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{Per-shadow-seed K=2 5-seed mean-logit ensemble UAR. Mean / std / range / canonical $z$-score in last rows.}
 \label{tab:shadow_per_seed}
@@ -292,7 +293,7 @@ canonical $z$-score         & --- & --- & $+1.16\sigma$ & $+1.24\sigma$ & --- \\
 canonical $\Delta$ vs shadow mean & --- & --- & $+0.0177$ & $+0.0208$ & --- \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{Verdict.} \texttt{marginal\_canonical\_within\_2sigma}. The canonical mean-logit ensemble UAR ($0.7090$) sits at $z {=} +1.24\sigma$ above the shadow mean ($0.6882$); within the $\pm 2\sigma$ envelope but above $\pm 1\sigma$. Mild but real partition-specific lift, consistent with cumulative implicit fit through the per-seed locked $\beta^*$ on canonical \texttt{train\_threshold}, the ensemble locked $\tau^*$ on canonical \texttt{train\_threshold}, the K=2 G\_other selection on canonical \texttt{devel\_test} from §\ref{ssec:k2}, and the M14 admission threshold calibrated on the canonical sweep. None of these decisions violated the pre-registered protocol; the canonical split was fixed before any rung optimisation; the shadow distribution makes the irreducible single-partition noise quantitatively visible.
 
@@ -304,7 +305,7 @@ canonical $\Delta$ vs shadow mean & --- & --- & $+0.0177$ & $+0.0208$ & --- \\
 
 \paragraph{Speaker-mean smoothing $\alpha$-sweep (Table~\ref{tab:smoothing_app}).} A direct corollary of the cold-speaker sparsity finding: per-pseudo-speaker mean smoothing of the K=2 ensemble logit is monotonically uniformly bad. Shadow-paired $\Delta$ at $\alpha {=} 0$ is $-0.096 \pm 0.015$ (positive on $0/10$ shadow splits). The $\alpha$-sweep curve climbs monotonically toward $\alpha {=} 1.0$ (no smoothing) with no interior optimum.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{Speaker-mean smoothing $\alpha$-sweep on canonical devel\_test. Curve is monotonically increasing toward $\alpha {=} 1.0$ (no smoothing) with no interior optimum; train\_threshold UAR maximises at $\alpha {=} 0$ ($0.8401$) but does not transfer to devel\_test or any of 10 shadow splits.}
 \label{tab:smoothing_app}
@@ -325,7 +326,7 @@ $0.90$ & $0.6593$ & $0.7047$ & $(0.765, 0.644)$ \\
 $1.00$ & $0.6529$ & $\mathbf{0.7090}$ & $(0.791, 0.627)$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \paragraph{Why the train\_threshold-overfit $\alpha {=} 0$ selection was caught by the shadow-eval gate.} Train\_threshold UAR at $\alpha {=} 0$ ($0.8401$) is much higher than at $\alpha {=} 1.0$ ($0.6529$) because pseudo-speaker averaging on the small train\_threshold ($\sim 100$ unique pseudo-speakers $\times \sim 10$ chunks-per-speaker) is essentially ``predict the per-speaker label'' --- and on train\_threshold the per-seed-mean K=2 logits are mostly correct given the locked $\beta^* + \tau^*$ from canonical $\to$ smoothing trivially achieves near-perfect train\_threshold UAR. But this doesn't transfer to devel\_test (or any shadow split) because the test fold's pseudo-speaker composition differs from train\_threshold's. The pre-registered shadow-eval admission gate (paired $\Delta$ on shadow distribution, not canonical-only $\Delta$) caught exactly this overfit pattern.
 

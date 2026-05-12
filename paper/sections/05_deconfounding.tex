@@ -1,3 +1,4 @@
+%!TEX root = ../main.tex
 \section{De-Confounding Ladder Closure}
 \label{sec:deconf}
 
@@ -12,7 +13,7 @@ We tested three classes of de-confounding intervention on URTIC + frozen WavLM. 
 
 \textbf{Embedding mixup (M9 narrow window empty).} Plan B mixes WavLM pooled stats per chunk: $\tilde{X}_{\text{anchor}} = \alpha \cdot X_{\text{anchor}} + (1-\alpha) \cdot X_{\text{partner}}$, $\alpha \sim U(\alpha_{\min}, \alpha_{\max})$, partner = same-cold + different-pseudo-speaker, $K{=}3$ cached mixed variants per chunk. Two $\alpha$-axis endpoints tested: \emph{conservative} $\alpha \sim U(0.70, 0.85)$ and \emph{aggressive} $\alpha \sim U(0.50, 0.70)$. Both endpoints fail differently:
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{A5.5 $\alpha$-axis sweep at the embedding level (3 seeds). Both endpoints fail differently; the M9 operating window is empty across the $\alpha$-axis.}
 \label{tab:a55_alpha}
@@ -25,7 +26,7 @@ $U(0.70, 0.85)$ conservative & $0.6624 \pm 0.0031$ & $0.0506$ & PARTIAL \\
 $U(0.50, 0.70)$ aggressive   & $0.6397 \pm 0.0186$ & $0.0485$ & branch (d) FAIL \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 Conservative $\alpha$ gives a small UAR lift ($+0.006$, $\sim 1.6\sigma$) without measurable probe drop --- the augmentation activated weak regularisation (recall pattern shifted to more cold-balanced) rather than de-confounding. Aggressive $\alpha$ drops UAR by $0.017$ ($\sigma$ explodes 6$\times$) AND the probe still doesn't drop. Branch (d) verdict: both endpoints fail differently; intermediate $\alpha \sim U(0.60, 0.80)$ can't escape --- gentler falls toward conservative's null, stronger toward aggressive's UAR damage. Per-$\alpha$ LR-probe and cos(init, final) details in Appendix~\ref{app:a55_alpha}.
 
@@ -40,7 +41,7 @@ A6 adds a fresh projection MLP ($4096 \to 512 \to 128$ with GELU + LayerNorm, L2
 
 \textbf{M10 — bottleneck-confound diagnostic.} The reflection caught a confound: A2.5's LR probe baseline was on the 4096-d fused representation, while A6's LR probe was on the 128-d L2-normalised z. The 32$\times$ dim reduction plus the unit-hypersphere metric change can drop LR-recoverable speaker info \emph{independent} of the contrastive objective. Three controls on the same 128-d L2-normalised z disambiguate:
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{A6 PoC controls: bottleneck explains the apparent LR drop; cold-CE Pareto-dominates A6 on every metric.}
 \label{tab:a6_controls}
@@ -55,7 +56,7 @@ vanilla SupCon (128-d)  & $0.0463$ & $0.0400$ & $0.6012$ & $+0.049$ \\
 A6 spk-masked SupCon    & $0.0477$ & $0.0410$ & $0.5988$ & $+0.059$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 Three independent refutations of the head-only A6 mechanism: (i) random untrained projection drops LR to 0.0427 (within 0.0017 of A6); (ii) cold-CE-only Pareto-dominates A6 on every metric; (iii) vanilla SupCon (no speaker-masking) slightly beats A6 — the speaker-masking lever is mildly counterproductive (reduces positive count without buying de-confounding back).
 
@@ -90,7 +91,7 @@ After applying the corrected M13 decision (devel $> 0.08$ proceeds regardless of
 
 \subsection{Three-level closure summary}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{De-confounding ladder closure on URTIC + frozen WavLM.}
 \label{tab:closure}
@@ -104,7 +105,7 @@ repr (LW)    & A7 PoC            & M10 + M12 mem-dead \\
 repr (LW, no proj) & A7c (v2)    & M14: substrate-resistant \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 All within-budget options are exhausted. The methodology framework (M8 -- M14) is the load-bearing contribution; the categorical closure plus the seven instrumentation disciplines are transferable to any small-data paralinguistic foundation-model pipeline.
 
@@ -113,11 +114,11 @@ All within-budget options are exhausted. The methodology framework (M8 -- M14) i
 
 For convenience, the twelve M-disciplines that emerged from the closure are summarised in Table~\ref{tab:m_disciplines}. Each contains a falsifiable mechanism + the failure mode it catches; each generalises beyond URTIC. M8--M14 emerged from the de-confounding ladder; M15--M17 emerged from a follow-up sweep of ensemble-aggregation ablations on the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:ensemble_defence}); M18 emerged from a shadow-split robustness analysis (Section~\ref{ssec:shadow_robustness}); M19 emerged from the cold-speaker-sparsity findings on URTIC (Section~\ref{ssec:cold_sparsity}).
 
-\begin{table}[t]
-\centering\small
+\begin{table*}[t]
+\centering\footnotesize
 \caption{Twelve negative-control disciplines for foundation-model paralinguistic pipelines (M8 -- M19). M8--M14: de-confounding ladder. M15--M17: ensemble-aggregation ablations. M18: shadow-split robustness. M19: sparse-minority-class-speaker corollaries.}
 \label{tab:m_disciplines}
-\begin{tabular}{lp{4.5cm}}
+\begin{tabular}{lp{0.92\textwidth}}
 \toprule
 ID & one-line discipline \\
 \midrule
@@ -138,4 +139,4 @@ M18 & On small-data corpora where the held-out test set is unavailable, a shadow
 M19 & On corpora with sparse minority-class speaker representation (URTIC has $\sim 10$ cold speakers per devel half), speaker-level aggregation (smoothing or evaluation) increases variance rather than reducing it; the chunk-level metric is more stable. The naive ``aggregate to speaker level for noise reduction'' heuristic doesn't apply when minority-class speaker count is small. Empirical evidence on URTIC: chunk-UAR shadow $\sigma {=} 0.017$, speaker-UAR shadow $\sigma {=} 0.082$ ($\sim 5\times$ larger); speaker-mean smoothing produces monotone-decreasing $\alpha$-sweep with shadow-paired $\Delta {=} -0.096 \pm 0.015$ at full smoothing. Validates corpus-design choice of chunk-level UAR as the official metric and rules out a class of related interventions (multi-chunk inference, confidence weighting, speaker-level evaluation, multi-task speaker auxiliary heads). \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}

@@ -1,3 +1,4 @@
+%!TEX root = ../main.tex
 \section{Method: A2 $\rightarrow$ A2.5 $\rightarrow$ A5b}
 \label{sec:method}
 
@@ -23,7 +24,7 @@ where the MLP is two-layer (Linear-BN-GELU-Dropout, $4096{\to}128{\to}128$). The
 
 The per-layer cold/speaker honesty audit (A5d) trains a linear cold probe and a linear speaker probe on \texttt{pooled[:, L, :]} for each $L$ separately, computes $\mathrm{sub}@1_L = \mathrm{label\_gain}_L - \mathrm{speaker\_gain}_L$, and writes the 25-dimensional vector to \texttt{results/A5d\_grouped\_layer\_honesty.csv}. We then re-initialise the A2 head's softmax layer-weight logits with $\theta_w = T \cdot \mathrm{sub}@1$, using $T{=}50$. The training recipe is otherwise identical to A2.
 
-\textbf{A2.5 result (5-seed lock):} devel\_test argmax UAR $0.6563 \pm 0.0027$ at $N{=}5$ (5-seed expansion from the original 3-seed lock 0.6564 \pm 0.0038); $+0.020$ over uniform-A2 ($\sim$7$\sigma$ at $N{=}5$). MLP probe top-1 unchanged at $0.0501 \to 0.0501$ (no speaker-probe inflation). LR probe slightly down ($0.0760 \to 0.0725$). Pareto improvement on every measured dimension. Cosine-similarity diagnostic: $\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}}) \approx 0.9998$ across all seeds at the default lr — the optimizer essentially does not move the prior. An lr stress test confirmed the layer-weight subspace has gradient signal at $10\times$ higher lr ($\cos(\text{init},\text{final})$ drops to 0.21 at lr$\times 100$), but the M5 finding (Section~\ref{sec:disc}) is that the standard low-lr training recipe is too constrained to find the prior's attractor from uniform init: an lr$\times$init grid (uniform vs honest-prior $\times$ lr$\times\{3, 5, 10\}$, 18 retrains) shows uniform plateaus at UAR 0.6447--0.6466 across all tested lr while honesty-prior reaches 0.657--0.664 at every lr. The honesty prior is therefore a \emph{distinct attractor} in the layer-weight subspace that uniform initialisation cannot reach via lr alone.
+\textbf{A2.5 result (5-seed lock):} devel\_test argmax UAR $0.6563 \pm 0.0027$ at $N{=}5$ (5-seed expansion from the original 3-seed lock $0.6564 \pm 0.0038$); $+0.020$ over uniform-A2 ($\sim$7$\sigma$ at $N{=}5$). MLP probe top-1 unchanged at $0.0501 \to 0.0501$ (no speaker-probe inflation). LR probe slightly down ($0.0760 \to 0.0725$). Pareto improvement on every measured dimension. Cosine-similarity diagnostic: $\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}}) \approx 0.9998$ across all seeds at the default lr — the optimizer essentially does not move the prior. An lr stress test confirmed the layer-weight subspace has gradient signal at $10\times$ higher lr ($\cos(\text{init},\text{final})$ drops to 0.21 at lr$\times 100$), but the M5 finding (Section~\ref{sec:disc}) is that the standard low-lr training recipe is too constrained to find the prior's attractor from uniform init: an lr$\times$init grid (uniform vs honest-prior $\times$ lr$\times\{3, 5, 10\}$, 18 retrains) shows uniform plateaus at UAR 0.6447--0.6466 across all tested lr while honesty-prior reaches 0.657--0.664 at every lr. The honesty prior is therefore a \emph{distinct attractor} in the layer-weight subspace that uniform initialisation cannot reach via lr alone.
 
 \subsection{A5b: Honesty-audited late fusion}
 \label{ssec:a5b}
@@ -57,7 +58,7 @@ To tighten the standard error on the headline number, we trained A2.5 honesty-pr
 
 \textbf{Headline N=5 numbers vs prior 3-seed locks:}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
 \caption{5-seed expansion of A2.5 / A5b K=1 / A5b K=2. $\sigma$ reduction 16--29\% across all metrics; the K=2$-$K=1 lift sharpens from 1.4$\sigma$ at $N{=}3$ to 4.30$\sigma$ at $N{=}5$.}
 \label{tab:5seed}
@@ -71,7 +72,7 @@ K=2 LOCKED UAR      & $0.7023 \pm 0.0077$ & $\mathbf{0.7037 \pm 0.0060}$ & $-21\
 K=2 $-$ K=1 lift    & $+0.0110 \pm 0.0032$ & $+0.0103 \pm 0.0024$ ($\mathbf{4.30\sigma}$) & $-24\,\%$ \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \textbf{Per-seed K=2$-$K=1 deltas at N=5 — all positive:} seed 42 $+0.0117$; seed 123 $+0.0137$; seed 7 $+0.0075$; seed 999 (NEW) $+0.0092$; seed 31337 (NEW) $+0.0095$. No seed produces null or reversed lift. $\beta^*$ for K=2 on the new seeds (999: $\beta^*{=}12$, 31337: $\beta^*{=}8$) sits in the same interior plateau as the original 3 seeds ($\beta^* \in \{6, 8, 8\}$); G4\_gi+G5\_modulation orthogonality holds across all 5 seeds.
 

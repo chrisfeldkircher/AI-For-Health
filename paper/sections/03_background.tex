@@ -1,3 +1,4 @@
+%!TEX root = ../main.tex
 \section{Background and Setup}
 \label{sec:bg}
 
@@ -7,7 +8,7 @@ The Upper Respiratory Tract Infection Corpus (URTIC) was distributed for the Com
 
 \subsection{Frozen WavLM-Large pooled-stats cache}
 
-We use \texttt{microsoft/wavlm-large} (24 Transformer layers + 1 input layer, 1024-d hidden) without any fine-tuning. For each chunk, frame-level activations from layers $L \in \{0, 1, \dots, 24\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, producing a per-chunk fp16 tensor of shape $[25, 4096]$ ($25 \cdot 4 \cdot 1024 = 4 \cdot 25 \cdot 1024$ stats). The cache lives at \texttt{cache/microsoft\_wavlm-large/pooled/\{stem\}.pt} and is reused by every downstream rung — A2, A2.5, A5b, A5.5, A6, A6b, A7, A7c, A7c-v2 all consume the same cache.
+We use \texttt{microsoft/wavlm-large} (24 Transformer layers + 1 input layer, 1024-d hidden) without any fine-tuning. For each chunk, frame-level activations from layers $L \in \{0, 1, \dots, 24\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, producing a per-chunk fp16 tensor of shape $[25, 4096]$ ($25 \cdot 4 \cdot 1024 = 4 \cdot 25 \cdot 1024$ stats). The cache lives at \path|cache/microsoft_wavlm-large/pooled/{stem}.pt| and is reused by every downstream rung — A2, A2.5, A5b, A5.5, A6, A6b, A7, A7c, A7c-v2 all consume the same cache.
 
 \subsection{Speaker-grouped sub-splits (within-partition leak fix)}
 \label{ssec:splits}
