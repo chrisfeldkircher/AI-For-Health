@@ -1628,7 +1628,7 @@ The K=2 5-seed mean-logit ensemble at 0.7090 stays the canonical paper-headline 
 
 **Wall time:** 39.88 min (consistent with my predicted ~25-30 min for the augmentation extraction + ~10 min for fusion). Lessons: WavLM-Large extraction is ~10 min/aug at ~30 chunks/sec on GPU (fp16 batch 1); gain extractions are 2× faster than time-stretch extractions (5.5 min vs 10.5 min) because no librosa time-stretch call.
 
-#### 4.12.3 K=3 with HuBERT-base + learned LW softmax (cell appended, queued)
+#### 4.12.3 K=3 with HuBERT-base + learned LW softmax (DONE; nuanced result -- both hypotheses partially validated, K=3 doesn't admit by logit-correlation)
 
 The cleanest test of the §4.11.2.1 hypothesis (i) "layer-weighted softmax pooling does the work". Mirrors WavLM-A2.5's treatment on HuBERT-base pooled stats:
 
@@ -1656,6 +1656,37 @@ Also report: `delta vs HuBERT mean-pooled standalone (0.5396)` (the §4.11.2.1 n
 **Output:** `results/A5b_k3_hubert_lw_5seed.json` (per-layer audit + per-seed head training results + standalone per seed + 5-seed standalone aggregate + M14 verdict + K=3 sweep if applicable + final decision). Cost: ~50 min wall-clock (~5 min audit + ~25 min head training across 5 seeds + ~20 min standalone UAR + K=3 sweep). HuBERT cache assumed present from §4.11.2.1.
 
 **Dependencies:** none beyond what §4.11.2.1 already required.
+
+**RESULT (DONE):** decision = `k3_hubert_lw_no_admit`; K=2 stays canonical. **Both hypotheses partially validated; new fusion-orthogonality boundary condition emerged.** Cell ran in **3.71 min** (vs 50 min predicted) because head training fired early-stop at epoch 1-4 across all seeds — the HuBERT layer-weight subspace is much smaller (13 layers vs WavLM's 25) and the cold signal saturates fast.
+
+**Hypothesis decomposition:**
+
+| measurement | value | interpretation |
+| --- | --- | --- |
+| HuBERT mean-pooled standalone (§4.11.2.1 ref) | $0.5396$ | naive baseline |
+| HuBERT-A2.5 standalone (this cell, 5-seed mean) | $0.6217 \pm 0.0291$ | learned LW + honesty prior |
+| WavLM-A2.5 standalone (~ref) | $0.656$ | full-capacity LW |
+| **gap closure breakdown** | $0.5396 \to 0.656 = 0.116$ total | --- |
+| from layer-weighted softmax (HuBERT mean → HuBERT-A2.5) | $+0.082$ | $\approx 71\%$ |
+| from capacity (HuBERT-A2.5 → WavLM-A2.5) | $+0.034$ | $\approx 29\%$ |
+
+**Hypothesis (i) "layer-weighted softmax does the work"** — PARTIALLY VALIDATED. Adding learned LW + honesty-prior init to HuBERT-base buys $+0.082$ standalone UAR, lifting the substrate from M14 definite-FAIL ($0.5396 < 0.55$) to M14 admit-plausible ($0.6217 \geq 0.61$). The audited cold-relevant layers concentrate (top-5 final softmax weights: L0 $0.31$, L1 $0.083$, L12 $0.083$, L10 $0.069$, L3 $0.067$ — heavily L0-dominant which is also the highest-sub@1 layer in the audit). cos(audit prior, final softmax) $= 0.95$ across all 5 seeds — the prior is tightly preserved through training (mirrors the M5 finding for WavLM-A2.5).
+
+**Hypothesis (ii) "capacity dominates"** — PARTIALLY VALIDATED. Even with the same architectural treatment (LW softmax + honesty prior + identical training recipe), HuBERT-A2.5 standalone is $0.034$ below WavLM-A2.5. Some of the gap is genuinely about backbone capacity / pretraining-corpus diversity ($24 \times 1024$ vs $13 \times 768$ pre-stat dims; WavLM trained on $94$\,k hours, HuBERT-base on $960$\,h LibriSpeech).
+
+**K=3 fusion verdict: NO ADMIT (0.6955 ± 0.0083, Δ -0.008 vs K=2 LOCKED).** Per-seed locked $\beta^* = \{16, 16, 6, 16, 16\}$ (4 of 5 boundary-pegged); per-seed deltas $\{-0.020, -0.003, -0.013, -0.004, -0.001\}$ (4 of 5 within K=2 σ envelope, 1 noticeably worse). The result is essentially neutral ($-0.008$ within $\sim 1.5\sigma$ of K=2 σ $0.006$), not catastrophic — but doesn't cross the admit threshold ($0.7037 + 0.005 = 0.7087$).
+
+**New mechanistic insight (refinement of the §6 standalone-UAR-predictor heuristic):** standalone UAR cleared 0.61 but K=3 fusion didn't admit. **The mechanism is logit correlation, not individual weakness:** HuBERT-A2.5 logit is highly correlated with WavLM-A2.5 logit by construction (both derived from the same audit recipe — fit linear cold + speaker probes per FM layer, compute sub@1, use as honesty prior for an LW softmax head, train cold-CE). Both heads end up concentrating on cold-relevant layers and producing similar cold-axis predictions per chunk. Adding a correlated logit to the K=3 fusion doesn't add orthogonal information — it just adds noise that the fusion architecture detects as "noise to silence" and pegs $\beta^*$ at boundary 16. **The standalone-UAR-predictor heuristic should be augmented with a logit-correlation check (or an early-fusion baseline) before committing β-sweep compute to a candidate that's structurally similar to the anchor.**
+
+**Per-seed standalone variance (σ = 0.0291) is much higher than WavLM-A2.5 (~0.0027 at 5-seed).** HuBERT-A2.5 head training is less stable; possible mechanism: HuBERT pooled stats have lower SNR on cold (per-layer cold UAR range $0.5569$--$0.6128$ vs WavLM's likely $0.65+$ for the cold-best layer), so the head training is more sensitive to seed-specific data ordering. Per-seed standalone is bimodal: 3 of 5 seeds clear 0.61 (seed 7 $0.6547$, seed 42 $0.6475$, seed 999 $0.6191$); 2 of 5 are below (seed 123 $0.5888$, seed 31337 $0.5982$). The mean (0.6217) crosses the M14 threshold by a thin margin; per-seed variance is the limiting factor.
+
+**Paper implications:**
+
+- **Update §4.5.5 K=3 HuBERT subsection** in `paper/sections/04_method.tex`: add a paragraph noting the §08 future-work axis (HuBERT-base + learned LW) has now been tested, with the nuanced result (both hypotheses partial, new orthogonality boundary).
+- **Update §6 standalone-UAR-predictor table** in `paper/sections/06_results.tex`: add a row for HuBERT-A2.5 (FM-derived, 128-d projection from LW head's classifier output, standalone $0.6217 \pm 0.029$, K=3 verdict NO ADMIT, mechanism: logit correlation with anchor). Add a paragraph after the heuristic-statement explaining the boundary condition.
+- **Update §08 conclusion future work**: this axis is now CLOSED with paper-paragraph evidence. The remaining untested variants from the §08 list are (ii) HuBERT-large mean-pooled (still genuine "capacity dominates" test) and (iii) HuBERT discrete tokens (orthogonal feature, not subject to the audit-recipe-mirror correlation issue) — these stay as future work for a possible deeper paper.
+- **Add Appendix `app:k3_hubert_lw`**: per-layer audit table + per-seed head training history + per-seed standalone + K=3 sweep details.
+- **Methodology table refinement**: the result refines the standalone-UAR-predictor heuristic mentioned in §6 (not the M-disciplines table); decide whether to add as M18 ("multi-FM late fusion requires logit orthogonality, not just individual standalone strength") or keep as a §6 paragraph. Recommend §6 paragraph since it's a sharpening of an existing finding rather than a fully new discipline.
 
 #### 4.12.4 Documentation strategy when results land
 

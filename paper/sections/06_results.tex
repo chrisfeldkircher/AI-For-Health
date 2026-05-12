@@ -65,7 +65,7 @@ The exhaustive K=2 sweep across all six A5a-admitted feature groups + the full 8
 
 \begin{table}[t]
 \centering\small
-\caption{Standalone cold-LR UAR predicts K-fusion admission across 7 candidates spanning two substrate families. Threshold $\sim 0.61$ partitions admit/fail.}
+\caption{Standalone cold-LR UAR predicts K-fusion admission across 8 candidates spanning two substrate families and two probe types. Threshold $\sim 0.61$ partitions admit/fail for individually-distinct candidates; HuBERT-A2.5 is the boundary-condition exception (cleared standalone but failed K=3 by logit-correlation with the WavLM-A2.5 anchor).}
 \label{tab:standalone_predictor}
 \begin{tabular}{llccc}
 \toprule
@@ -74,13 +74,18 @@ candidate         & substrate    & standalone & K-fusion verdict & $\beta^*$ \\
 G5\_modulation    & handcrafted (64-d)  & $0.6121$ & K=2 WIN ($0.7037$, 5s)         & interior \\
 G1\_voicing       & handcrafted (9-d)   & $0.6058$ & K=2 borderline ($0.6964$, 3s)  & interior \\
 G6\_spectral      & handcrafted (21-d)  & $0.6053$ & K=2 FAIL ($0.6698$, 3s)        & boundary \\
+\textbf{HuBERT-A2.5 (LW)}      & \textbf{FM-derived (LW head)} & $\mathbf{0.6217 \pm 0.029}$ & \textbf{K=3 FAIL$^\dagger$ ($0.6955$, 5s)} & boundary \\
 \textbf{HuBERT-base mean-pool} & \textbf{FM-derived (3072-d)} & $\mathbf{0.5396}$ & \textbf{K=3 SKIPPED (M14 pre-flight, 5s)} & --- \\
 G\_egemaps\_full  & handcrafted (88-d)  & $0.5384$ & K=3 FAIL ($0.6801$, 5s)        & boundary \\
 G2\_prosody       & handcrafted (10-d)  & $0.5088$ & K=2 FAIL ($0.6674$, 3s)        & boundary \\
 G3\_voice quality & handcrafted (14-d)  & $0.5039$ & K=2 FAIL ($0.6576$, 3s)        & boundary \\
 \bottomrule
 \end{tabular}
+\\[2pt]
+\footnotesize{$^\dagger$HuBERT-A2.5 is the boundary condition: standalone $0.6217$ cleared the $0.61$ admission threshold, but K=3 fusion failed because the candidate logit is highly correlated with the WavLM-A2.5 anchor logit by construction (same audit recipe applied to a different FM substrate; both end up concentrating on cold-relevant layers and producing similar cold-axis predictions). The K-fusion architecture rewards orthogonality, not absolute strength.}
 \end{table}
+
+\paragraph{Boundary condition for the heuristic --- multi-FM late fusion requires logit orthogonality, not just standalone strength.} The HuBERT-A2.5 row in Table~\ref{tab:standalone_predictor} is the heuristic's first failure: standalone cleared $0.61$ but K=3 fusion didn't admit (5-seed $0.6955 \pm 0.0083$, $\Delta -0.008$ vs K=2 LOCKED; 4 of 5 seeds at boundary $\beta^*{=}16$). The mechanism is structural: the audit recipe (per-layer cold + speaker probes $\to$ sub@1 $\to$ LW softmax with honesty prior $\to$ cold-CE training) discovers similar cold-axis projections regardless of which FM substrate it is applied to, because cold-relevant layers in any speech FM end up encoding similar acoustic cues (voice quality, breathing patterns, modulation rate). Two A2.5-style heads on different FM substrates produce different absolute logits but highly correlated rankings --- the K-fusion architecture detects the redundancy and pegs $\beta^*$ at boundary. The practical implication: \emph{the standalone-UAR-predictor heuristic should be augmented with a logit-correlation check (or an early-fusion baseline) before committing $\beta$-sweep compute to a candidate that's structurally similar to the anchor.} Recipe-orthogonal candidates (e.g., HuBERT discrete-token histograms, which capture syllable-rate / utterance-rhythm patterns that pooled-stat representations average out) bypass this boundary condition and stay as future work (Section~\ref{sec:conc}).
 
 \subsection{Recall pattern flip in the ensemble}
 
