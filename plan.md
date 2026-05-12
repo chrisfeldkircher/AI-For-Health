@@ -1840,6 +1840,45 @@ If (a) holds: paper-relevant edge-case finding. If (b) holds: confirms shadow-me
 
 **The K=2 5-seed mean-logit ensemble at canonical 0.7090 / shadow-mean 0.6882 ± 0.017 is the FINAL canonical paper-headline triple.** Speaker-smoothing was the cheapest UAR-push attempt under the new shadow-eval gate and it failed unambiguously. No further interventions tested within the configurations.
 
+### 4.14 "Come closer to 0.710 baseline" plan (post-§4.13 reflections; shadow-mean as the binding metric)
+
+After the §4.13 closures (shadow-split harness DONE marginal; speaker-smoothing DONE hurts; seed=23 DONE structural), the user-stated goal pivoted to "come closer to the 71% baseline with high probability while staying on a justifiable research track." The honest reality is that "exceed 0.710 on shadow mean" is not high-probability with any tractable intervention (shadow $\sigma {=} 0.017$, gap is +0.022); "come closer (>+0.005 shadow lift)" is achievable.
+
+The 3-step plan, cheapest-first, each shadow-eval gated, each paper-grade either way:
+
+| step | intervention | cost | probability of meaningful shadow lift | expected shadow lift if positive |
+| --- | --- | --- | --- | --- |
+| §4.14.1 | multi-K ensemble (K=1 + K=2 per-seed averaging) | ~5-6 min | ~70% | +0.001 to +0.003 |
+| §4.14.2 | diverse-anchor 10-seed ensemble (5 new A2.5 heads with varied lr/dropout/proj_dim) | ~25-30 min | ~50-60% | +0.003 to +0.008 |
+| §4.14.3 | ComParE-SVM K=3 (2017 baseline replication under speaker-grouped subsplit) | ~1 day | ~25% (admit conditional on standalone ≥ 0.61) | +0.005 to +0.015 |
+
+Cumulative: probability of shadow-mean lift > +0.005 from all three stacking favorably: ~65-75%; probability of crossing 0.710 on shadow mean: ~15-25%.
+
+**Skip list (lower EV per the §4.13 reflections):**
+
+- LoRA fine-tune: high variance, scope drift into de-confounding ladder, ~5-7 day investment.
+- HuBERT-large mean-pooled: capacity confirmation test of §4.12.3 hypothesis; lower EV than ComParE-SVM for shadow lift.
+- Whisper-A2.5: would have the same audit-recipe-mirror correlation issue as HuBERT-A2.5 per §4.12.3; almost certain to fail K=3 admit by correlation; defer to future work as another instance of the same finding.
+- MDD adversary (Margin Disparity Discrepancy as alternative to DANN): the §4.10 / A7 / A7c v2 substrate-resistance verdict (`B_dann_dead_substrate_resistant`: every metric flat across $\lambda \in [0, 0.1]$) is an architectural property of the frozen-WavLM + LW-softmax substrate, not a property of the specific adversarial loss formulation. MDD would almost certainly produce the same `B_mdd_dead_substrate_resistant` verdict (same substrate, different adversarial loss math, same outcome). Worth a paper-stage future-work mention as "another adversarial-loss formulation also closes negatively under M14 substrate-resistance" but not worth the engineering cost (new MDD module, new cell, ~half-day for a likely-confirming negative).
+
+#### 4.14.1 Multi-K ensemble (K=1 + K=2 per-seed averaging, shadow-eval gated; cell appended, queued for user-run)
+
+**Goal:** variance reduction across the K-axis. Per seed, average K=1 fused logit (a2.5 + $\beta_{k1}^* \cdot z_{g4}$) and K=2 fused logit (a2.5 + $\beta_{k2}^* \cdot \text{mean}(z_{g4}, z_{g5})$); then 5-seed mean-logit ensemble of the averaged-per-seed logits.
+
+**Math.** $\text{multi\_K}_{\text{seed}} = 0.5 \cdot (K_1^{\text{seed}} + K_2^{\text{seed}}) = a_{2.5} + 0.5(\beta_{k1} + \beta_{k2}/2) \cdot z_{g4} + 0.25 \beta_{k2} \cdot z_{g5}$. Effectively a re-weighted K=2 with asymmetric per-channel β coefficients (more weight on G4_gi than G5_modulation), per-seed. For seed 42 (β_k1=6, β_k2=8): effective $\beta_{g4} {=} 5$, effective $\beta_{g5} {=} 2$, vs K=2-only $\beta_{g4} {=} 4$, $\beta_{g5} {=} 4$.
+
+**Decision rule (shadow-mean Δ, not canonical-only):**
+
+- shadow Δ ≥ 0.003 AND ≥ 7/10 shadow splits positive → `multi_k_robust_lift`
+- shadow Δ ≥ 0.001 → `multi_k_marginal` (paper supplementary)
+- |shadow Δ| ≤ 0.001 → `multi_k_neutral` (K=2-only stays canonical)
+- shadow Δ < 0 BUT canonical Δ ≥ 0.003 → `multi_k_canonical_only_overfit` (do NOT promote)
+- shadow Δ < -0.001 → `multi_k_hurts`
+
+**Why "high probability of small lift, low risk":** K=1 + K=2 share the A2.5 anchor + G4_gi component → high correlation bound (asymptotic effective sample size with 10 logits at average correlation $r \sim 0.93$ is $\sim 1.07$ vs $\sim 1.05$ for 5 K=2-only logits at $r \sim 0.94$), so ensemble lift is bounded. But per-seed K=1 and K=2 differ in fusion weight ($\beta_{k1}$ vs $\beta_{k2}$) producing distinct effective per-channel weighting → ensemble averaging finds a slightly different operating point than K=2-alone. Expected shadow-mean lift: +0.001 to +0.003.
+
+**Output:** `results/A5b_k2_multi_k_ensemble.json`. Cost: ~5-6 min wall-clock. Sanity check baked in: K=2-only ensemble reproduction should reproduce 0.7090 canonical reference exactly.
+
 #### 4.13.3 Run order + post-cell decision tree
 
 1. **Run §4.13.1 first** (shadow-split harness). Decisive verdict in ~6 min.
