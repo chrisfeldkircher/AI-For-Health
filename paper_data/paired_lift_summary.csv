@@ -1,0 +1,4 @@
+comparison,description,canonical_lift,shadow_lift_mean,shadow_lift_std,n_positive,n_total
+multi_K_vs_K2_only,multi-K paired lift over K=2-only across 10 shadow splits + canonical,0.002058,0.005862,0.0041,9,10
+multi_K_with_K3_vs_multi_K,multi-K-with-K=3 (ComParE-LR) paired lift over multi-K,0.00157,2e-05,0.00261,5,10
+diverse_anchor_vs_5seed,10-seed diverse-anchor paired lift over 5-seed multi-K,-0.002182,-0.002081,0.00146,1,10

@@ -1,0 +1,8 @@
+method,canonical_uar,shadow_mean,shadow_std,n_shadow_splits
+K2_only,0.709,0.688185,0.01685,10
+multi_K,0.711058,0.694046,0.01573,10
+multi_K_with_K3_compare_lr,0.712628,0.694067,0.0166,10
+K3_only_compare_lr,0.686765,0.674591,0.014,10
+compare_lr_standalone,0.596428,0.585252,0.00832,10
+multi_K_diverse_10seed,0.708876,0.691966,0.01615,10
+speaker_smoothing_best_alpha,0.619882,0.59235,0.01944,10

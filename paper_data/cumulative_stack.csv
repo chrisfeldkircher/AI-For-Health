@@ -1,0 +1,8 @@
+stage,description,devel_test_uar,devel_test_uar_std,n_seeds,speaker_probe_mlp_top1,speaker_probe_lr_top1
+A2_grouped,"frozen WavLM-Large + 2-layer MLP, uniform layer-weight init",0.636135,0.00188,3,0.049778,0.075956
+A2.5_honestprior,+ honesty-prior layer-weight init (T_INV * sub@1),0.656363,0.003845,3,0.050125,0.072485
+A5b_K1_n3,+ K=1 late fusion w/ G4_gain_invariant (n=3 seeds),0.6913,0.007601,3,,
+A5b_K2_n3,+ K=2 late fusion w/ G4_gain_invariant + G5_modulation (n=3 seeds),0.702269,0.007654,3,,
+A5b_K2_n5,K=2 5-seed expansion (canonical headline),0.703725,0.006013,5,0.018163,0.07286
+A5b_K2_mean_logit_ens,K=2 5-seed mean-logit ensemble (paper-supplementary),0.709,,5,,
+A5b_multiK,"Multi-K ensemble: per-seed avg(K=1, K=2) then 5-seed mean-logit (canonical 0.7111)",0.711058,,5,,

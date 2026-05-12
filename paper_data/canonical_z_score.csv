@@ -1,0 +1,2 @@
+method,description,canonical_uar,shadow_mean,shadow_std,delta_canonical_minus_shadow_mean,canonical_z_sigma
+K2_only,shadow-distribution z-score for canonical K=2-only ensemble,0.709,0.688185,0.01685,0.020815,1.235

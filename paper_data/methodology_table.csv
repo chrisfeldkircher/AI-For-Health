@@ -1,0 +1,13 @@
+m_id,category,discipline_one_line
+M8,de-confounding ladder,audio-splice self-control: A5.5 phase 3.5
+M9,de-confounding ladder,"α-endpoint controls: α∈{0,1} canonical points anchor mixup α-sweep"
+M10,de-confounding ladder,bottleneck-confound test: 128-d projection vs 4096-d un-bottlenecked substrate
+M11,de-confounding ladder,subtractive auxiliary-objective interaction: λ-grid with main loss only as reference
+M12,de-confounding ladder,in-flight memorisation-gap probe at every epoch (loss-vs-UAR-vs-probe trajectory)
+M13,de-confounding ladder,disc-ceiling-before-λ-sweep ordering: A7 baseline before adversarial sweep
+M14,de-confounding ladder,substrate noise floor (speaker-probe top-1 ceiling at this corpus scale) + standalone-UAR-predictor for K-fusion admission
+M15,ensemble aggregation,monotonic-calibration invariance: isotonic must not move ranking-only UAR
+M16,ensemble aggregation,"small-calibration-split LR-stacking overfit: LR-stacked weights beat grid only on tiny held-out, lose on full devel_test"
+M17,ensemble aggregation,FM-substrate TTA must use perturbations that survive input normalisation
+M18,shadow-split robustness,cheap canonical-pipeline-logit-replay across N alternative devel partitions to quantify devel-side overfit risk on small-data corpora
+M19,sparse-minority-class corollary,speaker-level aggregation increases variance rather than reducing it when minority-class speaker count is small (URTIC chunk-UAR σ=0.017 vs speaker-UAR σ=0.082)

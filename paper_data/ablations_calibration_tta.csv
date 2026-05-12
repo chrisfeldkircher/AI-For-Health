@@ -1,0 +1,7 @@
+variant,description,devel_test_uar,recall_C,recall_NC,delta_vs_mean_logit
+mean_logit,5-seed K=2 mean-logit (canonical headline),0.709,0.791252,0.626747,0.0
+lr_stacked,5-seed K=2 LR-stacked weights on small held-out,0.613719,0.646123,0.581314,-0.095281
+uar_grid_search,5-seed K=2 best per-seed weights via UAR grid,0.70486,0.819085,0.590634,-0.00414
+isotonic_calibrated,5-seed K=2 mean-logit + isotonic on devel_val,0.706422,,,-0.002578
+tta_original_only,TTA pipeline reproduction (original only),0.709,,,-0.0
+tta_5x,5-version TTA mean-logit (original + 4 augmentations),0.668285,0.640159,0.696412,-0.040715

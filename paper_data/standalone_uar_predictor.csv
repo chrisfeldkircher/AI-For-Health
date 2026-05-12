@@ -1,0 +1,6 @@
+candidate,description,standalone_canonical_uar,standalone_std_or_seed_std,standalone_shadow_mean,K_fusion_verdict,locked_beta
+G4_gain_invariant,handcrafted gain-invariant family (3 dims; cold-LR probe),0.663206,0.0,,"K=1_ADMIT (G_other winner under exhaustive K=1 sweep, K=2 locked at β=8)",
+G_egemaps_v02_full_88d,eGeMAPSv02 superset replacement / addition,0.538432,,,K=3_NO_ADMIT (audit-driven slicing validates),
+HuBERT_base_meanpool,HuBERT-base mean-pooled chunk repr (M14 pre-flight: fail),0.539587,,,K=3_NO_ADMIT (m14_pre_flight: skip_definite_fail),
+HuBERT_base_LW_softmax,HuBERT-base + honesty-prior layer-weighted softmax (A2.5 architecture transferred),0.621657,0.029131,,K=3_NO_ADMIT (logit-correlation w/ WavLM-A2.5 anchor),
+ComParE_2016_LR,classical 6373-d ComParE-2016 functionals + regularised cold-LR,0.596428,0.008322,0.585252,"K=3_NEUTRAL (canonical +0.0016, shadow paired +0.00002, 5/10 positive)",
