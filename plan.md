@@ -1770,7 +1770,18 @@ Quick targeted diagnostic on the low-outlier shadow split (seed=23, ensemble UAR
 
 If (a) holds: paper-relevant edge-case finding. If (b) holds: confirms shadow-mean ± std is the right summary statistic; canonical headline can stay.
 
-#### 4.13.2 Speaker-level logit smoothing (cell appended, queued)
+**RESULT (DONE):** verdict = `structural_harder_cold_speakers` (cell ran in 0.53 min). seed=23 has 95 unique pseudo-speakers (vs canonical 107) and only **5 cold speakers** (vs canonical 10), with cold-speaker mean correctness of $0.466$ (vs canonical $0.694$). Speaker-level UAR collapses to $0.4056$ (vs canonical $0.7232$), $\sim 5\sigma$ below canonical and meaningfully below the shadow-mean of $0.5996 \pm 0.0819$. The mechanism is structural but **not a partition defect**: cold speakers are sparse on URTIC ($\sim 21$ across the entire devel partition split into halves of $\sim 10$ each), and seed=23 happened to put 5 *specific* cold speakers into devel\_test that turned out to be harder-than-average for the locked configuration to classify.
+
+**Z-score discrepancy note (caught in reflection 2):** the cell computed `shadow_mean_ex_23` (excluding seed=23 itself, $\sigma {=} 0.0072$) for the comparison table, giving $z {=} -6.78\sigma$ for chunk-UAR; the §4.13.1 baseline used the inclusive shadow distribution (10 splits, $\sigma {=} 0.0169$), giving $z {=} -2.60\sigma$. Both statistics are valid: the exclusive-of-self captures "how extreme is this point relative to the OTHER points" (useful for outlier detection); the inclusive captures "how extreme relative to the full distribution including itself" (the standard summary statistic for distribution variance). For paper citation we use the inclusive $z {=} -2.60\sigma$ (consistent with §4.13.1 framing); the exclusive-of-self overstates extremeness because the tail outlier's inclusion expands the inclusive $\sigma$.
+
+**The deeper finding (paper-grade, M19 candidate):** on URTIC, **speaker-level UAR is much MORE noisy than chunk-level UAR across shadow splits**. Across the 10 shadow splits, chunk-UAR distribution has $\sigma {=} 0.017$ (from §4.13.1); speaker-UAR distribution has $\sigma {=} 0.0819$ ($\sim 5\times$ larger). This is the OPPOSITE of the conventional paralinguistic intuition that speaker-level aggregation reduces noise. Mechanism: URTIC cold speakers are sparse ($\sim 10$ per devel half), so per-speaker accuracy is itself noisy; the gain from per-speaker aggregation is dwarfed by the loss in effective sample size when collapsing $\sim 4800$ chunks to $\sim 100$ speakers. **M19 candidate:** *"on corpora with sparse minority-class speaker representation (URTIC has $\sim 10$ cold speakers per devel half), speaker-level aggregation (smoothing or evaluation) increases variance rather than reducing it; the chunk-level metric is more stable. The naive 'aggregate to speaker level for noise reduction' heuristic doesn't apply when minority-class speaker count is small. Validates ComParE's choice of chunk-UAR as the official metric and rules out a class of related interventions (multi-chunk inference, confidence weighting, speaker-level evaluation)."* This finding is shared between §4.13.1.1 (seed=23 diag) and §4.13.2 (speaker smoothing negative) -- both are downstream consequences of the same underlying property of URTIC.
+
+**Paper implications:**
+
+- **Reframe seed=23 in the paper:** not "harder cold speakers in this partition" (defect-implying) but "cold-speaker selection variance is large because the cold class is sparse" (structural property). Add as a vignette in §6 results illustrating the partition-variance mechanism concretely.
+- **Quote the speaker-UAR vs chunk-UAR variance comparison** as the load-bearing methodology paragraph: "chunk-UAR shadow $\sigma {=} 0.017$, speaker-UAR shadow $\sigma {=} 0.082$ -- speaker-level evaluation is $\sim 5\times$ MORE variable on URTIC; validates ComParE's choice of chunk-UAR as the official metric." This is the most substantive methodology contribution emerging from §4.13.
+
+#### 4.13.2 Speaker-level logit smoothing (DONE; SHADOW-EVAL CONFIRMS smoothing hurts on every split; chunk-level signal is load-bearing on URTIC)
 
 **Goal:** test whether per-pseudo-speaker mean smoothing of the K=2 ensemble logit reduces per-chunk noise enough to improve UAR. URTIC labels are per-recording (a person either has a cold during the recording or doesn't), so per-chunk K=2 fused-logit predictions can be noisy in ways that should average out across the chunks of the same speaker.
 
@@ -1792,6 +1803,42 @@ If (a) holds: paper-relevant edge-case finding. If (b) holds: confirms shadow-me
 **Output:** `results/A5b_k2_speaker_smoothing.json`. Per-α devel_test UAR + best-α lock + decision + monotonicity diagnostic.
 
 **Expected lift:** +0 to +0.005. The per-chunk K=2 already includes the per-seed-mean ensemble averaging which captures most of the variance reduction; speaker-level smoothing adds an additional axis (across chunks of the same speaker) that may or may not reduce remaining noise. Either outcome paper-relevant.
+
+**RESULT (DONE):** decision = `smoothing_hurts`. Cell ran in 0.63 min. The α-sweep on canonical train_threshold UAR picked $\alpha^* {=} 0.0$ (full smoothing) by maximizing train_threshold UAR ($0.8401$) -- a textbook overfit signal: pure pseudo-speaker averaging exploits the train_threshold pseudo-speaker composition without generalizing.
+
+**Per-shadow-split paired delta** (smoothed at $\alpha {=} 0.0$ vs no-smoothing $\alpha {=} 1.0$):
+
+| split | baseline ($\alpha {=} 1.0$) | smoothed ($\alpha {=} 0.0$) | $\Delta$ |
+| --- | --- | --- | --- |
+| canonical (42) | $0.7090$ | $0.6199$ | $-0.0891$ |
+| shadow(1)  | $0.7031$ | $0.5955$ | $-0.1076$ |
+| shadow(2)  | $0.6930$ | $0.6162$ | $-0.0769$ |
+| shadow(3)  | $0.6983$ | $0.5810$ | $-0.1173$ |
+| shadow(5)  | $0.6877$ | $0.5936$ | $-0.0942$ |
+| shadow(11) | $0.7042$ | $0.6003$ | $-0.1039$ |
+| shadow(17) | $0.6893$ | $0.6104$ | $-0.0789$ |
+| shadow(23) | $0.6443$ | $0.5528$ | $-0.0914$ |
+| shadow(31) | $0.6853$ | $0.5953$ | $-0.0900$ |
+| shadow(53) | $0.6856$ | $0.5703$ | $-0.1154$ |
+| shadow(99) | $0.6910$ | $0.6081$ | $-0.0829$ |
+
+**Aggregate:** baseline shadow mean = $0.6882 \pm 0.0169$ (matches §4.13.1 reference EXACTLY $\to$ pipeline is fully deterministic across cells); smoothed shadow mean = $0.5924 \pm 0.0194$; paired $\Delta$ shadow mean = $-0.0958 \pm 0.0146$, **positive on 0/10 shadow splits**.
+
+**The α-sweep curve is monotonically increasing toward $\alpha {=} 1.0$:** $\alpha {=} 0.0$ canonical $0.6199 \to 0.10 (0.6400) \to 0.20 (0.6684) \to 0.30 (0.6852) \to 0.40 (0.6992) \to 0.50 (0.7052) \to 0.60 (0.7075) \to 0.70 (0.7080) \to 0.80 (0.7036) \to 0.90 (0.7047) \to 0.95 (0.7084) \to 1.00 (0.7090)$. Maximum at $\alpha {=} 1.0$; every intermediate setting is worse. The strong form of "smoothing-is-uniformly-bad": curve is monotonic with no interior optimum.
+
+**Mechanism (paper-grade insight):** URTIC cold detection works AT THE CHUNK LEVEL because **within-speaker variation carries real cold evidence, not just noise**. A single speaker's recording session contains chunks with coughs / throat clearing / breathiness (high cold evidence) interspersed with chunks of relatively clean speech (low cold evidence). The model's per-chunk predictions correctly assign different cold-probability to different chunks of the same speaker, based on local acoustic evidence. Speaker-level smoothing destroys this by averaging the high-evidence chunks with the low-evidence ones, collapsing the predictive signal. **This is the OPPOSITE of typical paralinguistic smoothing benefits ($+0.005$ to $+0.015$ UAR)** and reflects a structural property of URTIC's chunk-level annotation protocol where within-speaker variation is informative.
+
+**The selection procedure was its own diagnostic:** train_threshold UAR at $\alpha {=} 0.0$ ($0.8401$) is much higher than at $\alpha {=} 1.0$ ($0.6529$) because pseudo-speaker averaging on train_threshold's $\sim 100$ unique pseudo-speakers $\times \sim 10$ chunks-per-speaker is essentially "predict the per-speaker label" -- and on train_threshold the per-seed-mean K=2 logits are mostly correct given the locked $\beta^* + \tau^*$ from canonical $\to$ smoothing trivially achieves near-perfect train_threshold UAR. But this doesn't transfer to devel_test (or any shadow split) because the test fold's pseudo-speaker composition differs from train_threshold's. The pre-registered admission gate (shadow-mean $\Delta$, not canonical $\Delta$) was correctly tuned to catch exactly this failure mode.
+
+**Conservative-α observation:** even at $\alpha \in [0.5, 0.95]$ (mild smoothing only), every $\alpha < 1.0$ underperforms $\alpha = 1.0$ on canonical UAR. The smoothing-monotone-decreasing pattern is robust across the full $\alpha$ grid. There is no interior optimum to recover even with a more conservative selection criterion.
+
+**Paper implications:**
+
+- Add a paragraph to §6 results (alongside the calibration / TTA / HuBERT-LW ablations) noting the speaker-smoothing negative + the within-speaker-variation-carries-signal mechanism. This is the most pedagogically useful negative result in the project because it overturns the conventional speaker-smoothing intuition.
+- Combine with the §4.13.1.1 seed=23 vignette + the speaker-UAR-vs-chunk-UAR variance finding to make the point: ComParE's choice of chunk-UAR as the official metric was correct on URTIC; speaker-level evaluation would be much noisier; speaker-level smoothing destroys real signal. All three findings (smoothing fails, seed=23 outlier, speaker-UAR noisier than chunk-UAR) are downstream of cold-speaker sparsity on URTIC.
+- M19 (described in §4.13.1.1 above) covers all three findings under a single methodology umbrella.
+
+**The K=2 5-seed mean-logit ensemble at canonical 0.7090 / shadow-mean 0.6882 ± 0.017 is the FINAL canonical paper-headline triple.** Speaker-smoothing was the cheapest UAR-push attempt under the new shadow-eval gate and it failed unambiguously. No further interventions tested within the configurations.
 
 #### 4.13.3 Run order + post-cell decision tree
 

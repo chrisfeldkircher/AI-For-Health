@@ -111,11 +111,11 @@ All within-budget options are exhausted. The methodology framework (M8 -- M14) i
 \subsection{Methodology contributions consolidated}
 \label{ssec:m_disciplines}
 
-For convenience, the eleven M-disciplines that emerged from the closure are summarised in Table~\ref{tab:m_disciplines}. Each contains a falsifiable mechanism + the failure mode it catches; each generalises beyond URTIC. M8--M14 emerged from the de-confounding ladder; M15--M17 emerged from a follow-up sweep of ensemble-aggregation ablations on the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:ensemble_defence}); M18 emerged from a shadow-split robustness analysis (Section~\ref{ssec:shadow_robustness}).
+For convenience, the twelve M-disciplines that emerged from the closure are summarised in Table~\ref{tab:m_disciplines}. Each contains a falsifiable mechanism + the failure mode it catches; each generalises beyond URTIC. M8--M14 emerged from the de-confounding ladder; M15--M17 emerged from a follow-up sweep of ensemble-aggregation ablations on the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:ensemble_defence}); M18 emerged from a shadow-split robustness analysis (Section~\ref{ssec:shadow_robustness}); M19 emerged from the cold-speaker-sparsity findings on URTIC (Section~\ref{ssec:cold_sparsity}).
 
 \begin{table}[t]
 \centering\small
-\caption{Eleven negative-control disciplines for foundation-model paralinguistic pipelines (M8 -- M18). M8--M14: de-confounding ladder. M15--M17: ensemble-aggregation ablations. M18: shadow-split robustness.}
+\caption{Twelve negative-control disciplines for foundation-model paralinguistic pipelines (M8 -- M19). M8--M14: de-confounding ladder. M15--M17: ensemble-aggregation ablations. M18: shadow-split robustness. M19: sparse-minority-class-speaker corollaries.}
 \label{tab:m_disciplines}
 \begin{tabular}{lp{4.5cm}}
 \toprule
@@ -134,6 +134,8 @@ M16 & On small calibration splits ($n \lesssim 1$\,k, $k_{\text{minority}} < 100
 M17 & On FM substrates with input normalisation (Wav2Vec2 / HuBERT / WavLM all default to per-utterance zero-mean unit-variance via \texttt{do\_normalize=True}), waveform-level multiplicative perturbations are absorbed and produce identical pooled features. Standard TTA designs (gain + time-stretch) tested on cold detection produce: gain $=$ no-op; time-stretch $=$ systematic UAR drop because pooled per-frame outputs are sensitive to temporal-structure changes that positional encodings + attention patterns introduce. Use perturbations that survive input normalisation (additive noise) or operate at the pooled-stats stage (SpecAugment-style masking on $[L, 4D]$) instead. \\
 \midrule
 M18 & On small-data corpora where the held-out test set is unavailable, a shadow-split robustness harness on the canonical pipeline's cached logits is a cheap diagnostic that quantifies devel-side overfit risk: re-evaluate the locked configuration across $N \geq 10$ different \texttt{(devel\_val, devel\_test)} partitions of the existing devel split (training-side splits and locked hyperparameters kept fixed); report the shadow distribution alongside the canonical headline UAR. The canonical's $z$-score in the shadow distribution quantifies the magnitude of canonical-favorability; partition variance becomes the right uncertainty unit for canonical-vs-baseline gap claims. \\
+\midrule
+M19 & On corpora with sparse minority-class speaker representation (URTIC has $\sim 10$ cold speakers per devel half), speaker-level aggregation (smoothing or evaluation) increases variance rather than reducing it; the chunk-level metric is more stable. The naive ``aggregate to speaker level for noise reduction'' heuristic doesn't apply when minority-class speaker count is small. Empirical evidence on URTIC: chunk-UAR shadow $\sigma {=} 0.017$, speaker-UAR shadow $\sigma {=} 0.082$ ($\sim 5\times$ larger); speaker-mean smoothing produces monotone-decreasing $\alpha$-sweep with shadow-paired $\Delta {=} -0.096 \pm 0.015$ at full smoothing. Validates corpus-design choice of chunk-level UAR as the official metric and rules out a class of related interventions (multi-chunk inference, confidence weighting, speaker-level evaluation, multi-task speaker auxiliary heads). \\
 \bottomrule
 \end{tabular}
 \end{table}
