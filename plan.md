@@ -1861,7 +1861,7 @@ Cumulative: probability of shadow-mean lift > +0.005 from all three stacking fav
 - Whisper-A2.5: would have the same audit-recipe-mirror correlation issue as HuBERT-A2.5 per §4.12.3; almost certain to fail K=3 admit by correlation; defer to future work as another instance of the same finding.
 - MDD adversary (Margin Disparity Discrepancy as alternative to DANN): the §4.10 / A7 / A7c v2 substrate-resistance verdict (`B_dann_dead_substrate_resistant`: every metric flat across $\lambda \in [0, 0.1]$) is an architectural property of the frozen-WavLM + LW-softmax substrate, not a property of the specific adversarial loss formulation. MDD would almost certainly produce the same `B_mdd_dead_substrate_resistant` verdict (same substrate, different adversarial loss math, same outcome). Worth a paper-stage future-work mention as "another adversarial-loss formulation also closes negatively under M14 substrate-resistance" but not worth the engineering cost (new MDD module, new cell, ~half-day for a likely-confirming negative).
 
-#### 4.14.1 Multi-K ensemble (K=1 + K=2 per-seed averaging, shadow-eval gated; cell appended, queued for user-run)
+#### 4.14.1 Multi-K ensemble (DONE; multi_k_robust_lift -- canonical 0.7090 → 0.7111 crosses 0.710 baseline; shadow-mean 0.6882 → 0.6940 lifted by +0.006 on 9/10 splits)
 
 **Goal:** variance reduction across the K-axis. Per seed, average K=1 fused logit (a2.5 + $\beta_{k1}^* \cdot z_{g4}$) and K=2 fused logit (a2.5 + $\beta_{k2}^* \cdot \text{mean}(z_{g4}, z_{g5})$); then 5-seed mean-logit ensemble of the averaged-per-seed logits.
 
@@ -1878,6 +1878,48 @@ Cumulative: probability of shadow-mean lift > +0.005 from all three stacking fav
 **Why "high probability of small lift, low risk":** K=1 + K=2 share the A2.5 anchor + G4_gi component → high correlation bound (asymptotic effective sample size with 10 logits at average correlation $r \sim 0.93$ is $\sim 1.07$ vs $\sim 1.05$ for 5 K=2-only logits at $r \sim 0.94$), so ensemble lift is bounded. But per-seed K=1 and K=2 differ in fusion weight ($\beta_{k1}$ vs $\beta_{k2}$) producing distinct effective per-channel weighting → ensemble averaging finds a slightly different operating point than K=2-alone. Expected shadow-mean lift: +0.001 to +0.003.
 
 **Output:** `results/A5b_k2_multi_k_ensemble.json`. Cost: ~5-6 min wall-clock. Sanity check baked in: K=2-only ensemble reproduction should reproduce 0.7090 canonical reference exactly.
+
+**RESULT (DONE; multi_k_robust_lift):** cell ran in **0.52 min** (mostly cached I/O). Both gates passed: shadow-mean Δ +0.0059 (≥ 0.003 threshold) AND 9/10 shadow splits positive (≥ 7/10 threshold).
+
+**Per-split results:**
+
+| split | K=2-only | multi-K | paired Δ |
+| --- | --- | --- | --- |
+| canonical(42) | 0.7090 | **0.7111** | +0.0021 |
+| shadow(1)   | 0.7031 | 0.7014 | -0.0017 |
+| shadow(2)   | 0.6930 | 0.7004 | +0.0073 |
+| shadow(3)   | 0.6983 | 0.6998 | +0.0015 |
+| shadow(5)   | 0.6877 | 0.6933 | +0.0056 |
+| shadow(11)  | 0.7042 | **0.7081** | +0.0039 |
+| shadow(17)  | 0.6893 | 0.7027 | +0.0134 |
+| shadow(23)  | 0.6443 | 0.6518 | +0.0075 |
+| shadow(31)  | 0.6853 | 0.6930 | +0.0078 |
+| shadow(53)  | 0.6856 | 0.6908 | +0.0051 |
+| shadow(99)  | 0.6910 | 0.6992 | +0.0082 |
+
+**Aggregate:** baseline K=2-only shadow mean 0.6882 ± 0.0169 (matches §4.13.1 reference EXACTLY → pipeline determinism confirmed across cells); multi-K shadow mean **0.6940 ± 0.0157** (note σ slightly *decreased* from 0.0169 → 0.0157, consistent with variance reduction); paired Δ shadow mean = **+0.0059 ± 0.0041**, positive on 9/10 shadow splits. Only seed=1 was marginally negative (-0.0017, within numerical noise).
+
+**Locked τ:** multi-K τ* = -1.625 vs K=2-only τ* = -1.375 (shifts toward more cold-aggressive operating point; consistent with the K=1-component contributing additional cold-axis signal at locked β_k1).
+
+**Canonical now crosses 0.710 baseline** by +0.0011 (multi-K canonical 0.7111 vs baseline 0.7100). This is a meaningful narrative shift: the previous "matches 0.710 within partition variance" framing (K=2-only canonical 0.7090, Δ -0.001) becomes "exceeds 0.710 on canonical (Δ +0.001), comparable within partition variance on shadow mean (multi-K shadow-mean 0.6940 vs 0.7100, Δ -0.016 ≈ 1σ)" with multi-K.
+
+**Shadow-mean narrowing:** previous K=2-only shadow gap was -0.022 (= 0.6882 - 0.7100); multi-K narrows it to -0.016 (= 0.6940 - 0.7100). **~27% of the shadow gap closed by Step 1 alone.** This is at the upper end of my predicted +0.001-0.003 range (effective sample size argument); the actual lift of +0.006 suggests the K=1 + K=2 logits were less correlated than r ~ 0.93 (probably closer to r ~ 0.85-0.90 given the β-weight asymmetry between K=1 and K=2 per seed).
+
+**Mechanism reading:** the multi-K logit per seed is `a2.5 + β_eff_g4 · z_g4 + β_eff_g5 · z_g5` with asymmetric β coefficients (more weight on G4_gi than G5_modulation) that differ per seed depending on the locked β_k1 and β_k2 values. This produces 5 distinct effective per-channel weightings that the ensemble averages over -- the variance reduction comes from the per-seed weighting diversity, not just from doubling the logit count. Effective ensemble independence > 5 K=2-only seeds at uniform weighting.
+
+**Paper implications:**
+
+- **Abstract refresh:** new headline triple = multi-K canonical 0.7111 / shadow-mean 0.6940 ± 0.016 / paired lift +0.006 over K=2-only with 9/10 positive. Canonical now exceeds 0.710 baseline by +0.001 (within partition variance, so still partition-variance-equivalent; but the canonical-vs-baseline statement flips from "below by 0.001" to "above by 0.001").
+- **§6 results cumulative stack table:** add multi-K row as the new top of the stack. Cumulative lift over leak-corrected baseline: A5b multi-K = +0.075 (was +0.073 for K=2-only); ~17.5σ vs leak-corrected baseline.
+- **§7 discussion partition-variance framing:** retain the partition-variance equivalence framing (the 0.011 canonical gain isn't a model superiority claim on the underlying distribution, just a single-partition lift); but the canonical-side narrative can lean slightly more affirmative.
+- **§5 methodology table:** no new M-discipline (multi-K is a standard ensemble-diversification trick); maybe a brief mention in M19 about "ensemble across K-axis is one of the cheap variance-reduction operations that survives shadow-eval."
+- **Appendix:** add per-shadow-split paired-Δ table to `app:k2_shadow` or new `app:k2_multi_k`.
+
+**Next-step options (per the §4.14 plan):**
+
+- **Step 2 (diverse-anchor 10-seed ensemble, ~30 min):** train 5 additional A2.5 heads with varied hyperparameters (lr×2, lr×0.5, dropout 0.3, dropout 0.7, proj_dim 256), append to the existing 5-seed ensemble. Expected additional shadow lift: +0.003-0.008 if anchors are less correlated. Stacks additively with multi-K.
+- **Step 3 (ComParE-SVM K=3, ~1 day):** 2017 baseline replication; biggest justification; uncertain payoff. Expected shadow lift: +0.005-0.015 if standalone ≥ 0.61.
+- **OR: lock at multi-K and write the paper.** Canonical already exceeds baseline; shadow mean closed 27% of the gap; methodology framework is rich.
 
 #### 4.13.3 Run order + post-cell decision tree
 

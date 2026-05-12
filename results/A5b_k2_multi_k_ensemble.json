@@ -1,0 +1,215 @@
+{
+  "rung_id": "A5b_k2_multi_k_ensemble",
+  "description": "Multi-K ensemble: per-seed avg of K=1 + K=2 fused logits, then 5-seed mean-logit ensemble. Tests whether averaging across the K-axis (K=1 uses G4_gi alone at beta_k1*; K=2 uses G4_gi + G5_modulation at beta_k2*) reduces ensemble variance enough to lift shadow-mean UAR. Shadow-eval gated: lift over K=2-only baseline must be positive on the SHADOW MEAN, not just canonical.",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "shadow_split_seeds": [
+    1,
+    2,
+    3,
+    5,
+    11,
+    17,
+    23,
+    31,
+    53,
+    99
+  ],
+  "split_seed_canonical": 42,
+  "locked_betas_k1": {
+    "42": 6.0,
+    "123": 8.0,
+    "7": 4.0,
+    "999": 12.0,
+    "31337": 6.0
+  },
+  "locked_betas_k2": {
+    "42": 8.0,
+    "123": 8.0,
+    "7": 6.0,
+    "999": 12.0,
+    "31337": 8.0
+  },
+  "ref_canonical_baseline": 0.709,
+  "ref_shadow_mean_baseline": 0.6882,
+  "ref_shadow_std_baseline": 0.0169,
+  "target_baseline_2017": 0.71,
+  "k2_only_baseline_per_split": [
+    {
+      "split_seed": 42,
+      "n_test": 4795,
+      "uar": 0.7089999610908639,
+      "recall_C": 0.7912524850894632,
+      "recall_NC": 0.6267474370922647
+    },
+    {
+      "split_seed": 1,
+      "n_test": 4798,
+      "uar": 0.7030896279861019,
+      "recall_C": 0.7613412228796844,
+      "recall_NC": 0.6448380330925192
+    },
+    {
+      "split_seed": 2,
+      "n_test": 4805,
+      "uar": 0.6930131536804099,
+      "recall_C": 0.7421875,
+      "recall_NC": 0.6438388073608199
+    },
+    {
+      "split_seed": 3,
+      "n_test": 4806,
+      "uar": 0.6983212172712547,
+      "recall_C": 0.761252446183953,
+      "recall_NC": 0.6353899883585564
+    },
+    {
+      "split_seed": 5,
+      "n_test": 4789,
+      "uar": 0.6877351363954302,
+      "recall_C": 0.728,
+      "recall_NC": 0.6474702727908603
+    },
+    {
+      "split_seed": 11,
+      "n_test": 4786,
+      "uar": 0.7041791880541297,
+      "recall_C": 0.784,
+      "recall_NC": 0.6243583761082594
+    },
+    {
+      "split_seed": 17,
+      "n_test": 4798,
+      "uar": 0.6893362647030556,
+      "recall_C": 0.751984126984127,
+      "recall_NC": 0.6266884024219842
+    },
+    {
+      "split_seed": 23,
+      "n_test": 4798,
+      "uar": 0.6442798671145127,
+      "recall_C": 0.6456692913385826,
+      "recall_NC": 0.6428904428904428
+    },
+    {
+      "split_seed": 31,
+      "n_test": 4809,
+      "uar": 0.6852500654526414,
+      "recall_C": 0.7265625,
+      "recall_NC": 0.6439376309052828
+    },
+    {
+      "split_seed": 53,
+      "n_test": 4807,
+      "uar": 0.6856434967038012,
+      "recall_C": 0.735812133072407,
+      "recall_NC": 0.6354748603351955
+    },
+    {
+      "split_seed": 99,
+      "n_test": 4788,
+      "uar": 0.6909986912505356,
+      "recall_C": 0.7555110220440882,
+      "recall_NC": 0.626486360456983
+    }
+  ],
+  "multi_k_per_split": [
+    {
+      "split_seed": 42,
+      "n_test": 4795,
+      "uar": 0.7110577448635309,
+      "recall_C": 0.8011928429423459,
+      "recall_NC": 0.6209226467847158
+    },
+    {
+      "split_seed": 1,
+      "n_test": 4798,
+      "uar": 0.701378786019268,
+      "recall_C": 0.7712031558185405,
+      "recall_NC": 0.6315544162199953
+    },
+    {
+      "split_seed": 2,
+      "n_test": 4805,
+      "uar": 0.7003509073637317,
+      "recall_C": 0.767578125,
+      "recall_NC": 0.6331236897274634
+    },
+    {
+      "split_seed": 3,
+      "n_test": 4806,
+      "uar": 0.6997933700726052,
+      "recall_C": 0.7788649706457925,
+      "recall_NC": 0.6207217694994179
+    },
+    {
+      "split_seed": 5,
+      "n_test": 4789,
+      "uar": 0.6933233854045232,
+      "recall_C": 0.752,
+      "recall_NC": 0.6346467708090464
+    },
+    {
+      "split_seed": 11,
+      "n_test": 4786,
+      "uar": 0.7081129258049463,
+      "recall_C": 0.804,
+      "recall_NC": 0.6122258516098926
+    },
+    {
+      "split_seed": 17,
+      "n_test": 4798,
+      "uar": 0.7027080976778228,
+      "recall_C": 0.7857142857142857,
+      "recall_NC": 0.6197019096413601
+    },
+    {
+      "split_seed": 23,
+      "n_test": 4798,
+      "uar": 0.6517656883798616,
+      "recall_C": 0.6732283464566929,
+      "recall_NC": 0.6303030303030303
+    },
+    {
+      "split_seed": 31,
+      "n_test": 4809,
+      "uar": 0.6930125669071445,
+      "recall_C": 0.75,
+      "recall_NC": 0.636025133814289
+    },
+    {
+      "split_seed": 53,
+      "n_test": 4807,
+      "uar": 0.6907727390336252,
+      "recall_C": 0.7553816046966731,
+      "recall_NC": 0.6261638733705773
+    },
+    {
+      "split_seed": 99,
+      "n_test": 4788,
+      "uar": 0.6992450744342498,
+      "recall_C": 0.781563126252505,
+      "recall_NC": 0.6169270226159944
+    }
+  ],
+  "k2_only_canonical_repro_uar": 0.7089999610908639,
+  "k2_only_canonical_repro_delta": -3.89091360242233e-08,
+  "k2_only_shadow_mean": 0.6881846708611873,
+  "k2_only_shadow_std": 0.01685294031052181,
+  "multi_k_canonical_uar": 0.7110577448635309,
+  "multi_k_shadow_mean": 0.6940463541097779,
+  "multi_k_shadow_std": 0.015728331570001093,
+  "multi_k_locked_tau": -1.625,
+  "k2_only_locked_tau": -1.375,
+  "canonical_lift": 0.0020577837726669657,
+  "shadow_lift": 0.0058616832485905435,
+  "shadow_lift_std": 0.004102278313849949,
+  "n_positive_shadows": 9,
+  "decision": "multi_k_robust_lift",
+  "elapsed_minutes": 0.5208832422892252
+}

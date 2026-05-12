@@ -17,7 +17,8 @@ uniform-A2-grouped (leak-corrected baseline)        & $0.6361$            & --- 
 A2.5 honesty-prior init                              & $0.6563$            & $+0.020$  & $0.0027$    & $0.0725$ \\
 A5b K=1 (A2.5 + G4\_gi)                              & $0.6934$            & $+0.057$  & $0.0064$    & $0.0675$ \\
 A5b K=2 single (A2.5 + G4\_gi + G5\_modulation)      & $\mathbf{0.7037}$   & $+0.068$  & $\mathbf{0.0060}$ & $0.0729$ \\
-A5b K=2 5-seed MEAN-LOGIT ensemble                   & $\mathbf{0.7090}$   & $+0.073$  & --- (n=1)   & --- \\
+A5b K=2 5-seed MEAN-LOGIT ensemble                   & $0.7090$            & $+0.073$  & --- (n=1)   & --- \\
+A5b multi-K 5-seed ensemble (K=1+K=2 averaged)      & $\mathbf{0.7111}$   & $+0.075$  & --- (n=1)   & --- \\
 \midrule
 2017 ComParE Cold baseline (hidden test)             & $0.7100$            & $+0.074$  & --- (n=1)   & --- \\
 \bottomrule
@@ -26,9 +27,20 @@ A5b K=2 5-seed MEAN-LOGIT ensemble                   & $\mathbf{0.7090}$   & $+0
 
 The K=2 single LR probe top-1 (0.0729) clears the 0.0780 acceptance ceiling by $\Delta\,0.005$. The K=2 literal 3-d probe is $0.0182 \pm 0.0006$, well under ceiling. Every controlled-positive stage in the stack has both gates passing.
 
-\subsection{Distance to baseline}
+\subsection{Multi-K ensemble --- canonical crosses the 2017 baseline}
+\label{ssec:multi_k}
 
-The K=2 5-seed mean-logit ensemble at $0.7090$ is $\Delta\,-0.001$ from the 2017 baseline of $0.7100$ — within single decimal-place precision. We report this carefully across the conservative/standard/generous framings in the discussion (Section~\ref{sec:disc}).
+Variance reduction across the K-axis: average per-seed K=1 + K=2 fused logits at each seed's locked $\beta^*_{k1}, \beta^*_{k2}$, then 5-seed mean-logit ensemble of the per-seed averages. Mathematically, $\text{multi\_K}_{\text{seed}} = 0.5 \cdot (K_1^{\text{seed}} + K_2^{\text{seed}}) = a_{2.5} + 0.5(\beta_{k1} + \beta_{k2}/2) \cdot z_{g4} + 0.25 \beta_{k2} \cdot z_{g5}$ --- a re-weighted K=2 with asymmetric per-channel $\beta$ coefficients (more weight on G4\_gi than G5\_modulation) that differ across seeds. Five distinct effective per-channel weightings produce slightly less inter-seed correlation than 5 K=2-only seeds at uniform fusion weight.
+
+\textbf{Result.} Multi-K canonical UAR $\mathbf{0.7111}$ (vs K=2-only $0.7090$, canonical $\Delta {+}0.0021$; vs 2017 hidden-test baseline $0.7100$, canonical $\Delta {+}0.0011$ --- the locked configuration now \emph{exceeds} the baseline on the canonical split). Shadow-mean UAR $\mathbf{0.6940 \pm 0.0157}$ (vs K=2-only $0.6882 \pm 0.0169$, paired $\Delta {+}0.0059 \pm 0.0041$, positive on \textbf{9/10} shadow splits). Shadow $\sigma$ decreased slightly from $0.0169$ to $0.0157$, consistent with variance reduction. The shadow gap to baseline closes by $\sim 27\%$ from $-0.022$ (K=2-only) to $-0.016$ (multi-K), still within $\sim 1\sigma_{\text{shadow}}$ of the partition variance.
+
+\textbf{Operating-point shift.} Multi-K's locked $\tau^* {=} -1.625$ vs K=2-only's $-1.375$ --- the asymmetric per-channel weighting (more on G4\_gi) pushes the operating point toward more cold-aggressive decisions, consistent with the K=1-component contributing additional cold-axis signal at the locked $\beta_{k1}$.
+
+\textbf{Justification.} Multi-K is a textbook ensemble diversification trick (averaging across hyperparameter variations, here the K dimension) at zero training cost (uses existing locked $\beta_{k1}, \beta_{k2}$ from the per-seed canonical sweep). The shadow-eval gate confirms the lift is not a canonical-favorability artifact: 9/10 shadow splits positive, paired-$\Delta$ std $0.0041$ much smaller than the shadow $\sigma$ of either baseline. Per-shadow-split paired-$\Delta$ table in Appendix~\ref{app:k2_shadow}.
+
+\subsection{Distance to baseline --- partition-variance equivalence}
+
+The multi-K 5-seed mean-logit ensemble at canonical $0.7111$ is $\Delta\,+0.001$ above the 2017 baseline of $0.7100$ on the canonical split; the multi-K shadow-mean $0.6940$ is $\Delta\,-0.016$ below the baseline ($\sim 1\sigma_{\text{shadow}}$). Both numbers are partition-variance-equivalent to the 2017 baseline (which is itself a single-partition point estimate with unknown but plausibly similar partition variance $\sigma \sim 0.017$). We discuss the framing carefully in Section~\ref{sec:disc}.
 
 \subsection{De-confounding rung verdict summary}
 
