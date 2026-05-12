@@ -8,6 +8,15 @@ copying the multi-GB feature caches (`cache/microsoft_wavlm-large/pooled/`,
 `cache/handcrafted/`, etc.). Pull this directory on the Mac and all paper
 figures and tables can be plotted from these CSVs alone.
 
+## Subdirectories
+
+- **`eda/`** — exploratory-data-analysis bundle for the URTIC dataset itself:
+  per-chunk metadata, ECAPA-TDNN speaker embeddings, PCA-128 of the
+  WavLM-A2.5 substrate, pseudo-speaker cluster-quality stats, and
+  pre-computed 2D UMAP coordinates. Total ~15 MB. See `eda/README.md` for
+  plot recipes. Use this for figures showing the embedding space and that
+  the pseudo-speaker clusters are sensible.
+
 ## Files
 
 ### Headline tables
