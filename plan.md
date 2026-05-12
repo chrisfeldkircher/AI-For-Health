@@ -1499,6 +1499,121 @@ A5.5 locked: data-level alone insufficient (M9). A6 closed: representation-level
 
 ---
 
+### 4.12 Tier-2 follow-ups for pushing past 0.7090 (three queued cells)
+
+After the paper's structural restructure (commit `9a32ede`, main + supplementary appendix split), three additional cells are appended to `run.ipynb` to push UAR past the K=2 5-seed mean-logit ensemble's 0.7090. Cheap-to-expensive cost order, orthogonal mechanisms so they stack independently:
+
+| sub-section | cell | cost | mechanism | expected lift if hypothesis holds |
+| --- | --- | --- | --- | --- |
+| §4.12.1 | calibration / stacked weighting | ~5 min | re-weight per-seed K=2 fused logits via LR-stacking + UAR-grid-search; isotonic ablation as M15-test | +0.000 to +0.005 over 0.7090 if some seeds add noise |
+| §4.12.2 | TTA on K=2 ensemble | ~25 min | 4 audio augmentations × 5 seeds = 25 forward passes; mean-logit | +0.003 to +0.010 over 0.7090 if WavLM substrate variance is the bottleneck |
+| §4.12.3 | HuBERT-base + learned layer-weighting | ~50 min | A2.5-style head on HuBERT pooled stats with honesty-prior init from per-layer audit; M14 pre-flight; conditional K=3 fusion sweep | +0.005 to +0.012 over 0.7037 K=2 single (-> ensemble ~0.715-0.721) if the layer-weighted-pooling-does-the-work hypothesis holds |
+
+Decision tree for the queue: any of the three can stack with the others if positive. Cell §4.12.3 is the load-bearing methodology test (cleanest test of the §4.11.2.1 hypothesis (i) "layer-weighted softmax does the work" vs hypothesis (ii) "capacity dominates"); cells §4.12.1 and §4.12.2 are pure UAR-push optimisations with low methodology risk.
+
+#### 4.12.1 K=2 ensemble calibration + stacked weighting (cell appended, queued)
+
+Three weighting strategies on the K=2 5-seed per-seed fused logits + one isotonic ablation:
+
+**Strategies:**
+
+1. **MEAN-LOGIT baseline** (equal weights w_i = 0.2 each). The existing K=2 5-seed mean-logit ensemble at devel_test UAR 0.7090.
+2. **LR-STACKED weighting:** fit logistic regression on `(per-seed K=2 fused logits, label)` on `train_threshold` (StandardScaler + LogisticRegression with C=1.0, class_weight="balanced"). The 5 learned weights + bias collapse the 5-d input to a single calibrated probability. Apply to devel_test, sweep tau, evaluate. Mechanism: LR may shrink down 'noisier' seeds, raising effective weight on more informative ones.
+3. **UAR-GRID-SEARCH weighting:** coarse grid over `(w_1, ..., w_5)` with `w_i ∈ {0.0, 0.1, 0.2, 0.3, 0.4, 0.5}`, normalised to sum to 1 (6^5 = 7776 combinations evaluated). Pick the combination with highest UAR on `train_threshold` (after sweeping tau). Apply to devel_test. Mechanism: directly optimises the target metric (UAR) rather than the proxy (likelihood); captures non-monotonic seed-quality patterns that LR can't.
+4. **ISOTONIC ABLATION on the best of (1)-(3):** fit `IsotonicRegression(out_of_bounds="clip", y_min=0, y_max=1)` on `(sigmoid(best_ensemble_logit), y)` on `train_threshold`, apply to devel_test. **Mathematically: monotonic calibration is order-preserving, so UAR-at-optimal-tau is INVARIANT under it.** This serves as the M15-candidate "monotonic calibration cannot improve UAR-at-optimal-tau" confirmation.
+
+**Why M15-candidate matters as a methodology contribution:** the existing tau-sweep on the swept-logit-score already implicitly does whatever monotonic calibration would do. The only way calibration can help UAR-at-optimal-tau is to break monotonicity (which isotonic does NOT, by design) -- so any non-zero lift in the calibrated arm would indicate a measurement artefact (tau grid resolution mismatch), not a real gain. This is paper-relevant if the M15 confirmation holds: it's a tight bound on what calibration can/cannot do for UAR-at-swept-threshold.
+
+**Decision rules:**
+
+- Any variant > 0.710 baseline -> "calibrated ensemble crosses 0.710 baseline" (paper headline lift).
+- Any variant > 0.7090 + 0.002 -> "calibration helps modestly" (paper supplementary ablation).
+- All variants within 0.002 of mean-logit -> "calibration neutral" (paper supplementary ablation; mean-logit stays canonical).
+- Any variant < 0.7090 - 0.002 -> "calibration hurts" (paper supplementary; document as failed-as-expected ablation, given LR-stacking can overfit on n=973 train_threshold).
+
+**Output:** `results/A5b_k2_ensemble_calibrated.json`. Self-contained (no GPU; numpy + sklearn only on cached fused logits). Cost: ~5 min wall-clock.
+
+#### 4.12.2 K=2 TTA ensemble (cell appended, queued)
+
+Test-time augmentation on the WavLM substrate of the K=2 LOCKED canonical. For each of 4 audio perturbations + the original (5 versions per chunk), re-extract WavLM-Large pooled stats via `transformers AutoModel` inline (mirrors §4.11.2.1's HuBERT inline extraction), cache to `cache/microsoft_wavlm-large/pooled_tta/{aug_name}/`.
+
+**Augmentations** (chosen for class-preserving paralinguistic robustness):
+
+| aug name | kind | parameter |
+| --- | --- | --- |
+| `original` | (none -- existing cache) | -- |
+| `time_stretch_p2` | librosa.effects.time_stretch | rate=1.02 |
+| `time_stretch_m2` | librosa.effects.time_stretch | rate=0.98 |
+| `gain_p2dB` | multiplicative gain | factor = 10^(+0.1) |
+| `gain_m2dB` | multiplicative gain | factor = 10^(-0.1) |
+
+**Why these augmentations:** time-stretch ≤ 2% preserves vowel quality (the paralinguistic cue for cold) while perturbing pitch contour and rate features minimally; gain ≤ 2dB perturbs amplitude statistics that WavLM's spectral layers absorb but doesn't shift voicing/breathing patterns. Larger perturbations risk shifting class probability (especially time_stretch >5% which starts to mimic 'raspy' = cold-positive shift on healthy speakers).
+
+**Why TTA on WavLM only (not also on G4/G5):** G4_gain_invariant is gain-invariant by construction (zero-mean spectral centroid, zero-mean MFCCs); G5 modulation spectrum is fairly robust to small temporal jitter (4-Hz envelope correlations). Re-extracting them for each augmentation would add ~25 min compute for likely-marginal lift. We TTA the WavLM logit, which is where most expected variance reduction comes from for foundation-model-derived features. (If TTA is positive, a follow-up cell could test full-audio-TTA with re-extracted G4/G5; if WavLM-only TTA is null, full-audio-TTA is unlikely to help either.)
+
+**Pipeline per (augmentation, seed):**
+
+- Forward augmented WavLM pooled through the existing A2.5 head ckpt -> a2.5 logit per chunk.
+- Compute `fused = a2.5_logit_aug + β_seed · mean(z_g4_orig, z_g5_orig)` where G4/G5 z-logits use the un-augmented cache.
+- Per (aug, seed) sanity tau-sweep on train_threshold + devel_test UAR (printed inline for diagnostic).
+
+**TTA ensemble:** mean across 5 augmentations × 5 seeds = 25 fused logits per chunk; sweep tau on train_threshold; evaluate on devel_test. Original-only ensemble (5 seeds, no augmentations) reproduced as a sanity check vs the §4.11.1.4 reference 0.7090; reproduction delta should be < 0.002 (any larger drift indicates a checkpoint/cache regression to debug).
+
+**Decision rules:**
+
+- TTA UAR ≥ 0.710 baseline -> "TTA crosses 0.710 baseline" (paper headline lift).
+- TTA UAR > 0.7090 + 0.002 -> "TTA helps modestly" (paper supplementary ablation).
+- |TTA UAR - 0.7090| ≤ 0.002 -> "TTA neutral" (paper supplementary ablation; document as 'WavLM substrate variance is not the bottleneck').
+- TTA UAR < 0.7090 - 0.002 -> "TTA hurts" (paper supplementary; document as failed-as-expected ablation if WavLM is robust to small input perturbations).
+
+**Output:** `results/A5b_k2_tta_ensemble.json` (extraction times per aug + per (aug, seed) UAR + ensemble UAR + decision). Cost: ~25 min compute (4 augmentations × ~6 min WavLM-Large re-extraction; ~1 min handcrafted re-fitting; ~2 min fusion+sweep). HuBERT cache reuse pattern from §4.11.2.1 (idempotent on existing per-stem cache files).
+
+**Dependencies:** `librosa` for `time_stretch` (and the existing `transformers + soundfile`).
+
+#### 4.12.3 K=3 with HuBERT-base + learned LW softmax (cell appended, queued)
+
+The cleanest test of the §4.11.2.1 hypothesis (i) "layer-weighted softmax pooling does the work". Mirrors WavLM-A2.5's treatment on HuBERT-base pooled stats:
+
+**STEP 1 -- Per-layer HuBERT honesty audit:** for each layer `L ∈ {0..12}`, train linear cold probe + linear speaker probe on `pooled[:, L, :]` (3072-d per layer, mean+std+skew+kurt of the 768-d hidden), compute `label_gain_L = cold_uar_L - 0.50`, `speaker_gain_L = top1_L - 1/k`, `sub@1_L = label_gain - speaker_gain`. Produces a 13-d audit vector that is the honesty prior for the layer-weighted softmax. Output: `results/A5d_hubert_layer_honesty.csv` (mirrors `A5d_grouped_layer_honesty.csv` for WavLM).
+
+**STEP 2 -- HuBERT-A2.5 head training (per seed):** `LayerWeightedPooledHead(n_layers=13, stat_dim=3072, proj_dim=128, dropout=0.5)`. Initialise `layer_weights = T_INV * sub_at_1` with `T_INV = 50.0` (mirrors WavLM-A2.5). Train cold-CE with class-balanced sampling, AdamW with `lr=1e-3` for head + `lr=1e-4` for `layer_weights` (per `param_groups` convention), `weight_decay=1e-4`, 25 epochs, early-stop patience 6 on devel_val UAR. 5 seeds {42, 123, 7, 999, 31337}. Save ckpt per seed at `cache/facebook_hubert-base-ls960/head_A25_honestprior_seed{seed}.pt`.
+
+**STEP 3 -- Standalone HuBERT-A2.5 UAR per seed (M14 pre-flight):** per seed, forward devel_test through trained head -> `P(cold)` per chunk -> log-odds -> swept tau on train_threshold -> per-seed UAR. Aggregate 5-seed mean. Apply M14 standalone-UAR-predicts-K-fusion-admission heuristic (calibrated from §4.11.1.1):
+
+- `< 0.55` -> definite FAIL; skip K=3 sweep (M14 fail-fast).
+- `>= 0.61` -> admit plausible; run K=3 sweep.
+- `[0.55, 0.61)` -> borderline; run K=3 for confirmation.
+
+Also report: `delta vs HuBERT mean-pooled standalone (0.5396)` (the §4.11.2.1 number) and `delta vs WavLM-A2.5 standalone (~0.656)`. The first delta tests "does layer-weighted softmax close the gap on HuBERT-base?"; the second tests "is HuBERT-A2.5 anywhere close to WavLM-A2.5 strength on the same task?".
+
+**STEP 4 -- K=3 fusion sweep (if M14 pre-flight passes):** for each seed: `fused = a2.5_wavlm_logit + β · mean(z_g4_gi, z_g5_mod, z_hubert_a25)`. Extended β-grid `{0..2, 2.5..16}` (16 values). Per-seed argmax β* on `train_threshold` UAR. 5 seeds.
+
+**Decision rules:**
+
+- Mean K=3 UAR > 0.7037 + 0.005 = 0.7087 -> ADMIT K=3 with HuBERT-A2.5 as new canonical. 'Layer-weighted softmax does the work' hypothesis VALIDATED. Multi-FM late fusion as a new architectural contribution.
+- Standalone clears 0.61 but K=3 doesn't admit -> M14 heuristic FALSIFIED on this substrate; document the counter-example. Possible mechanism: HuBERT-A2.5 logit is correlated with WavLM-A2.5 logit (both audited from cold-relevant layers of FM substrates); fusion partner needs to be ORTHOGONAL to admit.
+- Standalone < 0.55 (M14 skip) -> "layer-weighted softmax DOESN'T close the gap on HuBERT-base alone; capacity / backbone strength dominates" -> evidence for §4.11.2.1 hypothesis (ii) over hypothesis (i). Future work: HuBERT-large with learned LW.
+- Standalone in `[0.55, 0.61)` -> M14 borderline; K=3 verdict either way is paper-relevant.
+
+**Output:** `results/A5b_k3_hubert_lw_5seed.json` (per-layer audit + per-seed head training results + standalone per seed + 5-seed standalone aggregate + M14 verdict + K=3 sweep if applicable + final decision). Cost: ~50 min wall-clock (~5 min audit + ~25 min head training across 5 seeds + ~20 min standalone UAR + K=3 sweep). HuBERT cache assumed present from §4.11.2.1.
+
+**Dependencies:** none beyond what §4.11.2.1 already required.
+
+#### 4.12.4 Documentation strategy when results land
+
+- If §4.12.1/2 give modest lifts (<= +0.005 each, stacking to maybe +0.010) -> add a single paper subsection in main body §4 method explaining the calibrated/TTA ensemble as the deployment-ready operating point; defer per-variant numbers to appendix.
+- If §4.12.3 admits at K=3 -> rewrite §4.5.5 K=3 HuBERT subsection in main body to reflect the new canonical (HuBERT-A2.5 as the third group instead of HuBERT mean-pooled as a M14-skipped negative). Update the cumulative stack table (§6 Table tab:stack) to add a new row "K=3 (A2.5 + G4 + G5 + HuBERT-A2.5)".
+- If §4.12.3 doesn't admit -> add a paragraph to §4.5.5 explaining "we tested the layer-weighted-pooling-closes-the-gap variant explicitly; it [closed/didn't close] the standalone gap to 0.61, and [admitted/didn't admit] at K=3". Either outcome is paper-relevant for the M14 cross-family discussion.
+- M15 confirmation (if isotonic null holds) -> add an M15 entry to the methodology table (Table tab:m_disciplines) and a short paragraph to §5 de-confounding closure. M15 = "monotonic calibration cannot improve UAR-at-optimal-tau; the swept-threshold protocol already does this work".
+
+#### 4.12.5 Risk/upside summary
+
+- **Stacking risk:** all three cells could give null results, in which case the K=2 5-seed mean-logit ensemble at 0.7090 stays the headline. Even null results are paper-relevant ablations that defend the canonical configuration.
+- **Stacking upside:** if all three give modest positive lifts: calibration +0.003, TTA +0.005, HuBERT-A2.5 K=3 +0.010 -> cumulative ~0.727 (clearly past 0.710 baseline + interpretable lift over no-aug per-seed-single 0.7037). Compositional lifts would need a final all-three-stacked run to confirm the additivity isn't double-counting any variance reduction.
+- **Methodology contribution:** §4.12.3 is the cleanest test of the layer-weighted-pooling hypothesis from §4.11.2.1 -- whichever way it lands, it's a paper-grade result for the M14 cross-family discussion. §4.12.1's M15 ablation is a paper-grade result for the methodology table if it confirms.
+
+---
+
 ## 5. A5 — feature enhancement + honesty-audited late fusion
 
 **One-line framing**: we perform **feature enhancement** by deriving physiologically motivated, **regime-conditioned** acoustic feature groups from raw audio and pYIN/RMS acoustic states. Each group is audited for cold association and speaker association before being admitted into a constrained late-fusion model.
