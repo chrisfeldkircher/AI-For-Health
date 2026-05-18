@@ -136,7 +136,7 @@ The A2.5 lr stress test produces a clarification of the original ``flat landscap
 
 \begin{table*}[t]
 \centering\small
-\caption{$\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis (mean over 3 seeds at honest-prior init).}
+\caption{$\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}})$ across the lr-axis (mean over 3 seeds at audit-derived prior init).}
 \label{tab:a25_lr_cos}
 \begin{tabular}{lc}
 \toprule
@@ -151,15 +151,15 @@ lr$\times 100$         & $0.21$ \\
 \end{tabular}
 \end{table*}
 
-The lr $\times$ init grid (uniform vs honest-prior $\times$ lr scaling $\in \{1, 3, 5, 10\}$, 3 seeds per cell, 24 retrains in total) shows the honesty prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone:
+The lr $\times$ init grid (uniform vs audit-derived prior $\times$ lr scaling $\in \{1, 3, 5, 10\}$, 3 seeds per cell, 24 retrains in total) shows the audit-derived prior is a \emph{distinct attractor} that uniform initialisation cannot reach via lr alone:
 
 \begin{table*}[t]
 \centering\small
-\caption{lr $\times$ init grid: A2.5 honest-prior init reaches a UAR plateau ($0.657$--$0.664$) at every tested lr; uniform init plateaus at a strictly lower band ($0.6447$--$0.6466$) at every tested lr. 3 seeds per cell. The honesty prior is a distinct attractor in the layer-weight subspace.}
+\caption{lr $\times$ init grid: A2.5 audit-derived prior init reaches a UAR plateau ($0.657$--$0.664$) at every tested lr; uniform init plateaus at a strictly lower band ($0.6447$--$0.6466$) at every tested lr. 3 seeds per cell. The audit-derived prior is a distinct attractor in the layer-weight subspace.}
 \label{tab:lr_init_grid}
 \begin{tabular}{lcc}
 \toprule
-lr scaling   & uniform init (3-seed mean) & honest-prior init (3-seed mean) \\
+lr scaling   & uniform init (3-seed mean) & audit-derived prior init (3-seed mean) \\
 \midrule
 lr$\times 1$  & $0.6463 \pm 0.0019$ & $0.6564 \pm 0.0038$ \\
 lr$\times 3$  & $0.6447 \pm 0.0023$ & $0.657\phantom{0} \pm 0.004\phantom{0}$ \\
@@ -169,7 +169,7 @@ lr$\times 10$ & $0.6451 \pm 0.0030$ & $0.664\phantom{0} \pm 0.006\phantom{0}$ \\
 \end{tabular}
 \end{table*}
 
-We report A2.5-default (honest-prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence for the M5 (originally ``flat landscape,'' now ``constrained-recipe attractor'') discipline: the honest-prior advantage is not an artefact of the prior happening to land near a wider-basin attractor that uniform init reaches at higher lr; it is a strictly distinct attractor that uniform init cannot reach at any tested lr.
+We report A2.5-default (audit-derived prior + lr$\times 1$) as canonical because higher-lr trades $+0.007$ UAR for $+0.016$ LR-probe leak --- a Pareto-bad trade for the de-confounding paper narrative. The grid serves as ablation evidence for the M5 (originally ``flat landscape,'' now ``constrained-recipe attractor'') discipline: the audit-derived prior advantage is not an artefact of the prior happening to land near a wider-basin attractor that uniform init reaches at higher lr; it is a strictly distinct attractor that uniform init cannot reach at any tested lr.
 
 \section{K=2 ensemble calibration / stacked weighting (M15 + M16)}
 \label{app:k2_calibration}
@@ -233,9 +233,9 @@ The original-only-ensemble sanity reproduction (5 seeds $\times$ 1 augmentation 
 \section{K=3 with HuBERT-base + learned LW softmax (hypothesis decomposition)}
 \label{app:k3_hubert_lw}
 
-A2.5-style head trained on HuBERT-base pooled stats with the same recipe as WavLM-A2.5 (per-layer audit on cold + speaker probes $\to$ sub@1 vector $\to$ honesty-prior init for an LW softmax head $\to$ cold-CE training, 5 seeds). Tests whether the audited layer-weighted softmax pooling that did the work for WavLM-A2.5 also unlocks HuBERT-base, disambiguating the \S\ref{ssec:k3_hubert} mechanism hypothesis (i) ``layer-weighted softmax does the work'' from hypothesis (ii) ``capacity dominates.''
+A2.5-style head trained on HuBERT-base pooled stats with the same recipe as WavLM-A2.5 (per-layer audit on cold + speaker probes $\to$ sub@1 vector $\to$ audit-derived prior init for an LW softmax head $\to$ cold-CE training, 5 seeds). Tests whether the audited layer-weighted softmax pooling that did the work for WavLM-A2.5 also unlocks HuBERT-base, disambiguating the \S\ref{ssec:k3_hubert} mechanism hypothesis (i) ``layer-weighted softmax does the work'' from hypothesis (ii) ``capacity dominates.''
 
-\paragraph{Per-layer HuBERT-base audit.} L0 is the strongest cold-honest layer (sub@1 $= +0.0525$), substantially ahead of the rest (L1 $+0.027$, L12 $+0.026$, L10 $+0.023$, L3 $+0.022$). Per-layer cold UAR range is $0.5569$--$0.6128$ (much narrower than WavLM-Large's typical $0.55$--$0.70$ range across its 25 layers); per-layer speaker top-1 is $0.045$--$0.078$ (similar to WavLM's per-layer speaker structure). The cold signal in HuBERT-base is more uniformly distributed across layers than in WavLM-Large, reducing the leverage the LW softmax can extract via concentration on the cold-best layer.
+\paragraph{Per-layer HuBERT-base audit.} L0 is the strongest cold-vs-speaker layer (highest sub@1, $+0.0525$), substantially ahead of the rest (L1 $+0.027$, L12 $+0.026$, L10 $+0.023$, L3 $+0.022$). Per-layer cold UAR range is $0.5569$--$0.6128$ (much narrower than WavLM-Large's typical $0.55$--$0.70$ range across its 25 layers); per-layer speaker top-1 is $0.045$--$0.078$ (similar to WavLM's per-layer speaker structure). The cold signal in HuBERT-base is more uniformly distributed across layers than in WavLM-Large, reducing the leverage the LW softmax can extract via concentration on the cold-best layer.
 
 \paragraph{HuBERT-A2.5 head training.} All 5 seeds converged to similar layer-weight distributions: $\cos$(audit prior, final softmax) $= 0.9489$--$0.9500$ across seeds; top-5 final layers identical across seeds (L0 $\approx 0.31$, L1 $\approx 0.084$, L12 $\approx 0.083$, L10 $\approx 0.069$, L3 $\approx 0.067$). The audit prior is tightly preserved through training, mirroring the M5 finding for WavLM-A2.5. Early stopping fired at epoch 1--4 for all seeds (the small layer-weight subspace + saturating cold signal makes additional epochs hurt rather than help; train loss drops fast $0.25 \to 0.01$ by epoch 7--10 but val UAR plateaus or declines after epoch 1--4 --- classic overfitting signature on the small head capacity).
 
@@ -250,15 +250,15 @@ A2.5-style head trained on HuBERT-base pooled stats with the same recipe as WavL
 configuration                       & standalone UAR (5-seed)       & contribution \\
 \midrule
 HuBERT mean-pooled (\S\ref{ssec:k3_hubert})       & $0.5396$                       & baseline \\
-HuBERT-A2.5 (LW + honesty prior)    & $\mathbf{0.6217 \pm 0.0291}$  & $+0.082$ ($\approx 71\%$) \\
-WavLM-A2.5 (LW + honesty prior)     & $\sim 0.656$                   & $+0.034$ ($\approx 29\%$) \\
+HuBERT-A2.5 (LW + audit-derived prior)    & $\mathbf{0.6217 \pm 0.0291}$  & $+0.082$ ($\approx 71\%$) \\
+WavLM-A2.5 (LW + audit-derived prior)     & $\sim 0.656$                   & $+0.034$ ($\approx 29\%$) \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 \paragraph{K=3 fusion result.} Per-seed standalone HuBERT-A2.5 is bimodal: 3 seeds clear $0.61$ (seed 7 $0.6547$, seed 42 $0.6475$, seed 999 $0.6191$); 2 seeds below (seed 123 $0.5888$, seed 31337 $0.5982$). The 5-seed mean ($0.6217$) crosses the M14 threshold by a thin margin and per-seed variance ($\sigma {=} 0.0291$) is the limiting factor. K=3 fusion (A2.5\_WavLM $+$ G4\_gi $+$ G5\_modulation $+$ HuBERT-A2.5) at extended $\beta$-grid $\{0..2, 2.5..16\}$, per-seed locked $\beta^* {=} \{16, 16, 6, 16, 16\}$ (4 of 5 boundary-pegged), 5-seed mean $0.6955 \pm 0.0083$ ($\Delta -0.008$ vs K=2 LOCKED). Per-seed deltas $\{-0.020, -0.003, -0.013, -0.004, -0.001\}$: 4 of 5 within K=2 $\sigma$ envelope (essentially neutral); 1 noticeably worse.
 
-\paragraph{Boundary-condition mechanism.} Standalone cleared $0.61$ but K=3 didn't admit. The mechanism is \emph{logit correlation, not individual weakness}: HuBERT-A2.5 logit is highly correlated with WavLM-A2.5 logit by construction. Both heads are trained via the same recipe (per-layer cold + speaker probes $\to$ sub@1 $\to$ LW softmax with honesty prior $\to$ cold-CE training); both end up concentrating on cold-relevant layers and producing similar cold-axis predictions per chunk. The K-fusion architecture detects the redundancy and pegs $\beta^*$ at boundary 16 with $\tau$ at extreme --- the same fusion-absorption signature seen for the K=3 G\_egemaps\_full failure (boundary $\beta^* +$ extreme $\tau$ for a low-standalone-UAR candidate), but here the candidate is individually strong and yet still fails the fusion. The audit recipe discovers similar cold-axis projections regardless of which FM substrate it's applied to, because cold-relevant layers in any speech FM end up encoding similar acoustic cues (voice quality, breathing patterns, modulation rate). The standalone-UAR-predictor heuristic should be augmented with a logit-correlation check (or an early-fusion baseline) before committing $\beta$-sweep compute to a candidate that's structurally similar to the anchor.
+\paragraph{Boundary-condition mechanism.} Standalone cleared $0.61$ but K=3 didn't admit. The mechanism is \emph{logit correlation, not individual weakness}: HuBERT-A2.5 logit is highly correlated with WavLM-A2.5 logit by construction. Both heads are trained via the same recipe (per-layer cold + speaker probes $\to$ sub@1 $\to$ LW softmax with audit-derived prior $\to$ cold-CE training); both end up concentrating on cold-relevant layers and producing similar cold-axis predictions per chunk. The K-fusion architecture detects the redundancy and pegs $\beta^*$ at boundary 16 with $\tau$ at extreme --- the same fusion-absorption signature seen for the K=3 G\_egemaps\_full failure (boundary $\beta^* +$ extreme $\tau$ for a low-standalone-UAR candidate), but here the candidate is individually strong and yet still fails the fusion. The audit recipe discovers similar cold-axis projections regardless of which FM substrate it's applied to, because cold-relevant layers in any speech FM end up encoding similar acoustic cues (voice quality, breathing patterns, modulation rate). The standalone-UAR-predictor heuristic should be augmented with a logit-correlation check (or an early-fusion baseline) before committing $\beta$-sweep compute to a candidate that's structurally similar to the anchor.
 
 \section{Shadow-split robustness analysis (M18)}
 \label{app:k2_shadow}

@@ -75,7 +75,7 @@ def fig1():
     cb = fig.colorbar(hb, ax=axA, fraction=0.046, pad=0.02)
     cb.set_label("log$_{10}$ count", fontsize=7)
 
-    # (B) per-cluster tightness vs separation (the honest cluster geometry)
+    # (B) per-cluster tightness vs separation (the cluster geometry)
     sz = (cs.n_chunks - cs.n_chunks.min()) / (cs.n_chunks.max() - cs.n_chunks.min())
     sb = axB.scatter(cs.intra_cluster_mean_cosine, cs.nearest_other_cluster_cosine,
                      c=cs.cold_rate, s=8 + 34 * sz, alpha=0.7, cmap="magma",
@@ -180,10 +180,10 @@ def fig2():
 
 
 # ---------------------------------------------------------------------------
-# Fig 3 — honesty-prior layer weighting (single-column, stacked small multiples)
+# Fig 3 — audit-derived layer prior (single-column, stacked small multiples)
 # ---------------------------------------------------------------------------
 def fig3():
-    print("[fig3] honesty-prior layer small-multiples")
+    print("[fig3] audit-derived layer-prior small-multiples")
     la = pd.read_csv(PD / "layer_audit_wavlm_grouped.csv").sort_values("layer")
     L = la.layer.to_numpy()
     sub1 = la.subtractive_honesty_lam1.to_numpy()
@@ -193,7 +193,7 @@ def fig3():
 
     fig, ax = plt.subplots(4, 1, figsize=(COL, 5.0), sharex=True)
     ax[0].plot(L, la.cold_uar, "o-", color="#1f4e79", ms=3, lw=1.1)
-    ax[0].set_ylabel("cold UAR"); ax[0].set_title("Per-layer audit $\\rightarrow$ honesty prior")
+    ax[0].set_ylabel("cold UAR"); ax[0].set_title("Per-layer audit $\\rightarrow$ audit-derived prior")
     ax[1].plot(L, la.speaker_top1, "o-", color="#c00000", ms=3, lw=1.1)
     ax[1].set_ylabel("speaker top-1")
     ax[2].axhline(0, color="0.6", lw=0.6)
