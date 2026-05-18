@@ -8,7 +8,7 @@
 
 \paragraph{De-confounding mechanisms.} Three families of de-confounding interventions are commonly proposed in the audio paralinguistic literature.
 
-\textit{Data-level} interventions reshape the training distribution to break the cold-vs-speaker correlation. Cross-speaker audio splicing~\cite{kahn2020splicing}, gain/noise augmentation, and prosody-preserving voice conversion are typical. We test cross-speaker splicing and an embedding-mixup variant (A5.5 in Section~\ref{sec:deconf}); both fail for distinct mechanism reasons documented in M8 and M9.
+\textit{Data-level} interventions reshape the training distribution to break the cold-vs-speaker correlation. Cross-speaker audio splicing, gain/noise augmentation, and prosody-preserving voice conversion are typical. We test cross-speaker splicing and an embedding-mixup variant (A5.5 in Section~\ref{sec:deconf}); both fail for distinct mechanism reasons documented in M8 and M9.
 
 \textit{Representation-level} interventions reshape the embedding geometry, typically with supervised contrastive losses~\cite{khosla2020supcon}. A common variant masks speaker-positive pairs to encourage same-class-different-speaker proximity. We test this (A6 in Section~\ref{sec:deconf}) and find it dominated by simpler cold-CE training plus dimensionality-bottleneck effects (M10, M11).
 

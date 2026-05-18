@@ -87,23 +87,26 @@ def build_cumulative_stack() -> None:
         fnum(a2["speaker_probe_lr"]["top1"]["mean"]),
     ])
     # A2.5 honesty-prior
-    a25_dist = a25["distribution"]["uar_argmax"]
+    # A2.5 at N=5 (aggregate_n5.a25_arg_uar) so the cumulative stack matches
+    # the paper table tab:stack (5-seed), not the 3-seed A2_grouped_honestprior
+    # distribution. Speaker probes stay the 3-seed audit values.
+    n3 = k2["aggregate_n3"]
+    n5 = k2["aggregate_n5"]
+    a25_n5 = n5["a25_arg_uar"]
     rows.append([
-        "A2.5_honestprior", "+ honesty-prior layer-weight init (T_INV * sub@1)",
-        fnum(a25_dist["mean"]),
-        fnum(a25_dist["std"]),
-        a25_dist.get("n", 3),
+        "A2.5_honestprior", "+ honesty-prior layer-weight init (T_INV * sub@1), N=5",
+        fnum(a25_n5["mean"]),
+        fnum(a25_n5["std"]),
+        a25_n5.get("n", 5),
         fnum(a25["speaker_probe_mlp"]["top1"]["mean"]),
         fnum(a25["speaker_probe_lr"]["top1"]["mean"]),
     ])
-    # K=1 (locked β for A2.5 + G4_gain_invariant)
-    n3 = k2["aggregate_n3"]
-    n5 = k2["aggregate_n5"]
+    # K=1 at N=5 (locked β for A2.5 + G4_gain_invariant) -- matches tab:stack
     rows.append([
-        "A5b_K1_n3", "+ K=1 late fusion w/ G4_gain_invariant (n=3 seeds)",
-        fnum(n3["k1_locked_uar"]["mean"]),
-        fnum(n3["k1_locked_uar"]["std"]),
-        3,
+        "A5b_K1_n5", "+ K=1 late fusion w/ G4_gain_invariant (n=5 seeds)",
+        fnum(n5["k1_locked_uar"]["mean"]),
+        fnum(n5["k1_locked_uar"]["std"]),
+        5,
         None, None,
     ])
     # K=2 (locked β for A2.5 + G4_gain_invariant + G5_modulation)

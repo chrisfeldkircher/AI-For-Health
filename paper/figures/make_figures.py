@@ -131,7 +131,7 @@ def fig2():
     cum = pd.read_csv(PD / "cumulative_stack.csv").set_index("stage")
     sh = pd.read_csv(PD / "shadow_summary.csv").set_index("method")
 
-    ladder = ["A2_grouped", "A2.5_honestprior", "A5b_K1_n3", "A5b_K2_n5"]
+    ladder = ["A2_grouped", "A2.5_honestprior", "A5b_K1_n5", "A5b_K2_n5"]
     labels = ["A2", "A2.5", "K=1", "K=2"]
     xs = np.arange(len(ladder))
     ys = [cum.loc[r, "devel_test_uar"] for r in ladder]
