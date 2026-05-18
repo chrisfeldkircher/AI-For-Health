@@ -1,0 +1,34 @@
+%!TEX root = ../main.tex
+\section{Background and Setup}
+\label{sec:bg}
+
+\subsection{The URTIC corpus and the ComParE 2017 Cold sub-challenge}
+
+The Upper Respiratory Tract Infection Corpus (URTIC) was distributed for the ComParE 2017 Cold sub-challenge~\cite{schuller2017interspeech}. It contains 28\,652 audio chunks of $\sim$5 second duration each, drawn from $\sim$630 distinct speakers, with binary cold/non-cold (C/NC) labels at the chunk level. Class balance is heavily skewed towards non-cold ($\sim$9.5\,\% cold rate). The ``4students'' release we use exposes the train and devel subsplits but does not include speaker IDs; we cluster ECAPA-TDNN~\cite{desplanques2020ecapa} embeddings into $k{=}210$ pseudo-speakers (Section~\ref{ssec:pseudo}) as a proxy for the speaker probe protocol. The ComParE 2017 hidden test labels are not publicly available; we report all numbers on devel\_test (Section~\ref{ssec:splits}).
+
+\subsection{Frozen WavLM-Large pooled-stats cache}
+
+We use \texttt{microsoft/wavlm-large} (24 Transformer layers + 1 input layer, 1024-d hidden) without any fine-tuning. For each chunk, frame-level activations from layers $L \in \{0, 1, \dots, 24\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, producing a per-chunk fp16 tensor of shape $[25, 4096]$ ($25 \cdot 4 \cdot 1024 = 4 \cdot 25 \cdot 1024$ stats). The cache lives at \path|cache/microsoft_wavlm-large/pooled/{stem}.pt| and is reused by every downstream rung — A2, A2.5, A5b, A5.5, A6, A6b, A7, A7c, A7c-v2 all consume the same cache.
+
+\subsection{Speaker-grouped sub-splits (within-partition leak fix)}
+\label{ssec:splits}
+
+The default URTIC distribution provides train/devel/test as three top-level partitions. For internal evaluation, we sub-split train into \texttt{train\_fit} (90\,\%, used for training the head + cold probes) and \texttt{train\_threshold} (10\,\%, used for sweeping the calibration threshold $\tau$), and devel into \texttt{devel\_val} (50\,\%, used for early stopping) and \texttt{devel\_test} (50\,\%, the held-out evaluation split). The naive per-class random subsplit shared 198/210 pseudo-speakers between \texttt{train\_fit} and \texttt{train\_threshold}, and 198/206 between \texttt{devel\_val} and \texttt{devel\_test}. We replace the random subsplit with \texttt{StratifiedGroupKFold} keyed on the $k{=}210$ pseudo-speaker assignments, giving 0/0 overlap. The argmax UAR on the leak-corrected baseline (0.6361) is $\sim$0.007 lower than on the leaky variant ($\sim$0.6428). This fix is the foundation of every number we report; we call out the leak-corrected baseline as the load-bearing comparison reference. Where the 2017 baseline (0.710) was reported on a hidden test split with unknown speaker overlap properties, our devel\_test number is on a strictly speaker-disjoint subsplit. We discuss this devel-vs-hidden-test framing in Section~\ref{sec:disc}.
+
+\subsection{Pseudo-speaker clustering (k=210 ECAPA-TDNN)}
+\label{ssec:pseudo}
+
+Since URTIC's 4students release omits speaker IDs, we cluster ECAPA-TDNN embeddings on train chunks into $k{=}210$ pseudo-speaker clusters via $k$-means and assign devel/test chunks by nearest centroid. The pseudo-speaker assignments serve three purposes: (i) the group key for \texttt{StratifiedGroupKFold} sub-splitting; (ii) the target labels for the speaker probe (Section~\ref{ssec:probes}); and (iii) the masked-positive partner pool for the A6 supervised-contrastive variant (Section~\ref{sec:deconf}). $k{=}210$ approximates the corpus's true speaker count; a coarser $k{=}100$ and finer $k{=}420$ are also tested for the disc-ceiling diagnostics in M14 (Section~\ref{sec:deconf}).
+
+\subsection{Speaker probe substrates}
+\label{ssec:probes}
+
+We use two probe substrates in matched form across every rung:
+
+\textit{MLP probe} (\texttt{speakers.probe.train\_probe}): 2-layer MLP (256-d hidden, GELU, dropout 0.1) trained for 50 epochs at lr $10^{-3}$ on \texttt{(z, pseudo-speaker)} where $z$ is the 128-d projection output of the relevant rung. Training-time top-1 over $k{=}210$ classes; eval-time best top-1 reported.
+
+\textit{LR probe} (\texttt{honesty.speaker\_probe}): scikit-learn multinomial logistic regression with C=1.0, max\_iter=2000. Operates on either the literal fusion-input vector (e.g., 3-d $[\ell_{\text{A2.5}}, z\ell_{g_4}, z\ell_{g_5}]$ for K=2 fusion) or the backbone-concat substrate (e.g., 4167-d \texttt{pooled\_4096} $\oplus$ \texttt{G4\_gi (7)} $\oplus$ \texttt{G5\_modulation (64)} for K=2 backbone-concat). The LR probe substrate is what we cite when speaker leakage is the load-bearing measurement axis.
+
+\textit{Probe gate ceiling.} The acceptance threshold is $A2 \cdot \mathrm{LR\text{-}grouped} + 1\sigma = 0.0780$. Probes for any de-confounding rung must clear this ceiling on the matched substrate to count as ``not adding speaker leak.''
+
+\textit{Substrate $\times$ split protocol matters} (M2 in our methodology contributions): the same A2 fused vector gives top-1 $= 0.0501$ under MLP-probe + grouped splits, $0.0760$ under LR-probe + grouped splits, $0.0501$ under MLP-probe + random splits, $0.0680$ under LR-probe + random splits. We anchor every gate on \texttt{honesty.speaker\_probe} substrate AND grouped splits — \emph{ceiling = $A2$ LR-grouped $+ 1\sigma = 0.0780$}.

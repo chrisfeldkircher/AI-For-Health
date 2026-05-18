@@ -1,8 +1,8 @@
 %!TEX root = ../main.tex
-\section{De-Confounding Interventions and Negative Results}
+\section{De-Confounding Ladder Closure}
 \label{sec:deconf}
 
-We tested three classes of de-confounding intervention on URTIC + frozen WavLM. Within the frozen-backbone scope and compute budget of this project, none improved over the simpler cold-CE pipeline. These negative results are part of the paper's main story: they show which intuitive fixes do not survive stronger controls on this corpus, and each failure mode produced one of the M-disciplines summarised later in Section~\ref{ssec:m_disciplines}.
+We tested three classes of de-confounding intervention on URTIC + frozen WavLM. All three close negatively at every architectural scope tractable in the project's compute budget. The closure is the negative-result spine of the paper, and each rung's failure mode produced one of the M-disciplines (Section~\ref{ssec:m_disciplines}).
 
 \subsection{A5.5 --- Data-level: cross-speaker augmentation}
 \label{ssec:a5_5}
@@ -107,7 +107,7 @@ repr (LW, no proj) & A7c (v2)    & M14: substrate-resistant \\
 \end{tabular}
 \end{table*}
 
-Within the tested scope, all within-budget options were negative. The useful claim is therefore narrower than ``de-confounding is solved'' or ``de-confounding is impossible on URTIC'': these specific intervention families did not beat the simpler audited pipeline, and their failure modes produced a transferable instrumentation framework for future work on small-data paralinguistic foundation-model systems.
+All within-budget options are exhausted. The methodology framework (M8 -- M14) is the load-bearing contribution; the categorical closure plus the seven instrumentation disciplines are transferable to any small-data paralinguistic foundation-model pipeline.
 
 \subsection{Methodology contributions consolidated}
 \label{ssec:m_disciplines}

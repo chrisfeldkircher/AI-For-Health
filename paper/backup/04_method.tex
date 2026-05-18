@@ -1,0 +1,111 @@
+%!TEX root = ../main.tex
+\section{Method: A2 $\rightarrow$ A2.5 $\rightarrow$ A5b}
+\label{sec:method}
+
+The controlled-positive pipeline has three stages: a layer-weighted classification head on cached pooled stats (A2), an honesty-prior re-initialisation (A2.5), and a constrained late-fusion stage with handcrafted feature groups (A5b).
+
+\subsection{A2: Layer-weighted pooled head}
+\label{ssec:a2}
+
+Given the cached pooled tensor $X \in \mathbb{R}^{B \times 25 \times 4096}$ for a batch of $B$ chunks, the A2 head computes
+\begin{align}
+\tilde{X} &= \mathrm{Standardiser}(X) \\
+w &= \mathrm{softmax}(\theta_w) \in \mathbb{R}^{25} \\
+F &= \sum_{L=0}^{24} w_L \cdot \tilde{X}_{:, L, :} \in \mathbb{R}^{B \times 4096} \\
+z &= \mathrm{MLP}(F) \in \mathbb{R}^{B \times 128} \\
+\hat{y} &= \mathrm{Classifier}(z) \in \mathbb{R}^{B \times 2}
+\end{align}
+where the MLP is two-layer (Linear-BN-GELU-Dropout, $4096{\to}128{\to}128$). The standardiser is per-position $z$-score (4096 means + 4096 stds) fitted on the train\_fit cache before training; without it the per-position std spans $\sim$4 orders of magnitude (mean blocks dominate skew/kurt blocks by $\sim$1000$\times$), and the head collapses to majority-class. We train with class-balanced batch sampling, AdamW (head lr $10^{-3}$, layer-weights lr $10^{-4}$ per s3prl convention), 25 epochs, early stop patience 6.
+
+\textbf{A2 leak-corrected baseline:} on grouped splits (\texttt{stratified\_grouped\_split} keyed on $k{=}210$ pseudo-speakers), A2 reaches devel\_test argmax UAR $0.6361 \pm 0.002$. The pre-correction (random-split) number was $\sim$0.6428. The leak correction reduces argmax UAR by $\sim$0.007 and reveals val-test gap $-0.013$ (vs $-0.001$ in the leaky variant) — the gap correctly reveals devel\_val/devel\_test speaker disjointness instead of hiding it. MLP probe top-1 is essentially unchanged ($0.0501 \to 0.0498$), confirming the cross-partition speaker disjointness was the load-bearing one for the speaker-probe interpretation.
+
+\subsection{A2.5: Honesty-prior layer-weight initialisation}
+\label{ssec:a25}
+
+The per-layer cold/speaker honesty audit (A5d) trains a linear cold probe and a linear speaker probe on \texttt{pooled[:, L, :]} for each $L$ separately, computes $\mathrm{sub}@1_L = \mathrm{label\_gain}_L - \mathrm{speaker\_gain}_L$, and writes the 25-dimensional vector to \texttt{results/A5d\_grouped\_layer\_honesty.csv}. We then re-initialise the A2 head's softmax layer-weight logits with $\theta_w = T \cdot \mathrm{sub}@1$, using $T{=}50$. The training recipe is otherwise identical to A2.
+
+\textbf{A2.5 result (5-seed lock):} devel\_test argmax UAR $0.6563 \pm 0.0027$ at $N{=}5$ (5-seed expansion from the original 3-seed lock $0.6564 \pm 0.0038$); $+0.020$ over uniform-A2 ($\sim$7$\sigma$ at $N{=}5$). MLP probe top-1 unchanged at $0.0501 \to 0.0501$ (no speaker-probe inflation). LR probe slightly down ($0.0760 \to 0.0725$). Pareto improvement on every measured dimension. Cosine-similarity diagnostic: $\cos(\theta_w^{\text{init}}, \theta_w^{\text{final}}) \approx 0.9998$ across all seeds at the default lr — the optimizer essentially does not move the prior. An lr stress test confirmed the layer-weight subspace has gradient signal at $10\times$ higher lr ($\cos(\text{init},\text{final})$ drops to 0.21 at lr$\times 100$), but the M5 finding (Section~\ref{sec:disc}) is that the standard low-lr training recipe is too constrained to find the prior's attractor from uniform init: an lr$\times$init grid (uniform vs honest-prior $\times$ lr$\times\{3, 5, 10\}$, 18 retrains) shows uniform plateaus at UAR 0.6447--0.6466 across all tested lr while honesty-prior reaches 0.657--0.664 at every lr. The honesty prior is therefore a \emph{distinct attractor} in the layer-weight subspace that uniform initialisation cannot reach via lr alone.
+
+\subsection{A5b: Honesty-audited late fusion}
+\label{ssec:a5b}
+
+The A5a honesty audit (Section~\ref{sec:bg}) ranks candidate handcrafted feature groups by subtractive honesty $\mathrm{sub}@1_g = \mathrm{label\_gain}_g - \mathrm{speaker\_gain}_g$, admitting six groups: G1 voicing (9-d), G2 prosody (10-d), G3 voice quality (14-d, eGeMAPS slice), G4 energy + gain-invariant slice (7-d), G5 modulation (64-d), G6 spectral shape (21-d, eGeMAPS slice). G8 (OOD Mahalanobis) is anti-predictive on URTIC and dropped.
+
+\textbf{Fusion architecture.} Per group $g$, fit a logistic-regression cold probe on \texttt{train\_fit}, produce per-chunk logit $\ell_g$, and $z$-score normalize against the train-fit distribution to give $z\ell_g$. The fused logit is
+\begin{equation}
+\ell_{\text{fused}} = \ell_{\text{A2.5}} + \beta \cdot \mathrm{mean}_{g \in \mathcal{G}_K} \big(z\ell_g\big),
+\label{eq:fusion}
+\end{equation}
+where $\mathcal{G}_K$ is the admitted set of $K$ groups and $\beta$ is a single fusion coefficient. The threshold $\tau$ is swept on \texttt{train\_threshold} jointly with $\beta$.
+
+\textbf{K-locked extended $\beta$-sweep methodology.} Free K-sweep on \texttt{train\_threshold} over-rewards configurations with more $\tau$ flexibility (more groups widen the achievable $\tau$-vs-UAR curve) and inflates variance without improving the mean (M4 in Section~\ref{sec:disc} has the worked example: K-locked K=1 collapses $\sigma$ from 0.0112 to 0.0011, a 7$\times$ reduction). The discipline we adopt is to lock $K$ first, then sweep $\beta$ on an extended grid $\{0, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3, 4, 6, 8, 12, 16\}$ jointly with $\tau$. Per-seed argmax $\beta^*$ lock; $\tau$ floats freely with the per-seed A2.5 logit distribution.
+
+\subsection{A5b K=1 LOCKED: A2.5 + G4\_gain\_invariant}
+
+K=1 with G4\_gi as the single admitted group reaches UAR $0.6934 \pm 0.0064$ at $N{=}5$ ($+0.037$ over A2.5, $\sim$5.8$\sigma$). Per-seed locked $\beta^*$ sits in the interior plateau $\beta \in [4, 16]$ across seeds; G4-alone ($\beta \to \infty$ limit) reaches 0.6632, a striking parity with A2.5-alone (0.6564) — a 7-d handcrafted gain-invariant feature matches a 4096-d WavLM-Large representation on chunk-level cold UAR, and K=1 fusion beats G4-alone by $+0.028$, confirming partial orthogonality between the WavLM substrate and G4. The K=1 speaker probe gates pass cleanly: literal 2-d probe $0.0119 \pm 0.0015$, backbone-concat 4103-d probe $0.0675 \pm 0.0006$, both well under $0.0780$.
+
+\subsection{A5b K=2 LOCKED: A2.5 + G4\_gi + G5\_modulation}
+\label{ssec:k2}
+
+K=2 was originally tested at the design stage under a free-K-sweep that incurred the M4 $\tau$-pathology and FAILed. With the K-locked methodology established at K=1, we re-tested K=2 by adding each of the remaining admitted groups $G_{\text{other}} \in \{G1, G2, G3, G5, G6\}$ as the second slot. The exhaustive K=2 candidate sweep (5 candidates $\times$ 3 seeds, locked $\beta$-sweep) identified G5\_modulation as the unique winner; per-candidate locked $\beta^*$ values and the full sweep results are in Appendix~\ref{app:k2_candidates}, and the K-fusion verdict is also rolled into Table~\ref{tab:standalone_predictor} in Section~\ref{ssec:standalone_predictor}.
+
+The candidate sweep surfaces a transferable methodology heuristic: \textbf{standalone cold-LR UAR predicts K-fusion admission}. Candidates with standalone UAR $\geq 0.61$ (G5 $0.6121$, G1 $0.6058$) admit with interior $\beta^*$; candidates with standalone UAR $\sim$ 0.50--0.61 (G6 $0.6053$, G\_egemaps\_full $0.5384$, G2 $0.5088$, G3 $0.5039$) get fusion-absorbed at boundary $\beta^* \in \{12, 16\}$ with $\tau$ at extreme. The clean threshold around standalone-cold-LR UAR $\geq 0.61$ partitions admit/fail across six tested candidates; the cross-family generalisation across handcrafted + FM-derived substrates is in Section~\ref{ssec:standalone_predictor}.
+
+\subsubsection{5-seed expansion of A5b K=2}
+\label{ssec:k2_5seed}
+
+To tighten the standard error on the headline number, we trained A2.5 honesty-prior heads for 2 additional seeds $\{999, 31337\}$ and re-ran the extended $\beta$-sweep K=1 (G4\_gi alone) and K=2 (G4\_gi + G5\_modulation) across all 5 seeds. Per-seed reproduction confirms determinism: the N=3 subset of the 5-seed run reproduces the prior 3-seed locks exactly, so all $\sigma$-tightening is from the 2 new seeds.
+
+\textbf{Headline N=5 numbers vs prior 3-seed locks:}
+
+\begin{table*}[t]
+\centering\small
+\caption{5-seed expansion of A2.5 / A5b K=1 / A5b K=2. $\sigma$ reduction 16--29\% across all metrics; the K=2$-$K=1 lift sharpens from 1.4$\sigma$ at $N{=}3$ to 4.30$\sigma$ at $N{=}5$.}
+\label{tab:5seed}
+\begin{tabular}{lccc}
+\toprule
+metric              & N=3 prior        & N=5 (full)        & $\sigma$ red. \\
+\midrule
+A2.5 argmax UAR     & $0.6564 \pm 0.0038$ & $0.6563 \pm 0.0027$ & $-29\,\%$ \\
+K=1 LOCKED UAR      & $0.6913 \pm 0.0076$ & $0.6934 \pm 0.0064$ & $-16\,\%$ \\
+K=2 LOCKED UAR      & $0.7023 \pm 0.0077$ & $\mathbf{0.7037 \pm 0.0060}$ & $-21\,\%$ \\
+K=2 $-$ K=1 lift    & $+0.0110 \pm 0.0032$ & $+0.0103 \pm 0.0024$ ($\mathbf{4.30\sigma}$) & $-24\,\%$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\textbf{Per-seed K=2$-$K=1 deltas at N=5 — all positive:} seed 42 $+0.0117$; seed 123 $+0.0137$; seed 7 $+0.0075$; seed 999 (NEW) $+0.0092$; seed 31337 (NEW) $+0.0095$. No seed produces null or reversed lift. $\beta^*$ for K=2 on the new seeds (999: $\beta^*{=}12$, 31337: $\beta^*{=}8$) sits in the same interior plateau as the original 3 seeds ($\beta^* \in \{6, 8, 8\}$); G4\_gi+G5\_modulation orthogonality holds across all 5 seeds.
+
+\subsubsection{K=2 speaker probe gate (5-seed)}
+
+Per the 2-D acceptance discipline (cold UAR + speaker probe), we ran probe (i) literal 3-d and probe (ii) backbone-concat 4167-d on the K=2 fused logit at all 5 seeds. Both gates pass: probe (i) literal $0.0182 \pm 0.0006$ (4.3$\times$ margin under the 0.0780 ceiling); probe (ii) backbone-concat $0.0729 \pm 0.0005$ ($\Delta\,0.0051$ under ceiling). Per-seed $\sigma$ is tiny ($\leq 0.0006$); the marginal probe increases over K=1 ($+0.0063$ literal, $+0.0054$ backbone-concat) are capacity-driven (3-d $\supset$ 2-d; 4167-d $\supset$ 4103-d), not speaker-leak-driven — neither substrate has been shaped by speaker-aware training.
+
+\subsubsection{5-seed mean-logit ensemble}
+\label{ssec:ensemble}
+
+We compute a per-chunk linear average of the 5 per-seed K=2 fused logits at each seed's locked $\beta^*$, then sweep $\tau$ fresh on \texttt{train\_threshold} for the ensemble. The mean-logit ensemble reaches devel\_test UAR $\mathbf{0.7090}$ ($+0.0053$ over per-seed single mean, distance to 0.710 baseline $= 0.001$). A mean-probability variant (sigmoid-then-average-then-back-to-logit) reaches only 0.7041 — neutral. Mean-logit beats mean-probability because per-seed fused logits have similar magnitudes ($\beta^* \in \{6, 8, 8, 8, 12\}$, all $\tau^* \in [-3.95, +1.275]$); linear averaging in logit space preserves the ranking signal across chunks.
+
+\textbf{Recall-pattern flip — cold-balanced ensemble.} The mean-logit ensemble at locked $\tau^* = -1.375$ produces recC $= 0.791$, recNC $= 0.627$ — heavily cold-balanced. Per-seed single produces recC $\approx 0.43$, recNC $\approx 0.87$ (NC-biased). For a $\sim$9.5\,\%-cold corpus, recovering 79\,\% of cold cases is practically valuable beyond what the UAR scalar captures. We report both numbers (per-seed single's $\sigma$-bearing 0.7037 and the ensemble's 0.7090) to make the trade-off explicit.
+
+\subsubsection{K=3 with full eGeMAPSv02 --- A5a slicing methodology validated}
+
+A natural follow-up is whether the full 88-d eGeMAPSv02 functional set (which subsumes the audited G3 and G6 slices) adds cold-prediction signal beyond K=2. The K=3 (A2.5 + G4\_gi + G5\_mod + G\_egemaps\_full) extended $\beta$-sweep reaches UAR $0.6801 \pm 0.0097$ ($\Delta\,-0.0236$ vs K=2 LOCKED, with boundary-heavy $\beta^*$ across seeds) --- \emph{worse} than K=2. G\_egemaps\_full standalone cold-LR UAR is $0.5384$, well below the 0.61 admission threshold; the A5a-curated G3 (voice quality, 14-d) + G6 (spectral, 21-d) slices had already extracted the cold-relevant content from eGeMAPS, and the un-extracted 53 dimensions add dilution rather than signal. We treat this as a paper-stage validation of the A5a slicing methodology. Per-seed $\beta^*$ values and the mechanism analysis are in Appendix~\ref{app:egemaps}.
+
+\subsubsection{K=3 with HuBERT-base --- M14 pre-flight skip on a narrow test}
+\label{ssec:k3_hubert}
+
+The remaining axis to push past K=2 within the frozen-backbone commitment is a \emph{structurally-different} second foundation model alongside WavLM-Large. We extracted HuBERT-base-ls960~\cite{hsu2021hubert} pooled stats (mean+std+skew+kurt per layer per chunk) for the train + devel partitions and built a cold-LR substrate as the layer-mean of HuBERT's 13 layers (12 transformer + 1 input) of pooled stats, giving 3072-d per chunk. The full extraction protocol and cache layout are in Appendix~\ref{app:hubert}.
+
+\textbf{HuBERT mean-pooled standalone cold-LR UAR $= 0.5396$.} Sits firmly below the 0.55 ``definite FAIL'' floor of the M14 standalone-UAR predictor heuristic (Section~\ref{ssec:standalone_predictor}). The K=3 sweep was \emph{skipped} per the M14 pre-flight discipline; the fail-fast mechanism saved $\sim 5$ min of compute on a configuration the heuristic predicted would fail. The HuBERT row in Table~\ref{tab:standalone_predictor} extends the standalone-UAR predictor across two substrate families (handcrafted + FM-derived) with the same $\sim 0.61$ admit threshold.
+
+\textbf{The 0.116 standalone gap as methodology validation.} A2.5's single-substrate cold information (devel\_test argmax UAR $\sim 0.656$ at single-seed level) sits $0.116$ above HuBERT-base mean-pooled's standalone cold-LR UAR ($0.540$) on the same task with similar feature-extraction protocols. Naive backbone-mean-pool of WavLM-base alone would also likely be in the $0.55$--$0.60$ range; the $\sim 0.116$ gap is therefore not just ``WavLM is a better backbone,'' but plausibly attributable to the audited honesty-prior layer-weighted pooling methodology that distinguishes A2.5 from a naive use of any frozen FM. We cite this as additional evidence (alongside the A2 vs A2.5 ablation in Section~\ref{ssec:a25}) that the layer-weight initialisation contribution is doing real work, not just inheriting strength from the underlying foundation model.
+
+\textbf{Paper-stage framing --- narrow-test scope is load-bearing.} What we tested in this initial sweep was narrow: HuBERT-base, 13-layer averaged pooled stats, linear cold probe. The cleanest statement of that result is the M14 verdict --- \emph{HuBERT-base mean-pooled pooled-stat probe was weak standalone and therefore not promoted to fusion} --- not the broader claim ``HuBERT failed'' or ``single-FM late fusion is sufficient on URTIC.''
+
+\paragraph{Follow-up: HuBERT-base + learned layer-weighted softmax (the hypothesis-disambiguating test).} We subsequently tested the cleanest disambiguator between hypotheses (i) and (ii): an A2.5-style head trained on HuBERT pooled stats with the same recipe as WavLM-A2.5 (per-layer audit $\to$ honesty prior $\to$ LW softmax $\to$ cold-CE training, 5 seeds). The HuBERT-A2.5 standalone 5-seed UAR is $\mathbf{0.6217 \pm 0.0291}$ --- crosses the M14 admit-plausible threshold ($0.61$). The hypothesis decomposition (gap closure of $0.116$ from HuBERT mean-pooled $0.5396$ to WavLM-A2.5 $\sim 0.656$): \textbf{layer-weighted softmax accounts for $\sim 71\%$ ($+0.082$); capacity accounts for $\sim 29\%$ ($+0.034$).} Both hypotheses contribute --- the strong form of either ``only LW does the work'' or ``only capacity does the work'' is refuted; the conjunction ``audited LW softmax does most of the architectural work + residual ${\sim}30\%$ from backbone capacity / pretraining-corpus diversity'' is supported.
+
+\textbf{Cross-architectural transferability of the honesty-prior mechanism.} The $+0.082$ HuBERT lift mirrors the $+0.071$ WavLM lift over its own naive baseline (uniform-A2-grouped, Section~\ref{ssec:a25}). Both backbones converged to similarly stable layer-weight distributions: $\cos$(prior, final softmax) $\approx 0.95$ across all 5 HuBERT seeds (vs $\approx 0.9998$ across WavLM seeds at default lr), with the same top-5 final layers across all HuBERT seeds (L0, L1, L12, L10, L3). The honesty-prior + frozen-FM + small-data regime appears to admit a globally-stable optimum rather than per-seed-different convergence, on both architectures tested. \emph{We argue this is a general property of frozen-foundation-model + small-data layer-weighting setups, not WavLM-specific} --- a transferability claim that strengthens the C2 contribution. Per-seed standalone $\sigma$ on HuBERT-A2.5 ($0.029$) is $\sim 8\times$ WavLM-A2.5's $\sigma$ ($0.004$), reflecting HuBERT-base's smaller layer-weight subspace (13 layers vs 25) and faster cold-signal saturation (early stopping fires at epoch 1--4 across all HuBERT seeds, vs typically epoch 8--15 for WavLM-A2.5).
+
+Despite clearing the standalone admission threshold, the K=3 fusion (A2.5\_WavLM $+$ G4\_gi $+$ G5\_modulation $+$ HuBERT-A2.5) does \emph{not} admit: 5-seed mean $0.6955 \pm 0.0083$, $\Delta -0.008$ vs K=2 LOCKED, with 4 of 5 seeds at boundary $\beta^*{=}16$. Mechanism: HuBERT-A2.5 logit is highly correlated with WavLM-A2.5 logit by construction (both derived from the same audit recipe applied to different FM substrates; both end up concentrating on cold-relevant layers and producing similar cold-axis predictions). The K-fusion architecture rewards orthogonality, not absolute strength; a structurally-similar candidate fails despite individually clearing the threshold. Section~\ref{ssec:standalone_predictor} formalises this as a substrate-conditional refinement of the heuristic. Full per-layer audit + per-seed details in Appendix~\ref{app:k3_hubert_lw}.
+
+A5b K=2 (A2.5 + G4\_gi + G5\_modulation) is therefore the canonical late-fusion system within the configurations we tested: all six A5a-admitted handcrafted groups as K=2 partners (G5 unique winner); the full 88-d eGeMAPSv02 as a K=3 addition (failed); HuBERT-base mean-pooled as a K=3 addition (M14 pre-flight failed); HuBERT-base \emph{with learned LW softmax} as a K=3 addition (cleared standalone but failed K=3 fusion by logit-correlation). No alternative configuration we tested beats K=2 LOCKED $0.7037 \pm 0.0060$ within budget; remaining untested multi-FM variants (HuBERT-large mean-pooled, HuBERT discrete token histograms) stay as future work (Section~\ref{sec:conc}).
