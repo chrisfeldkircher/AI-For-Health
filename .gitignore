@@ -10,6 +10,19 @@
 # clustering assumption for A5.5 / A6 / A7 and are small
 /cache/*
 !/cache/pseudo_speakers/
+# Locked predict-time artifacts: the 5 A2.5 audit-derived-prior head
+# checkpoints (~2.9 MB each, <100 MB GitHub limit) + the frozen probe/beta/
+# tau bundle (~28 KB). These make the hidden-test predict cell portable
+# (Mac) with no multi-GB train/devel cache. Re-include the dir, re-ignore
+# its contents, then whitelist exactly these files.
+!/cache/microsoft_wavlm-large/
+/cache/microsoft_wavlm-large/*
+!/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed42.pt
+!/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed123.pt
+!/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed7.pt
+!/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed999.pt
+!/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed31337.pt
+!/cache/microsoft_wavlm-large/predict_artifacts_multiK.npz
 # second cache location appears inside model/ because notebooks cwd is there
 /model/cache/
 
