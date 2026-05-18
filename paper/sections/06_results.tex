@@ -8,7 +8,7 @@ Table~\ref{tab:stack} consolidates the controlled-positive pipeline. The cumulat
 
 \begin{table*}[t]
 \centering\small
-\caption{Cumulative stack on URTIC devel\_test (speaker-grouped sub-split). All numbers $N{=}5$ unless noted. The 2017 baseline 0.7100 is on the hidden test set; we report the apples-to-oranges caveat in Section~\ref{sec:disc}.}
+\caption{Cumulative stack on URTIC devel\_test (speaker-grouped sub-split), $N{=}5$. Controlled-ladder rows (A2--K=2 single) are the canonical 5-seed mean $\pm$ seed $\sigma$. The two locked ensemble refinements are reported \emph{shadow-first}: canonical single-partition number \emph{and} shadow-mean $\pm\,\sigma_{\text{shadow}}$ over 10 speaker-disjoint partitions (the binding metric; Fig.~\ref{fig:shadow}). The 2017 $0.7100$ is a single hidden-test point; the canonical--baseline comparison is contextualised by partition variance in Section~\ref{ssec:shadow_first} and is \emph{not} read as matching or beating the baseline.}
 \label{tab:stack}
 \begin{tabular}{lcccc}
 \toprule
@@ -18,10 +18,10 @@ uniform-A2-grouped (leak-corrected baseline)        & $0.6361$            & --- 
 A2.5 honesty-prior init                              & $0.6563$            & $+0.020$  & $0.0027$    & $0.0725$ \\
 A5b K=1 (A2.5 + G4\_gi)                              & $0.6934$            & $+0.057$  & $0.0064$    & $0.0675$ \\
 A5b K=2 single (A2.5 + G4\_gi + G5\_modulation)      & $\mathbf{0.7037}$   & $+0.068$  & $\mathbf{0.0060}$ & $0.0729$ \\
-A5b K=2 5-seed MEAN-LOGIT ensemble                   & $0.7090$            & $+0.073$  & --- (n=1)   & --- \\
-A5b multi-K 5-seed ensemble (K=1+K=2 averaged)      & $\mathbf{0.7111}$   & $+0.075$  & --- (n=1)   & --- \\
+A5b K=2 mean-logit ensemble (canonical / shadow)     & $0.7090$ / $0.6882$ & $+0.073$  & shadow $\pm0.0169$ & --- \\
+A5b multi-K ensemble (canonical / shadow)            & $\mathbf{0.7111}$ / $0.6940$ & $+0.075$ & shadow $\pm0.0157$ & --- \\
 \midrule
-2017 ComParE Cold baseline (hidden test)             & $0.7100$            & $+0.074$  & --- (n=1)   & --- \\
+2017 ComParE Cold baseline (hidden test, 1 partition) & $0.7100$           & $+0.074$  & --- (n=1)   & --- \\
 \bottomrule
 \end{tabular}
 \end{table*}
