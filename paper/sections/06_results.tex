@@ -26,7 +26,14 @@ A5b multi-K 5-seed ensemble (K=1+K=2 averaged)      & $\mathbf{0.7111}$   & $+0.
 \end{tabular}
 \end{table*}
 
-The K=2 single LR probe top-1 (0.0729) clears the 0.0780 acceptance ceiling by $\Delta\,0.005$. The K=2 literal 3-d probe is $0.0182 \pm 0.0006$, well under ceiling. Every controlled-positive stage in the stack has both gates passing.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig2}
+\caption{Cumulative audited stack (shadow-first). Controlled ladder A2 $\to$ A2.5 $\to$ K=1 $\to$ K=2 as 5-seed mean $\pm\sigma$ (filled blue). The ensemble / multi-K refinements are shown as both the single-partition canonical point (hollow red) and the shadow mean $\pm\sigma$ over 10 alternative devel partitions (filled red). The canonical points sit at/above the 2017 hidden-test baseline ($0.710$), but the honest shadow means ($0.688$, $0.694$) sit $\sim1\sigma$ below it: canonical is a single favourable partition, not the expected-test estimate.}
+\label{fig:stack}
+\end{figure}
+
+The K=2 single LR probe top-1 (0.0729) clears the 0.0780 acceptance ceiling by $\Delta\,0.005$. The K=2 literal 3-d probe is $0.0182 \pm 0.0006$, well under ceiling. Every controlled-positive stage in the stack has both gates passing (Fig.~\ref{fig:stack}).
 
 \subsection{Multi-K ensemble and baseline comparison}
 \label{ssec:multi_k}
@@ -145,6 +152,13 @@ mean-logit ensemble UAR      & $0.6882 \pm 0.0169$ & $[0.6443, 0.7042]$ & $0.709
 \bottomrule
 \end{tabular}
 \end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig4}
+\caption{Shadow-split robustness. For the K=2 ensemble and multi-K, each blue point is one of 10 alternative \texttt{(devel\_val, devel\_test)} partitions; the red square is the shadow mean $\pm\sigma$; the red star is the single canonical partition. The canonical split sits at the top of the distribution, near/at the 2017 baseline ($0.710$, dashed), while the shadow mean lies $\sim1\sigma$ below it --- the canonical point is one favourable draw, not the expected-test position. seed~23 is the structural low outlier (few cold speakers in its devel\_test; see Appendix).}
+\label{fig:shadow}
+\end{figure*}
 
 \textbf{Verdict: canonical favorable but not pathological.} $z {=} +1.24\sigma$ above shadow mean falls in the ``marginal'' zone (within $2\sigma$ but above $1\sigma$). The locked configuration found a partition where its specific characteristics happened to align well with the test fold, plausibly via cumulative implicit fit through the per-seed locked $\beta^*$ on canonical \texttt{train\_threshold}, the ensemble locked $\tau^*$ on canonical \texttt{train\_threshold}, the K=2 G\_other selection on canonical \texttt{devel\_test}, and the M14 admission threshold calibrated on the canonical sweep. This is not methodological failure --- every decision followed the pre-registered protocol; the canonical split was fixed before any rung optimisation; the partition variance is the irreducible noise of single-partition evaluation on small-data corpora. The shadow distribution makes that noise quantitatively visible.
 

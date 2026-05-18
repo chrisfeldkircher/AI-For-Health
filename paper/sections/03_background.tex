@@ -18,7 +18,14 @@ The default URTIC distribution provides train/devel/test as three top-level part
 \subsection{Pseudo-speaker clustering (k=210 ECAPA-TDNN)}
 \label{ssec:pseudo}
 
-Since URTIC's 4students release omits speaker IDs, we cluster ECAPA-TDNN embeddings on train chunks into $k{=}210$ pseudo-speaker clusters via $k$-means and assign devel/test chunks by nearest centroid. The pseudo-speaker assignments serve three purposes: (i) the group key for \texttt{StratifiedGroupKFold} sub-splitting; (ii) the target labels for the speaker probe (Section~\ref{ssec:probes}); and (iii) the masked-positive partner pool for the A6 supervised-contrastive variant (Section~\ref{sec:deconf}). $k{=}210$ approximates the corpus's true speaker count; a coarser $k{=}100$ and finer $k{=}420$ are also tested for the disc-ceiling diagnostics in M14 (Section~\ref{sec:deconf}).
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1}
+\caption{ECAPA-TDNN pseudo-speaker validation. \textbf{(A)} UMAP of the 19{,}101 train$+$devel ECAPA embeddings (log-density hexbin): the embedding space is highly clustered, not a single blob. \textbf{(B)} Per-cluster tightness vs separation for the shipped $k{=}210$ partition (marker area $\propto$ cluster size, colour $=$ cluster cold rate). \textbf{(C)} Validation of the \emph{shipped} $k{=}210$ labels computed in the raw L2-normalised 192-d ECAPA space (the production clustering space; \emph{not} the optimistic UMAP-reduced space). The load-bearing number is the kNN label cohesion: a chunk's 10 nearest ECAPA neighbours share its pseudo-speaker $94\times$ above chance. Independent raw-space HDBSCAN is non-degenerate and recovers a consistent finer partition (NMI $0.77$; ARI $0.31$ reflects $406{>}210$ granularity, not disagreement). Silhouette is reported relative only. Pseudo-speakers are thus a validated speaker-correlated proxy, not ground-truth IDs.}
+\label{fig:ecapa}
+\end{figure*}
+
+Since URTIC's 4students release omits speaker IDs, we cluster ECAPA-TDNN embeddings on train chunks into $k{=}210$ pseudo-speaker clusters via $k$-means and assign devel/test chunks by nearest centroid (validated in Fig.~\ref{fig:ecapa}). The pseudo-speaker assignments serve three purposes: (i) the group key for \texttt{StratifiedGroupKFold} sub-splitting; (ii) the target labels for the speaker probe (Section~\ref{ssec:probes}); and (iii) the masked-positive partner pool for the A6 supervised-contrastive variant (Section~\ref{sec:deconf}). $k{=}210$ approximates the corpus's true speaker count; a coarser $k{=}100$ and finer $k{=}420$ are also tested for the disc-ceiling diagnostics in M14 (Section~\ref{sec:deconf}).
 
 \subsection{Speaker probe substrates}
 \label{ssec:probes}

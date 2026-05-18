@@ -55,3 +55,9 @@ desktop.ini
 *.lot
 *.fls
 *.fdb_latexmk
+
+# paper figures: track the deterministic PDF build-inputs (regenerable from
+# paper_data/ + results/ via paper/figures/make_figures.py), but not the
+# PNG inspection copies or the built main.pdf
+!paper/figures/*.pdf
+paper/figures/*.png
