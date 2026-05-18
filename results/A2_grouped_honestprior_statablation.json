@@ -1,0 +1,445 @@
+{
+  "rung_id": "A2.5_statmoment_ablation",
+  "description": "Pooled-stat moment ablation on the canonical A2.5 head. Holds grouped splits (SPLIT_SEED=42), per-layer honesty prior (T_INV=50 from A5d_grouped_layer_honesty.csv), proj_dim=128, dropout=0.5, balanced sampler, 25 ep, lr 1e-3/1e-4, patience 6 ALL fixed; varies only the pooled-stat moment count by slicing [mean|std|skew|kurt] contiguous blocks. The 4096 variant is a reproduction control vs the locked 5-seed A2.5. Per-layer prior held fixed across variants by design (isolates the moment-count effect; a per-slice re-audit is the fully-fair but larger follow-up). Reviewer-defence for the mean+std+skew+kurt design choice.",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "T_INV": 50.0,
+  "honesty_prior_fixed_across_variants": true,
+  "stat_block_order": "mean(1024)|std(1024)|skew(1024)|kurt(1024) contiguous",
+  "split_sizes": {
+    "train_fit": 8532,
+    "train_threshold": 973,
+    "devel_val": 4801,
+    "devel_test": 4795
+  },
+  "variants": {
+    "mean": {
+      "stat_dim": 1024,
+      "aggregate": {
+        "argmax_uar": {
+          "mean": 0.657216069843752,
+          "std": 0.014055232257092189,
+          "n": 5
+        },
+        "calibrated_uar": {
+          "mean": 0.6506573327972519,
+          "std": 0.0135773032209145,
+          "n": 5
+        },
+        "val_test_gap": {
+          "mean": -0.02949221614307467,
+          "std": 0.013162467521890524,
+          "n": 5
+        },
+        "speaker_probe_lr_top1": {
+          "mean": 0.08677358883565923,
+          "std": 0.0006684776728132162,
+          "n": 5
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "best_epoch": 1,
+          "best_val_uar": 0.6327171957278925,
+          "tau": 0.735,
+          "uar_train_threshold_at_tau": 0.5368219982301267,
+          "devel_test_argmax_uar": 0.6573872237219738,
+          "devel_test_calibrated_uar": 0.6304727552670927,
+          "recall_C": 0.3320079522862823,
+          "recall_NC": 0.928937558247903,
+          "val_test_gap": -0.024670027994081245,
+          "speaker_probe_lr_top1": 0.08602374505311393,
+          "speaker_probe_lr_nmi": 0.4628566950041997
+        },
+        {
+          "seed": 123,
+          "best_epoch": 1,
+          "best_val_uar": 0.6277597113777968,
+          "tau": 0.7,
+          "uar_train_threshold_at_tau": 0.5326185491355679,
+          "devel_test_argmax_uar": 0.6798547021690917,
+          "devel_test_calibrated_uar": 0.6460125546812323,
+          "recall_C": 0.3558648111332008,
+          "recall_NC": 0.9361602982292637,
+          "val_test_gap": -0.05209499079129487,
+          "speaker_probe_lr_top1": 0.08623203499270986,
+          "speaker_probe_lr_nmi": 0.4628598103733466
+        },
+        {
+          "seed": 7,
+          "best_epoch": 5,
+          "best_val_uar": 0.6315784164296024,
+          "tau": 0.6649999999999999,
+          "uar_train_threshold_at_tau": 0.4842653946601628,
+          "devel_test_argmax_uar": 0.6541892633018292,
+          "devel_test_calibrated_uar": 0.6513475067581463,
+          "recall_C": 0.37375745526838966,
+          "recall_NC": 0.928937558247903,
+          "val_test_gap": -0.02261084687222681,
+          "speaker_probe_lr_top1": 0.08769006456988128,
+          "speaker_probe_lr_nmi": 0.46571243235218585
+        },
+        {
+          "seed": 999,
+          "best_epoch": 4,
+          "best_val_uar": 0.6242113145185992,
+          "tau": 0.30499999999999994,
+          "uar_train_threshold_at_tau": 0.5113638816343269,
+          "devel_test_argmax_uar": 0.6533585069267527,
+          "devel_test_calibrated_uar": 0.6598498477911654,
+          "recall_C": 0.43339960238568587,
+          "recall_NC": 0.8863000931966449,
+          "val_test_gap": -0.029147192408153444,
+          "speaker_probe_lr_top1": 0.0868569048114976,
+          "speaker_probe_lr_nmi": 0.4635197601079075
+        },
+        {
+          "seed": 31337,
+          "best_epoch": 6,
+          "best_val_uar": 0.6223526304494957,
+          "tau": 0.13999999999999999,
+          "uar_train_threshold_at_tau": 0.5376691631952688,
+          "devel_test_argmax_uar": 0.6412906530991127,
+          "devel_test_calibrated_uar": 0.6656039994886228,
+          "recall_C": 0.4572564612326044,
+          "recall_NC": 0.8739515377446412,
+          "val_test_gap": -0.01893802264961697,
+          "speaker_probe_lr_top1": 0.08706519475109352,
+          "speaker_probe_lr_nmi": 0.464177389081602
+        }
+      ]
+    },
+    "mean+std": {
+      "stat_dim": 2048,
+      "aggregate": {
+        "argmax_uar": {
+          "mean": 0.6619231025774523,
+          "std": 0.015286700717469813,
+          "n": 5
+        },
+        "calibrated_uar": {
+          "mean": 0.6631753745930753,
+          "std": 0.021638402902114263,
+          "n": 5
+        },
+        "val_test_gap": {
+          "mean": -0.03317551678039399,
+          "std": 0.01790862637820893,
+          "n": 5
+        },
+        "speaker_probe_lr_top1": {
+          "mean": 0.08802332847323474,
+          "std": 0.0029552224782564375,
+          "n": 5
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "best_epoch": 1,
+          "best_val_uar": 0.6341939175842013,
+          "tau": 0.27499999999999997,
+          "uar_train_threshold_at_tau": 0.5387105825473225,
+          "devel_test_argmax_uar": 0.6438957123984889,
+          "devel_test_calibrated_uar": 0.6328869745182215,
+          "recall_C": 0.6182902584493042,
+          "recall_NC": 0.6474836905871388,
+          "val_test_gap": -0.009701794814287568,
+          "speaker_probe_lr_top1": 0.08539887523432618,
+          "speaker_probe_lr_nmi": 0.4556221425193595
+        },
+        {
+          "seed": 123,
+          "best_epoch": 3,
+          "best_val_uar": 0.6266408784855771,
+          "tau": 0.4549999999999999,
+          "uar_train_threshold_at_tau": 0.5156752498327254,
+          "devel_test_argmax_uar": 0.6850893705798758,
+          "devel_test_calibrated_uar": 0.6879158413915389,
+          "recall_C": 0.48906560636182905,
+          "recall_NC": 0.8867660764212488,
+          "val_test_gap": -0.0584484920942987,
+          "speaker_probe_lr_top1": 0.09268902312018329,
+          "speaker_probe_lr_nmi": 0.45857527439994417
+        },
+        {
+          "seed": 7,
+          "best_epoch": 4,
+          "best_val_uar": 0.6349855835630609,
+          "tau": 0.25999999999999995,
+          "uar_train_threshold_at_tau": 0.49992445662731216,
+          "devel_test_argmax_uar": 0.6636636379301081,
+          "devel_test_calibrated_uar": 0.6716532121344626,
+          "recall_C": 0.4831013916500994,
+          "recall_NC": 0.8602050326188257,
+          "val_test_gap": -0.02867805436704718,
+          "speaker_probe_lr_top1": 0.08727348469068943,
+          "speaker_probe_lr_nmi": 0.45446479966317566
+        },
+        {
+          "seed": 999,
+          "best_epoch": 6,
+          "best_val_uar": 0.6228891199920765,
+          "tau": 0.37999999999999995,
+          "uar_train_threshold_at_tau": 0.4886307224104811,
+          "devel_test_argmax_uar": 0.6632988647796354,
+          "devel_test_calibrated_uar": 0.6732697940965577,
+          "recall_C": 0.44532803180914515,
+          "recall_NC": 0.9012115563839702,
+          "val_test_gap": -0.04040974478755888,
+          "speaker_probe_lr_top1": 0.08893980420745679,
+          "speaker_probe_lr_nmi": 0.4550102868065203
+        },
+        {
+          "seed": 31337,
+          "best_epoch": 3,
+          "best_val_uar": 0.6250284293603761,
+          "tau": 0.635,
+          "uar_train_threshold_at_tau": 0.5386080593986747,
+          "devel_test_argmax_uar": 0.6536679271991537,
+          "devel_test_calibrated_uar": 0.6501510508245958,
+          "recall_C": 0.38767395626242546,
+          "recall_NC": 0.9126281453867661,
+          "val_test_gap": -0.028639497838777617,
+          "speaker_probe_lr_top1": 0.08581545511351801,
+          "speaker_probe_lr_nmi": 0.45609063251926146
+        }
+      ]
+    },
+    "mean+std+skew": {
+      "stat_dim": 3072,
+      "aggregate": {
+        "argmax_uar": {
+          "mean": 0.6479861742869901,
+          "std": 0.008783431448582154,
+          "n": 5
+        },
+        "calibrated_uar": {
+          "mean": 0.6329781330655396,
+          "std": 0.01757009297715452,
+          "n": 5
+        },
+        "val_test_gap": {
+          "mean": -0.018345814866508815,
+          "std": 0.009429637917369381,
+          "n": 5
+        },
+        "speaker_probe_lr_top1": {
+          "mean": 0.08139970839408456,
+          "std": 0.0021108312535152236,
+          "n": 5
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "best_epoch": 1,
+          "best_val_uar": 0.6230750571796975,
+          "tau": 0.16499999999999998,
+          "uar_train_threshold_at_tau": 0.6235781658069112,
+          "devel_test_argmax_uar": 0.6392835901645115,
+          "devel_test_calibrated_uar": 0.6342735756940185,
+          "recall_C": 0.7335984095427436,
+          "recall_NC": 0.5349487418452936,
+          "val_test_gap": -0.01620853298481406,
+          "speaker_probe_lr_top1": 0.08185794626119558,
+          "speaker_probe_lr_nmi": 0.4521595924745068
+        },
+        {
+          "seed": 123,
+          "best_epoch": 1,
+          "best_val_uar": 0.6390294308075223,
+          "tau": 0.055,
+          "uar_train_threshold_at_tau": 0.5958807278064363,
+          "devel_test_argmax_uar": 0.6483711894522891,
+          "devel_test_calibrated_uar": 0.6048288553858582,
+          "recall_C": 0.8091451292246521,
+          "recall_NC": 0.4005125815470643,
+          "val_test_gap": -0.009341758644766829,
+          "speaker_probe_lr_top1": 0.0820662362007915,
+          "speaker_probe_lr_nmi": 0.4532813832990105
+        },
+        {
+          "seed": 7,
+          "best_epoch": 1,
+          "best_val_uar": 0.629052330198767,
+          "tau": 0.31499999999999995,
+          "uar_train_threshold_at_tau": 0.5459303705942026,
+          "devel_test_argmax_uar": 0.6392548715164743,
+          "devel_test_calibrated_uar": 0.6433361619657636,
+          "recall_C": 0.5089463220675944,
+          "recall_NC": 0.7777260018639329,
+          "val_test_gap": -0.010202541317707259,
+          "speaker_probe_lr_top1": 0.08248281607998334,
+          "speaker_probe_lr_nmi": 0.4532006508821545
+        },
+        {
+          "seed": 999,
+          "best_epoch": 1,
+          "best_val_uar": 0.6338637701733825,
+          "tau": 0.095,
+          "uar_train_threshold_at_tau": 0.6652187520234831,
+          "devel_test_argmax_uar": 0.658871097737897,
+          "devel_test_calibrated_uar": 0.6312905419301525,
+          "recall_C": 0.757455268389662,
+          "recall_NC": 0.5051258154706431,
+          "val_test_gap": -0.025007327564514514,
+          "speaker_probe_lr_top1": 0.08289939595917517,
+          "speaker_probe_lr_nmi": 0.45168798467636506
+        },
+        {
+          "seed": 31337,
+          "best_epoch": 2,
+          "best_val_uar": 0.6231812087430371,
+          "tau": 0.10999999999999999,
+          "uar_train_threshold_at_tau": 0.5429518033282251,
+          "devel_test_argmax_uar": 0.6541501225637785,
+          "devel_test_calibrated_uar": 0.6511615303519054,
+          "recall_C": 0.610337972166998,
+          "recall_NC": 0.6919850885368126,
+          "val_test_gap": -0.030968913820741406,
+          "speaker_probe_lr_top1": 0.07769214746927723,
+          "speaker_probe_lr_nmi": 0.4525011286340891
+        }
+      ]
+    },
+    "mean+std+skew+kurt": {
+      "stat_dim": 4096,
+      "aggregate": {
+        "argmax_uar": {
+          "mean": 0.6588968982007304,
+          "std": 0.0065367410592730765,
+          "n": 5
+        },
+        "calibrated_uar": {
+          "mean": 0.6480078522342182,
+          "std": 0.021442347154119218,
+          "n": 5
+        },
+        "val_test_gap": {
+          "mean": -0.025257857535740103,
+          "std": 0.00428999194377235,
+          "n": 5
+        },
+        "speaker_probe_lr_top1": {
+          "mean": 0.07256821495521766,
+          "std": 0.0009150544735050555,
+          "n": 5
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "best_epoch": 2,
+          "best_val_uar": 0.6286160312246085,
+          "tau": 0.585,
+          "uar_train_threshold_at_tau": 0.5172994323455138,
+          "devel_test_argmax_uar": 0.657946774154699,
+          "devel_test_calibrated_uar": 0.6499562735423433,
+          "recall_C": 0.40755467196819084,
+          "recall_NC": 0.8923578751164958,
+          "val_test_gap": -0.029330742930090525,
+          "speaker_probe_lr_top1": 0.07248489897937929,
+          "speaker_probe_lr_nmi": 0.451030191707197
+        },
+        {
+          "seed": 123,
+          "best_epoch": 1,
+          "best_val_uar": 0.6291983745742474,
+          "tau": 0.05,
+          "uar_train_threshold_at_tau": 0.5356187002223134,
+          "devel_test_argmax_uar": 0.649412008841638,
+          "devel_test_calibrated_uar": 0.6112572005061894,
+          "recall_C": 0.8807157057654076,
+          "recall_NC": 0.3417986952469711,
+          "val_test_gap": -0.020213634267390534,
+          "speaker_probe_lr_top1": 0.07206831910018746,
+          "speaker_probe_lr_nmi": 0.45095838750952183
+        },
+        {
+          "seed": 7,
+          "best_epoch": 6,
+          "best_val_uar": 0.6283583328289415,
+          "tau": 0.43499999999999994,
+          "uar_train_threshold_at_tau": 0.5246972869137294,
+          "devel_test_argmax_uar": 0.6579553434287102,
+          "devel_test_calibrated_uar": 0.6585063245874242,
+          "recall_C": 0.43141153081510936,
+          "recall_NC": 0.8856011183597391,
+          "val_test_gap": -0.029597010599768714,
+          "speaker_probe_lr_top1": 0.07415121849614664,
+          "speaker_probe_lr_nmi": 0.4506807048253782
+        },
+        {
+          "seed": 999,
+          "best_epoch": 3,
+          "best_val_uar": 0.6455812520290309,
+          "tau": 0.5049999999999999,
+          "uar_train_threshold_at_tau": 0.5331581446547667,
+          "devel_test_argmax_uar": 0.667273155104786,
+          "devel_test_calibrated_uar": 0.6664500415957193,
+          "recall_C": 0.4731610337972167,
+          "recall_NC": 0.8597390493942219,
+          "val_test_gap": -0.02169190307575508,
+          "speaker_probe_lr_top1": 0.07186002916059155,
+          "speaker_probe_lr_nmi": 0.45003079709988847
+        },
+        {
+          "seed": 31337,
+          "best_epoch": 2,
+          "best_val_uar": 0.636441212668123,
+          "tau": 0.6499999999999999,
+          "uar_train_threshold_at_tau": 0.5512723662342708,
+          "devel_test_argmax_uar": 0.6618972094738187,
+          "devel_test_calibrated_uar": 0.6538694209394147,
+          "recall_C": 0.4433399602385686,
+          "recall_NC": 0.8643988816402609,
+          "val_test_gap": -0.025455996805695658,
+          "speaker_probe_lr_top1": 0.07227660903978338,
+          "speaker_probe_lr_nmi": 0.45144232826037234
+        }
+      ]
+    }
+  },
+  "ladder": [
+    {
+      "variant": "mean",
+      "argmax_mean": 0.657216069843752,
+      "argmax_std": 0.014055232257092189,
+      "delta_vs_prev": null
+    },
+    {
+      "variant": "mean+std",
+      "argmax_mean": 0.6619231025774523,
+      "argmax_std": 0.015286700717469813,
+      "delta_vs_prev": 0.004707032733700323
+    },
+    {
+      "variant": "mean+std+skew",
+      "argmax_mean": 0.6479861742869901,
+      "argmax_std": 0.008783431448582154,
+      "delta_vs_prev": -0.013936928290462225
+    },
+    {
+      "variant": "mean+std+skew+kurt",
+      "argmax_mean": 0.6588968982007304,
+      "argmax_std": 0.0065367410592730765,
+      "delta_vs_prev": 0.010910723913740261
+    }
+  ],
+  "reproduction_control": {
+    "ref_5seed_a2_arg_uar_mean": 0.656322503006194,
+    "ablation_4096_argmax_mean": 0.6588968982007304,
+    "delta": 0.002574395194536394,
+    "reproduces_within_0p005": true
+  },
+  "verdict": "4moment_suboptimal",
+  "elapsed_minutes": 28.455235648155213
+}
