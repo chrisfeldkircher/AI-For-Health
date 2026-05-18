@@ -193,7 +193,7 @@ def fig3():
 
     fig, ax = plt.subplots(4, 1, figsize=(COL, 5.0), sharex=True)
     ax[0].plot(L, la.cold_uar, "o-", color="#1f4e79", ms=3, lw=1.1)
-    ax[0].set_ylabel("cold UAR"); ax[0].set_title("Per-layer audit $\\rightarrow$ audit-derived prior")
+    ax[0].set_ylabel("cold UAR"); ax[0].set_title("Per-layer cold-vs-speaker audit $\\rightarrow$ audit-derived prior")
     ax[1].plot(L, la.speaker_top1, "o-", color="#c00000", ms=3, lw=1.1)
     ax[1].set_ylabel("speaker top-1")
     ax[2].axhline(0, color="0.6", lw=0.6)
