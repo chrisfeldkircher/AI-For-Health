@@ -1,0 +1,51 @@
+{
+  "rung_id": "pseudo_speaker_ecapa_diagnostics",
+  "description": "Raw-L2 (L2-normalized full-192-D ECAPA, the production cluster.py space) validation of the SHIPPED k=210 pseudo-speaker labels used for every grouped split. NOT refit KMeans; NOT UMAP-32 (which cluster diagnostics.py flags as optimistic/inflated). HDBSCAN is the independent stress test with a pre-registered degeneracy rule; kNN label cohesion validates the shipped labels directly with no second clustering; agglomerative@k is a parameter-matched corroboration; silhouette is reported RELATIVE only.",
+  "provenance": {
+    "shipped_label_source": "cache/pseudo_speakers/k210_seed42.tsv",
+    "validated_via": "paper_data/eda/chunk_metadata.csv k210_cluster",
+    "exact_match": true,
+    "n_mismatch": 0,
+    "n_chunks": 19101,
+    "note": "labels validated are byte-exact the experiment-used labels"
+  },
+  "space": "raw-L2 (L2-normalized full 192-D ECAPA; matches model/speakers/cluster.py)",
+  "k": 210,
+  "hdbscan": {
+    "min_cluster_size": 5,
+    "metric": "euclidean_on_L2norm",
+    "n_clusters": 406,
+    "noise_frac": 0.03769436155175122,
+    "ari_vs_shipped": 0.30943500613161184,
+    "nmi_vs_shipped": 0.7677532447782294,
+    "ari_vs_shipped_excl_noise": 0.37299370964690604,
+    "nmi_vs_shipped_excl_noise": 0.7895483268027751,
+    "degenerate": false,
+    "degeneracy_rule": "noise_frac>0.5 OR n_clusters<50",
+    "interpretation": "HDBSCAN usable as independent concordance evidence"
+  },
+  "knn_label_cohesion": {
+    "k": 10,
+    "metric": "cosine",
+    "mean_same_pseudo_speaker": 0.6935500759122559,
+    "std": 0.36207331069523035,
+    "chance_baseline_sum_p2": 0.007364155812296304,
+    "lift_over_chance": 94.1791691525864,
+    "note": "load-bearing: validates the SHIPPED labels directly, no 2nd clustering"
+  },
+  "agglomerative_k_matched": {
+    "k": 210,
+    "metric": "cosine",
+    "linkage": "average",
+    "subsample_n": 8000,
+    "ari_vs_shipped": 0.3429221342707699,
+    "nmi_vs_shipped": 0.7568052294618732
+  },
+  "silhouette_shipped_labels_RELATIVE": {
+    "value": 0.07337921112775803,
+    "subsample_n": 5000,
+    "caveat": "euclidean on L2-normalized full-D; RELATIVE, not absolute quality"
+  },
+  "narrative_branch": "validated_proxy",
+  "branch_rule": "validated_proxy if (HDBSCAN non-degenerate AND ARI>=0.5) OR agglo ARI>=0.5 OR kNN lift>=20x; else best_available_proxy (leakage-audit then framed on ECAPA being an independent speaker-verification substrate + functional leakage reduction, not near-perfect cluster recovery)"
+}
