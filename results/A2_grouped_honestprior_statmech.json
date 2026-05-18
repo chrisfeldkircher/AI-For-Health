@@ -1,0 +1,281 @@
+{
+  "rung_id": "A2.5_statmoment_mechanism",
+  "description": "\u00a74.15 mechanism follow-up. PART A: dilution control \u2014 does any 2048-d decoy pad (Gaussian noise / permuted mean+std) clear the 0.0780 speaker gate like real skew+kurt, or only real higher moments? PART B: per-moment-block intrinsic linear audit (honest-prior pool, no training, train_fit->devel_val) decomposing cold-UAR + speaker-top1 + sub@1 per {mean,std,skew,kurt} 1024-d block. Per-layer prior held fixed across Part-A variants (same design + caveat as \u00a74.15).",
+  "split_seed": 42,
+  "training_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "T_INV": 50.0,
+  "gate_ceiling": 0.078,
+  "refs_from_4_15": {
+    "real_4moment_uar": 0.6589,
+    "real_4moment_probe": 0.0726,
+    "meanstd_probe": 0.088
+  },
+  "part_A_dilution_control": {
+    "variants": {
+      "real_4moment": {
+        "aggregate": {
+          "argmax_uar": {
+            "mean": 0.6602835920173276,
+            "std": 0.004395498659490847,
+            "n": 5
+          },
+          "calibrated_uar": {
+            "mean": 0.645877345433457,
+            "std": 0.019370009448404307,
+            "n": 5
+          },
+          "speaker_probe_lr_top1": {
+            "mean": 0.07231826702770257,
+            "std": 0.0010559293360247106,
+            "n": 5
+          }
+        },
+        "runs": [
+          {
+            "seed": 42,
+            "argmax_uar": 0.656547898072886,
+            "calibrated_uar": 0.6269725542365564,
+            "tau": 0.21999999999999997,
+            "recall_C": 0.7534791252485089,
+            "recall_NC": 0.5004659832246039,
+            "speaker_probe_lr_top1": 0.07165173922099563,
+            "speaker_probe_lr_nmi": 0.4509960748653072
+          },
+          {
+            "seed": 123,
+            "argmax_uar": 0.6577443540064367,
+            "calibrated_uar": 0.6235883858081706,
+            "tau": 0.20999999999999996,
+            "recall_C": 0.6898608349900597,
+            "recall_NC": 0.5573159366262814,
+            "speaker_probe_lr_top1": 0.07165173922099563,
+            "speaker_probe_lr_nmi": 0.4512355425845409
+          },
+          {
+            "seed": 7,
+            "argmax_uar": 0.6579553434287102,
+            "calibrated_uar": 0.6585063245874242,
+            "tau": 0.43499999999999994,
+            "recall_C": 0.43141153081510936,
+            "recall_NC": 0.8856011183597391,
+            "speaker_probe_lr_top1": 0.07415121849614664,
+            "speaker_probe_lr_nmi": 0.4506807048253782
+          },
+          {
+            "seed": 999,
+            "argmax_uar": 0.667273155104786,
+            "calibrated_uar": 0.6664500415957193,
+            "tau": 0.5049999999999999,
+            "recall_C": 0.4731610337972167,
+            "recall_NC": 0.8597390493942219,
+            "speaker_probe_lr_top1": 0.07186002916059155,
+            "speaker_probe_lr_nmi": 0.45003079709988847
+          },
+          {
+            "seed": 31337,
+            "argmax_uar": 0.6618972094738187,
+            "calibrated_uar": 0.6538694209394147,
+            "tau": 0.6499999999999999,
+            "recall_C": 0.4433399602385686,
+            "recall_NC": 0.8643988816402609,
+            "speaker_probe_lr_top1": 0.07227660903978338,
+            "speaker_probe_lr_nmi": 0.45144232826037234
+          }
+        ]
+      },
+      "meanstd_noise": {
+        "aggregate": {
+          "argmax_uar": {
+            "mean": 0.6408485712009397,
+            "std": 0.011844348883431962,
+            "n": 5
+          },
+          "calibrated_uar": {
+            "mean": 0.6404432677004145,
+            "std": 0.026995442898899772,
+            "n": 5
+          },
+          "speaker_probe_lr_top1": {
+            "mean": 0.07069360549885441,
+            "std": 0.005054197338255566,
+            "n": 5
+          }
+        },
+        "runs": [
+          {
+            "seed": 42,
+            "argmax_uar": 0.6372906549519286,
+            "calibrated_uar": 0.6527933980460202,
+            "tau": 0.05,
+            "recall_C": 0.5805168986083499,
+            "recall_NC": 0.7250698974836906,
+            "speaker_probe_lr_top1": 0.07477608831493439,
+            "speaker_probe_lr_nmi": 0.4326685449377589
+          },
+          {
+            "seed": 123,
+            "argmax_uar": 0.6618761336917914,
+            "calibrated_uar": 0.6694360861855893,
+            "tau": 0.27499999999999997,
+            "recall_C": 0.6023856858846919,
+            "recall_NC": 0.7364864864864865,
+            "speaker_probe_lr_top1": 0.06706936054988544,
+            "speaker_probe_lr_nmi": 0.423153485459695
+          },
+          {
+            "seed": 7,
+            "argmax_uar": 0.6335007198190169,
+            "calibrated_uar": 0.6479406413337311,
+            "tau": 0.08499999999999999,
+            "recall_C": 0.5407554671968191,
+            "recall_NC": 0.7551258154706431,
+            "speaker_probe_lr_top1": 0.06706936054988544,
+            "speaker_probe_lr_nmi": 0.4242056626649732
+          },
+          {
+            "seed": 999,
+            "argmax_uar": 0.6350390203050106,
+            "calibrated_uar": 0.6343671429021398,
+            "tau": 0.055,
+            "recall_C": 0.7216699801192843,
+            "recall_NC": 0.5470643056849953,
+            "speaker_probe_lr_top1": 0.06706936054988544,
+            "speaker_probe_lr_nmi": 0.4232864113639285
+          },
+          {
+            "seed": 31337,
+            "argmax_uar": 0.6365363272369511,
+            "calibrated_uar": 0.5976790700345921,
+            "tau": 0.95,
+            "recall_C": 0.21073558648111332,
+            "recall_NC": 0.9846225535880708,
+            "speaker_probe_lr_top1": 0.07748385752968132,
+            "speaker_probe_lr_nmi": 0.430385218632533
+          }
+        ]
+      },
+      "meanstd_permuted": {
+        "aggregate": {
+          "argmax_uar": {
+            "mean": 0.6576780695139508,
+            "std": 0.009099465899090218,
+            "n": 5
+          },
+          "calibrated_uar": {
+            "mean": 0.652390456885898,
+            "std": 0.016686971398583248,
+            "n": 5
+          },
+          "speaker_probe_lr_top1": {
+            "mean": 0.08119141845448866,
+            "std": 0.0004006536984309757,
+            "n": 5
+          }
+        },
+        "runs": [
+          {
+            "seed": 42,
+            "argmax_uar": 0.6608983100465242,
+            "calibrated_uar": 0.6617424993376182,
+            "tau": 0.25499999999999995,
+            "recall_C": 0.5089463220675944,
+            "recall_NC": 0.8145386766076421,
+            "speaker_probe_lr_top1": 0.08102478650281192,
+            "speaker_probe_lr_nmi": 0.4320620104309298
+          },
+          {
+            "seed": 123,
+            "argmax_uar": 0.6451857355401607,
+            "calibrated_uar": 0.6275321046692817,
+            "tau": 0.26999999999999996,
+            "recall_C": 0.7415506958250497,
+            "recall_NC": 0.5135135135135135,
+            "speaker_probe_lr_top1": 0.08123307644240783,
+            "speaker_probe_lr_nmi": 0.4332550689268857
+          },
+          {
+            "seed": 7,
+            "argmax_uar": 0.6528839544281375,
+            "calibrated_uar": 0.6576012239702511,
+            "tau": 0.16499999999999998,
+            "recall_C": 0.5666003976143141,
+            "recall_NC": 0.7486020503261882,
+            "speaker_probe_lr_top1": 0.08185794626119558,
+            "speaker_probe_lr_nmi": 0.4319382367011811
+          },
+          {
+            "seed": 999,
+            "argmax_uar": 0.6693404345594652,
+            "calibrated_uar": 0.6703497560767733,
+            "tau": 0.4549999999999999,
+            "recall_C": 0.441351888667992,
+            "recall_NC": 0.8993476234855545,
+            "speaker_probe_lr_top1": 0.08102478650281192,
+            "speaker_probe_lr_nmi": 0.4308070470322738
+          },
+          {
+            "seed": 31337,
+            "argmax_uar": 0.6600819129954661,
+            "calibrated_uar": 0.6447267003755658,
+            "tau": 0.08499999999999999,
+            "recall_C": 0.7475149105367793,
+            "recall_NC": 0.5419384902143523,
+            "speaker_probe_lr_top1": 0.080816496563216,
+            "speaker_probe_lr_nmi": 0.43020330709468363
+          }
+        ]
+      }
+    },
+    "reproduction_anchor_ok": true,
+    "verdict": "mixed"
+  },
+  "part_B_per_block_intrinsic_audit": {
+    "mean": {
+      "cold_uar": 0.6032221928757857,
+      "recall_C": 0.28937007874015747,
+      "recall_NC": 0.9170743070114139,
+      "speaker_top1": 0.07102686940220787,
+      "speaker_nmi": 0.4353962484914539,
+      "label_gain": 0.10322219287578571,
+      "speaker_gain": 0.06573586411120258,
+      "sub_at_1": 0.03748632876458313
+    },
+    "std": {
+      "cold_uar": 0.5968755674408623,
+      "recall_C": 0.3090551181102362,
+      "recall_NC": 0.8846960167714885,
+      "speaker_top1": 0.05936263278483649,
+      "speaker_nmi": 0.4033508845681064,
+      "label_gain": 0.09687556744086234,
+      "speaker_gain": 0.0540716274938312,
+      "sub_at_1": 0.04280393994703114
+    },
+    "skew": {
+      "cold_uar": 0.5608601532250816,
+      "recall_C": 0.23818897637795275,
+      "recall_NC": 0.8835313300722106,
+      "speaker_top1": 0.05769631326806915,
+      "speaker_nmi": 0.4096304154752355,
+      "label_gain": 0.06086015322508165,
+      "speaker_gain": 0.05240530797706386,
+      "sub_at_1": 0.00845484524801779
+    },
+    "kurt": {
+      "cold_uar": 0.5830387226229845,
+      "recall_C": 0.30118110236220474,
+      "recall_NC": 0.8648963428837643,
+      "speaker_top1": 0.06394501145594668,
+      "speaker_nmi": 0.406418902329817,
+      "label_gain": 0.0830387226229845,
+      "speaker_gain": 0.05865400616494139,
+      "sub_at_1": 0.024384716458043118
+    }
+  },
+  "elapsed_minutes": 37.49950258334478
+}
