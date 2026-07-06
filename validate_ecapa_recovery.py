@@ -36,6 +36,19 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "model"))
 
+# This box sits behind a TLS-intercepting proxy: requests/huggingface_hub reject
+# the cert (certifi lacks the corporate root CA) while the Windows store has it.
+# truststore routes Python SSL through the OS trust store so HF downloads work.
+try:
+    import truststore as _ts
+    _ts.inject_into_ssl()
+except Exception:
+    pass
+
+# The speechbrain ECAPA model is already cached from the URTIC extraction; point
+# at it so validation extraction is fully offline for the model itself.
+ECAPA_SAVEDIR = str(ROOT / "model" / "cache" / "speechbrain" / "spkrec-ecapa-voxceleb")
+
 # --------------------------------------------------------------------------- #
 # metrics
 # --------------------------------------------------------------------------- #
@@ -203,43 +216,64 @@ ADAPTERS = {
 
 def manifest_from_hf(hf_id: str, split: str, out_wav_dir: Path, config: str | None = None,
                      audio_col: str | None = None, speaker_col: str | None = None,
-                     max_rows: int | None = None) -> list[tuple[Path, str]]:
-    """Materialise a HuggingFace audio dataset (e.g. flozi00/multilingual-librispeech-
-    german-labeled, or facebook/multilingual_librispeech config 'german') to 16 kHz
-    wavs + a (path, speaker) manifest. Auto-detects the audio + speaker columns."""
+                     speaker_from_path: bool = False, max_speakers: int | None = None,
+                     max_per_speaker: int | None = None, scan_limit: int | None = None
+                     ) -> list[tuple[Path, str]]:
+    """STREAM a HuggingFace audio dataset (e.g. flozi00/multilingual-librispeech-
+    german-labeled or facebook/multilingual_librispeech config 'german') and
+    materialise a bounded, speaker-balanced subset to 16 kHz wavs + a (path,
+    speaker) manifest. Decodes with soundfile (Audio(decode=False)) to avoid the
+    torchcodec dependency. Speaker = an id column, else the MLS/LibriSpeech
+    filename convention {speaker}_{book}_{utt} / {speaker}-{chap}-{utt}."""
+    import io
+    from collections import Counter
     try:
         from datasets import load_dataset, Audio
     except ImportError:
-        raise SystemExit("HuggingFace 'datasets' not installed. Run:\n"
-                         "  pip install datasets soundfile")
+        raise SystemExit("HuggingFace 'datasets' not installed. Run: pip install datasets")
     import soundfile as sf
-    ds = load_dataset(hf_id, config, split=split) if config else load_dataset(hf_id, split=split)
-    cols = list(ds.column_names)
+
+    ds = (load_dataset(hf_id, config, split=split, streaming=True) if config
+          else load_dataset(hf_id, split=split, streaming=True))
+    feats = ds.features
     if audio_col is None:
-        audio_col = next((c for c in cols if isinstance(ds.features[c], Audio)), None) \
-            or ("audio" if "audio" in cols else None)
-    if audio_col is None:
-        raise SystemExit(f"no audio column found; columns are {cols}; pass --hf-audio-col")
-    if speaker_col is None:
-        for cand in ("speaker_id", "speaker", "reader_id", "reader", "client_id",
-                     "original_speaker_id", "spk_id"):
-            if cand in cols:
-                speaker_col = cand; break
-    if speaker_col is None:
-        raise SystemExit(f"no speaker column found; columns are {cols}; pass --hf-speaker-col")
-    print(f"[hf] {hf_id} split={split} rows={len(ds)} audio_col={audio_col!r} speaker_col={speaker_col!r}")
-    ds = ds.cast_column(audio_col, Audio(sampling_rate=16000))
+        audio_col = next((k for k, v in feats.items() if type(v).__name__ == "Audio"), "audio")
+    ds = ds.cast_column(audio_col, Audio(decode=False))
+    if speaker_col is None and not speaker_from_path:
+        speaker_col = next((c for c in ("speaker_id", "speaker", "reader_id", "reader",
+                                        "client_id", "original_speaker_id", "spk_id")
+                            if c in feats), None)
+        if speaker_col is None:
+            speaker_from_path = True
+    print(f"[hf] {hf_id} split={split} audio_col={audio_col!r} "
+          f"speaker={'<from filename>' if speaker_from_path else repr(speaker_col)} "
+          f"caps: max_speakers={max_speakers} max_per_speaker={max_per_speaker}")
+
     out_wav_dir.mkdir(parents=True, exist_ok=True)
+    per: Counter = Counter()
+    seen: set = set()
     manifest = []
-    n = len(ds) if max_rows is None else min(max_rows, len(ds))
-    for i in range(n):
-        ex = ds[i]
+    scanned = 0
+    for ex in ds:
+        scanned += 1
+        if scan_limit and scanned > scan_limit:
+            break
         a = ex[audio_col]
-        spk = str(ex[speaker_col])
-        wav = out_wav_dir / f"{i:07d}__{spk}.wav"
+        path = (a.get("path") if isinstance(a, dict) else None) or f"{scanned}.flac"
+        stem = Path(path).stem
+        spk = stem.split("_")[0].split("-")[0] if speaker_from_path else str(ex[speaker_col])
+        if spk not in seen and max_speakers and len(seen) >= max_speakers:
+            continue   # speaker pool full; keep scanning for more utts of known speakers
+        if max_per_speaker and per[spk] >= max_per_speaker:
+            continue
+        seen.add(spk); per[spk] += 1
+        wav = out_wav_dir / f"{spk}__{stem}.wav"
         if not wav.exists():
-            sf.write(str(wav), a["array"], a["sampling_rate"])
+            data, sr = sf.read(io.BytesIO(a["bytes"]))
+            sf.write(str(wav), data, sr)
         manifest.append((wav, spk))
+    print(f"[hf] collected {len(manifest)} utts from {len(seen)} speakers "
+          f"({scanned} rows scanned)")
     return manifest
 
 
@@ -253,9 +287,23 @@ def extract_embeddings(manifest, cache_dir: Path, device: str, batch_size: int =
     model/speakers/ecapa.extract_ecapa; only the audio decode is librosa (uniform
     flac/mp3/wav -> 16 kHz mono float)."""
     import torch
-    import librosa
+    import soundfile as sf
     from torch.utils.data import DataLoader, Dataset
     from speakers.ecapa import load_ecapa_encoder, TARGET_SR
+
+    def _load16k(path):
+        """wav/flac -> 16 kHz mono float32 via soundfile (+ scipy resample if
+        needed). Avoids librosa's resampler (broken lazy backend in this env)."""
+        a, sr = sf.read(str(path), dtype="float32", always_2d=False)
+        if getattr(a, "ndim", 1) > 1:
+            a = a.mean(axis=1)
+        a = np.asarray(a, dtype=np.float32)
+        if sr != TARGET_SR:
+            from math import gcd
+            from scipy.signal import resample_poly
+            g = gcd(int(sr), TARGET_SR)
+            a = resample_poly(a, TARGET_SR // g, int(sr) // g).astype(np.float32)
+        return a
 
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -272,8 +320,7 @@ def extract_embeddings(manifest, cache_dir: Path, device: str, batch_size: int =
         def __len__(s): return len(s.items)
         def __getitem__(s, i):
             p, _ = s.items[i]
-            a, _sr = librosa.load(str(p), sr=TARGET_SR, mono=True)   # -> 16 kHz mono float32
-            a = a.astype(np.float32)
+            a = _load16k(p)                                          # 16 kHz mono float32
             rl = len(a)
             if rl >= max_samples:
                 a = a[:max_samples]; rel = 1.0
@@ -286,7 +333,7 @@ def extract_embeddings(manifest, cache_dir: Path, device: str, batch_size: int =
                 "rel": torch.tensor([x["rel"] for x in b], dtype=torch.float32),
                 "keys": [x["key"] for x in b]}
 
-    enc = load_ecapa_encoder(device=device)
+    enc = load_ecapa_encoder(device=device, savedir=ECAPA_SAVEDIR)
     loader = DataLoader(_DS(todo), batch_size=batch_size, shuffle=False, collate_fn=_coll, num_workers=0)
     try:
         from tqdm.auto import tqdm
@@ -322,7 +369,7 @@ def load_matrix(manifest, cache_dir: Path):
 
 # --------------------------------------------------------------------------- #
 def run(name: str, manifest, cache_dir: Path, device: str, out_json: Path,
-        max_per_speaker: int | None) -> None:
+        max_per_speaker: int | None, min_utts: int = 1) -> None:
     if max_per_speaker:
         by = {}
         for p, s in manifest:
@@ -332,6 +379,15 @@ def run(name: str, manifest, cache_dir: Path, device: str, out_json: Path,
 
     extract_embeddings(manifest, cache_dir, device)
     X, labels = load_matrix(manifest, cache_dir)
+
+    if min_utts > 1:
+        # drop speakers with too few utterances (can't form a meaningful cluster)
+        from collections import Counter
+        cnt = Counter(labels.tolist())
+        keep = np.array([cnt[s] >= min_utts for s in labels])
+        X, labels = X[keep], labels[keep]
+        print(f"[filter] min {min_utts} utts/speaker -> {X.shape[0]} embeddings, "
+              f"{len(np.unique(labels))} speakers")
     n_true = len(np.unique(labels))
     print(f"[data] {X.shape[0]} embeddings, {n_true} true speakers")
 
@@ -406,6 +462,14 @@ def main():
     ap.add_argument("--hf-split", default="train")
     ap.add_argument("--hf-audio-col", default=None)
     ap.add_argument("--hf-speaker-col", default=None)
+    ap.add_argument("--hf-speaker-from-path", action="store_true",
+                    help="derive speaker from the MLS/LibriSpeech filename ({spk}_{book}_{utt})")
+    ap.add_argument("--hf-max-speakers", type=int, default=None)
+    ap.add_argument("--hf-max-per-speaker", type=int, default=None)
+    ap.add_argument("--hf-scan-limit", type=int, default=6000,
+                    help="max streamed rows to scan (bounds the download)")
+    ap.add_argument("--min-utts", type=int, default=1,
+                    help="drop speakers with fewer than this many utterances before clustering")
     ap.add_argument("--name", default="corpus")
     ap.add_argument("--device", default=None)
     ap.add_argument("--max-per-speaker", type=int, default=None)
@@ -419,7 +483,10 @@ def main():
         man = manifest_from_tsv(Path(a.manifest))
     elif a.hf:
         man = manifest_from_hf(a.hf, a.hf_split, ROOT / "cache" / "ecapa_validation" / a.name / "wav",
-                               config=a.hf_config, audio_col=a.hf_audio_col, speaker_col=a.hf_speaker_col)
+                               config=a.hf_config, audio_col=a.hf_audio_col, speaker_col=a.hf_speaker_col,
+                               speaker_from_path=a.hf_speaker_from_path,
+                               max_speakers=a.hf_max_speakers, max_per_speaker=a.hf_max_per_speaker,
+                               scan_limit=a.hf_scan_limit)
     elif a.corpus == "tuda" and a.root:
         man = manifest_tuda(Path(a.root), channel=a.channel)
     elif a.corpus and a.root:
@@ -433,7 +500,7 @@ def main():
     device = a.device or ("cuda" if torch.cuda.is_available() else "cpu")
     cache = ROOT / "cache" / "ecapa_validation" / a.name
     out = ROOT / "results" / f"ecapa_recovery_{a.name}.json"
-    run(a.name, man, cache, device, out, a.max_per_speaker)
+    run(a.name, man, cache, device, out, a.max_per_speaker, min_utts=a.min_utts)
 
 
 if __name__ == "__main__":
