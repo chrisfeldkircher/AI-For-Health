@@ -196,11 +196,86 @@ for sp, frac in (("train", 0.10), ("devel", 0.50)):
           f"cold_rates=({ra:.4f}, {rb:.4f}) sizes=({len(a1)}, {len(b1)})")
 check("V6_split_machinery", ok_v6, res_v6)
 
+# ---------------------------------------------------------------- V7
+print("\n=== V7: top-1 NN cluster cohesion per split (fragmentation probe) ===")
+# For each clip, is its single nearest neighbor (cosine, same split; ECAPA NN is
+# almost surely the same true speaker) in the same cluster? High on train (KMeans
+# fit there), low on devel/test = train-only fit fragments disjoint speakers.
+res_v7 = {}
+for sp in ("train", "devel", "test"):
+    m = split == sp
+    Xs = normalize(emb32[m], axis=1)
+    lab = np.array([tsv_map[s][1] for s in stems[m]], dtype=np.int64)
+    n = Xs.shape[0]
+    same = 0
+    B = 2048
+    for i0 in range(0, n, B):
+        sim = Xs[i0:i0 + B] @ Xs.T
+        for r in range(sim.shape[0]):
+            sim[r, i0 + r] = -2.0
+        nn1 = sim.argmax(axis=1)
+        same += int((lab[nn1] == lab[i0:i0 + B]).sum())
+    res_v7[sp] = float(same / n)
+    print(f"  {sp}: top-1 NN same-cluster = {same/n:.4f}")
+# This is a DIAGNOSTIC, not a pass/fail: train is expected high, devel/test low
+# by construction. Flag the asymmetry as a soundness concern to surface, not hide.
+v7_concern = res_v7["devel"] < 0.7 or res_v7["test"] < 0.7
+report["checks"]["V7_fragmentation"] = {
+    "diagnostic": True, "concern": bool(v7_concern),
+    "top1_nn_same_cluster": res_v7,
+    "interpretation": (
+        "train-only KMeans fit makes devel/test pseudo-speakers fragmented "
+        "(disjoint speakers assigned to train centroids). Low devel/test cohesion "
+        "means 'cluster-disjoint' does not imply 'speaker-disjoint' on those splits."),
+}
+print(f"  [{'CONCERN' if v7_concern else 'ok'}] devel/test fragmentation")
+
+# ---------------------------------------------------------------- V8
+print("\n=== V8: same-speaker-proxy leakage across the actual grouped splits ===")
+# Reproduce each grouped split; fraction of clips whose top-1 NN (proxy for same
+# true speaker) lands on the OTHER side. ~0 = speaker-honest; toward the min-side
+# fraction = the split barely separates true speakers.
+res_v8 = {}
+for sp, frac in (("train", 0.10), ("devel", 0.50)):
+    files = sorted(f for f in labels_map if f.startswith(sp + "_"))
+    a, b = stratified_grouped_split(files, labels_map, pseudo, val_frac=frac, seed=SEED)
+    a_st = set(f[:-4] for f in a)
+    order_sp = [f[:-4] for f in files]
+    Xs = normalize(np.vstack([emb32[order[s]] for s in order_sp]), axis=1)
+    side = np.array([0 if s in a_st else 1 for s in order_sp], dtype=np.int8)
+    n = Xs.shape[0]
+    nn_side = np.empty(n, dtype=np.int8)
+    B = 2048
+    for i0 in range(0, n, B):
+        sim = Xs[i0:i0 + B] @ Xs.T
+        for r in range(sim.shape[0]):
+            sim[r, i0 + r] = -2.0
+        nn_side[i0:i0 + B] = side[sim.argmax(axis=1)]
+    cross = float((nn_side != side).mean())
+    res_v8[sp] = {"nn_on_other_side": cross,
+                  "random_floor": float(min(side.mean(), 1 - side.mean()))}
+    print(f"  {sp}: NN-on-other-side = {cross:.4f} "
+          f"(floor {res_v8[sp]['random_floor']:.3f})")
+v8_concern = res_v8["devel"]["nn_on_other_side"] > 0.05
+report["checks"]["V8_split_speaker_leakage"] = {
+    "diagnostic": True, "concern": bool(v8_concern),
+    "per_split": res_v8,
+    "interpretation": (
+        "devel-side leakage is high because devel pseudo-speakers are fragmented "
+        "(V7). The reported devel_test UAR and shadow-mean are computed on this "
+        "split, so they are optimistically biased relative to a truly "
+        "speaker-disjoint test. Train side is clean."),
+}
+print(f"  [{'CONCERN' if v8_concern else 'ok'}] devel split same-speaker leakage")
+
 # ---------------------------------------------------------------- verdict
 print("\n=== VERDICT ===")
 report["all_pass"] = len(failures) == 0
 report["failures"] = failures
-print(f"  {'ALL CHECKS PASS' if report['all_pass'] else 'FAILURES: ' + ', '.join(failures)}")
+concerns = [k for k, v in report["checks"].items() if v.get("concern")]
+report["diagnostic_concerns"] = concerns
+print(f"  integrity checks (V1-V6): {'ALL PASS' if report['all_pass'] else 'FAILURES: ' + ', '.join(failures)}")
+print(f"  soundness concerns (V7-V8): {', '.join(concerns) if concerns else 'none'}")
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(json.dumps(report, indent=2))

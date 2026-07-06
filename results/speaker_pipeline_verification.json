@@ -63,8 +63,37 @@
         "cold_rate_b": 0.10490093847758081,
         "overlap_clusters": 0
       }
+    },
+    "V7_fragmentation": {
+      "diagnostic": true,
+      "concern": true,
+      "top1_nn_same_cluster": {
+        "train": 0.9739084692267228,
+        "devel": 0.49187161317215505,
+        "test": 0.4731441733849859
+      },
+      "interpretation": "train-only KMeans fit makes devel/test pseudo-speakers fragmented (disjoint speakers assigned to train centroids). Low devel/test cohesion means 'cluster-disjoint' does not imply 'speaker-disjoint' on those splits."
+    },
+    "V8_split_speaker_leakage": {
+      "diagnostic": true,
+      "concern": true,
+      "per_split": {
+        "train": {
+          "nn_on_other_side": 0.0013677012098895318,
+          "random_floor": 0.10236717517096265
+        },
+        "devel": {
+          "nn_on_other_side": 0.2745935806586077,
+          "random_floor": 0.4996873697373906
+        }
+      },
+      "interpretation": "devel-side leakage is high because devel pseudo-speakers are fragmented (V7). The reported devel_test UAR and shadow-mean are computed on this split, so they are optimistically biased relative to a truly speaker-disjoint test. Train side is clean."
     }
   },
   "all_pass": true,
-  "failures": []
+  "failures": [],
+  "diagnostic_concerns": [
+    "V7_fragmentation",
+    "V8_split_speaker_leakage"
+  ]
 }
