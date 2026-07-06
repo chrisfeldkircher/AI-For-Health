@@ -1,0 +1,51 @@
+{
+  "rung_id": "pooled_pseudo_speakers_diagnostics",
+  "description": "Faithful within-split pseudo-speaker labeling: KMeans fit on train+devel POOLED (k=420, ~210 speakers/split) with shared label space; test clustered separately (k=210, IDs offset +1000). Fixes the V7/V8 fragmentation of the train-only-fit shipped labels. NOTE: the reported UAR is NOT biased by the old fragmentation (results/audit_leakage_optimism.json); this labeling exists so that 'speaker-disjoint' is literally true on all splits and so that pseudo-speaker TARGETS (speaker probe on devel, A6/A7 heads) are measured against faithful labels. Locked results stay under k210_seed42.tsv; do not mix groupings within one experiment.",
+  "sklearn_version": "1.8.0",
+  "k_pooled": 420,
+  "k_test": 210,
+  "test_offset": 1000,
+  "seed": 42,
+  "tsv": "cache\\pseudo_speakers\\pooled_k420_seed42.tsv",
+  "v7_top1_nn_same_cluster": {
+    "shipped": {
+      "train": 0.9739,
+      "devel": 0.4919,
+      "test": 0.4731
+    },
+    "pooled": {
+      "train": 0.9774855339295108,
+      "devel": 0.9676948728636932,
+      "test": 0.9792691864726206
+    }
+  },
+  "v8_split_leakage": {
+    "shipped": {
+      "train": 0.0014,
+      "devel": 0.2746
+    },
+    "pooled": {
+      "train": 0.004734350341925302,
+      "devel": 0.015110462692788661
+    },
+    "detail": {
+      "train": {
+        "nn_on_other_side": 0.004734350341925302,
+        "cluster_overlap": 0,
+        "cold_rate_a": 0.1013846514902605,
+        "cold_rate_b": 0.10783316378433368,
+        "n_a": 8522,
+        "n_b": 983
+      },
+      "devel": {
+        "nn_on_other_side": 0.015110462692788661,
+        "cluster_overlap": 0,
+        "cold_rate_a": 0.10564700979370702,
+        "cold_rate_b": 0.1050656660412758,
+        "n_a": 4799,
+        "n_b": 4797
+      }
+    }
+  },
+  "sound": true
+}

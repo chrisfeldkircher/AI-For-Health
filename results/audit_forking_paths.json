@@ -1,0 +1,94 @@
+{
+  "rung_id": "audit_forking_paths",
+  "description": "Winner's-curse estimate for candidate selection on devel_test. Each candidate mean is modeled N(observed_mean, SE^2), SE from per-seed spread; Monte Carlo picks the argmax of noisy means and records observed max minus the (best-estimate) true mean of the picked candidate. This bounds how much the SELECTED system's reported devel_test UAR overshoots due to selection alone, not leakage. Caveats: candidates share seeds and features so their noise is positively correlated, which SHRINKS true selection optimism; treat the estimate as an upper-bound-flavored magnitude, not a precise correction. Assumes the candidate list found in results/A5b*.json is the full set of devel_test comparisons (undocumented discarded attempts would raise it).",
+  "n_candidates": 11,
+  "n_mc": 200000,
+  "candidates": [
+    {
+      "candidate": "A5b_k2_5seed_lock:per_seed.k2_locked",
+      "n_seeds": 5,
+      "mean": 0.7037251792136279,
+      "seed_std": 0.006013375122536977,
+      "se": 0.0026892631096397616
+    },
+    {
+      "candidate": "A5b_k2_extended_betasweep:candidate_results.G5_modulation",
+      "n_seeds": 3,
+      "mean": 0.7022689893568074,
+      "seed_std": 0.007653548371192343,
+      "se": 0.004418778212363721
+    },
+    {
+      "candidate": "A5b_k2_extended_betasweep:candidate_results.G1_voicing",
+      "n_seeds": 3,
+      "mean": 0.6964075287325442,
+      "seed_std": 0.007145278495057188,
+      "se": 0.004125328462556112
+    },
+    {
+      "candidate": "A5b_k2_5seed_lock:per_seed.k1_locked",
+      "n_seeds": 5,
+      "mean": 0.6933931360578375,
+      "seed_std": 0.0063557097876169874,
+      "se": 0.0028423598260744667
+    },
+    {
+      "candidate": "A5b_grouped_honestprior_betasweep_extended:",
+      "n_seeds": 3,
+      "mean": 0.691299932619258,
+      "seed_std": 0.007601060624782922,
+      "se": 0.004388474397845086
+    },
+    {
+      "candidate": "A5b_k3_egemaps_5seed:config_b_k3_addition",
+      "n_seeds": 5,
+      "mean": 0.6800916310153987,
+      "seed_std": 0.00965645849158732,
+      "se": 0.004318499521818865
+    },
+    {
+      "candidate": "A5b_grouped_honestprior_betasweep:",
+      "n_seeds": 3,
+      "mean": 0.6755389532948318,
+      "seed_std": 0.020819751651910662,
+      "se": 0.012020289220691777
+    },
+    {
+      "candidate": "A5b_k2_extended_betasweep:candidate_results.G6_spectral",
+      "n_seeds": 3,
+      "mean": 0.6697961500953892,
+      "seed_std": 0.0049138261996698575,
+      "se": 0.002836998879130428
+    },
+    {
+      "candidate": "A5b_k3_egemaps_5seed:config_a_k2_replacement",
+      "n_seeds": 5,
+      "mean": 0.6692051789912898,
+      "seed_std": 0.005554906620536817,
+      "se": 0.0024842297624367905
+    },
+    {
+      "candidate": "A5b_k2_g2g3_betasweep:candidate_results.G2_prosody",
+      "n_seeds": 3,
+      "mean": 0.6673985289876151,
+      "seed_std": 0.0014643360302199206,
+      "se": 0.0008454348012315392
+    },
+    {
+      "candidate": "A5b_k2_g2g3_betasweep:candidate_results.G3_voice_quality",
+      "n_seeds": 3,
+      "mean": 0.657555598376192,
+      "seed_std": 0.0013861662010259852,
+      "se": 0.0008003034293039135
+    }
+  ],
+  "expected_selection_optimism_uar": 0.002624482516163285,
+  "selection_optimism_p95_uar": 0.008581944049831546,
+  "argmax_flip_rate": 0.422855,
+  "context": {
+    "k2_locked_reference_mean": 0.7037,
+    "shadow_sigma": 0.0157,
+    "midterm_devel_to_test_gap": -0.0906
+  },
+  "reading": "If expected optimism is a few thousandths of UAR, forking paths is a minor contributor relative to the 0.09 devel->test gap; the dominant term remains pool identity."
+}
