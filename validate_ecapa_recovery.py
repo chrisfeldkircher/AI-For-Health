@@ -170,6 +170,15 @@ def manifest_tuda(root: Path, channel: str = "Samson") -> list[tuple[Path, str]]
         if spk is None:
             missing_spk += 1
             continue
+        if channel.upper() == "ALL":
+            # keep EVERY mic file under the same speaker: run this to test whether
+            # ECAPA recovery survives within-speaker recording-condition variation
+            # (fragmentation_mean -> ~1 = condition-robust; -> ~5 = mic-confounded).
+            for c in TUDA_CHANNELS:
+                w = xml.with_name(f"{xml.stem}_{c}.wav")
+                if w.exists():
+                    out.append((w, spk))
+            continue
         wav = xml.with_name(f"{xml.stem}_{channel}.wav")
         if not wav.exists():
             for c in TUDA_CHANNELS:
