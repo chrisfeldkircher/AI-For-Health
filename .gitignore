@@ -23,6 +23,13 @@
 !/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed999.pt
 !/cache/microsoft_wavlm-large/head_A2grouped_honestprior_seed31337.pt
 !/cache/microsoft_wavlm-large/predict_artifacts_multiK.npz
+# Shareable ECAPA-TDNN speaker embeddings, packed into a single ~10 MB npz so
+# the team pulls identical embeddings without 28k tiny .pt files. The canonical
+# speaker grouping (kmeans k=210) is cache/pseudo_speakers/k210_seed42.tsv.
+!/cache/ecapa-voxceleb/
+/cache/ecapa-voxceleb/*
+!/cache/ecapa-voxceleb/ecapa_embeddings.npz
+!/cache/ecapa-voxceleb/README.md
 # second cache location appears inside model/ because notebooks cwd is there
 /model/cache/
 
