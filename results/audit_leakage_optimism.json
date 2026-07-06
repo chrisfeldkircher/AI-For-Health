@@ -1,0 +1,13 @@
+{
+  "rung_id": "audit_leakage_optimism",
+  "description": "Direct test of devel-split speaker-leakage optimism on the committed A2.5 5-seed ensemble. devel_test clips split by whether their top-1 ECAPA NN is in devel_val (leaked) vs devel_test (clean); UAR compared at the train_threshold tau.",
+  "tau": 0.375,
+  "overall_devel_test_uar": 0.658903522017939,
+  "n_leaked": 1347,
+  "n_clean": 3448,
+  "uar_leaked_subset": 0.611028602860286,
+  "uar_clean_subset": 0.6763198757763975,
+  "leakage_optimism_uar": -0.06529127291611148,
+  "leaked_cold_rate": 0.10022271714922049,
+  "clean_cold_rate": 0.10672853828306264
+}

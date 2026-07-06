@@ -261,10 +261,21 @@ report["checks"]["V8_split_speaker_leakage"] = {
     "diagnostic": True, "concern": bool(v8_concern),
     "per_split": res_v8,
     "interpretation": (
-        "devel-side leakage is high because devel pseudo-speakers are fragmented "
-        "(V7). The reported devel_test UAR and shadow-mean are computed on this "
-        "split, so they are optimistically biased relative to a truly "
-        "speaker-disjoint test. Train side is clean."),
+        "devel-side same-speaker leakage is high (0.27) because devel "
+        "pseudo-speakers are fragmented (V7); the devel 'cluster-disjoint' split "
+        "is therefore not literally speaker-disjoint. IMPORTANT correction: a "
+        "direct test (results/audit_leakage_optimism.json) shows this does NOT "
+        "inflate the reported UAR -- leaked devel_test clips score WORSE than "
+        "clean ones, and the A2.5 val_test_gap is negative. The model, probes, "
+        "z-scores, beta and tau are all fit on the CLEAN train split; devel is "
+        "pure held-out, so a non-disjoint val/test split of devel does not leak "
+        "into training. This matters for the literal accuracy of "
+        "'speaker-disjoint' claims and for pseudo-speaker-target uses (speaker "
+        "probe on devel, A6/A7 heads), not for UAR bias. The real devel->test "
+        "optimism is pool identity: train+devel are one speaker pool, the hidden "
+        "test is a different pool. Re-clustering (pooled train+devel, k~420) "
+        "cuts this leakage 0.27->0.015 and cohesion 0.49->0.97, but does not "
+        "change the reported number."),
 }
 print(f"  [{'CONCERN' if v8_concern else 'ok'}] devel split same-speaker leakage")
 
