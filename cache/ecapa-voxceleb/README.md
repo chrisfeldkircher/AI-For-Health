@@ -8,7 +8,7 @@ different speaker-ID counts.
 
 `../pseudo_speakers/k210_seed42.tsv` is the canonical grouping. Columns:
 
-```
+```text
 file_stem   split   cluster
 train_0001  train   31
 ...
@@ -40,6 +40,10 @@ by_stem = {s: emb[i] for i, s in enumerate(stems)}
 
 ## Reproducing the labels from the embeddings
 
-kmeans(k=210, seed=42) on the L2-normalized embeddings reproduces
-`k210_seed42.tsv`. If you re-cluster yourself you may get a different labeling,
+Exact procedure (model/speakers/cluster.py): L2-normalize, fit
+KMeans(n_clusters=210, n_init=10, random_state=42) on the TRAIN embeddings
+only, then assign devel and test by nearest centroid. Verified to reproduce
+`k210_seed42.tsv` exactly from this npz (train label match 1.0, devel/test
+assignment agreement 1.0; see results/speaker_pipeline_verification.json).
+If you re-cluster with any other procedure you will get a different labeling,
 so please use the committed tsv rather than your own run.

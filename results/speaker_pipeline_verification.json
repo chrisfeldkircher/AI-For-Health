@@ -1,0 +1,70 @@
+{
+  "rung_id": "speaker_pipeline_verification",
+  "sklearn_version": "1.8.0",
+  "checks": {
+    "V1_npz_matches_pt": {
+      "pass": true,
+      "sampled": 300,
+      "mismatches": 0
+    },
+    "V2_embedding_sanity": {
+      "pass": true,
+      "nan": 0,
+      "inf": 0,
+      "zero_norm_rows": 0,
+      "duplicate_rows": 0,
+      "dup_examples": [],
+      "norm_min": 206.02525329589844,
+      "norm_med": 296.9827880859375,
+      "norm_max": 409.08270263671875
+    },
+    "V3_kmeans_reproducibility": {
+      "pass": true,
+      "exact_label_match_frac": 1.0,
+      "ari_vs_shipped": 1.0,
+      "note": "ARI robust to label permutation and sklearn version drift"
+    },
+    "V4_assignment_consistency": {
+      "pass": true,
+      "agree_devel": 1.0,
+      "agree_test": 1.0,
+      "note": "nearest-centroid re-derivation from shipped train labels"
+    },
+    "V5_test_label_cohesion": {
+      "pass": true,
+      "devel": {
+        "mean_same_cluster": 0.4305231273174286,
+        "chance": 0.012982387582987979,
+        "lift": 33.16209030151367
+      },
+      "test": {
+        "mean_same_cluster": 0.42121240496635437,
+        "chance": 0.013899372364666127,
+        "lift": 30.304420471191406
+      }
+    },
+    "V6_split_machinery": {
+      "pass": true,
+      "train": {
+        "deterministic": true,
+        "cluster_disjoint": true,
+        "n_side_a": 8532,
+        "n_side_b": 973,
+        "cold_rate_a": 0.10114861697140178,
+        "cold_rate_b": 0.10996916752312436,
+        "overlap_clusters": 0
+      },
+      "devel": {
+        "deterministic": true,
+        "cluster_disjoint": true,
+        "n_side_a": 4801,
+        "n_side_b": 4795,
+        "cold_rate_a": 0.1058112893147261,
+        "cold_rate_b": 0.10490093847758081,
+        "overlap_clusters": 0
+      }
+    }
+  },
+  "all_pass": true,
+  "failures": []
+}
