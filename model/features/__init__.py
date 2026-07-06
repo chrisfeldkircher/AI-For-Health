@@ -32,6 +32,10 @@ from .scalar_g6 import extract_g6, carve_g6, G6_PREFIXES
 from .modulation import extract_modulation, modulation_features
 from .scalar_g5 import extract_g5, G5_NAMES, G5_DIM
 from .scalar_g9_cqt import extract_g9, extract_cqt, cqt_features, G9_NAMES, G9_DIM
+from .signature import (
+    extract_g10, extract_signature, signature_features, logsig_depth2,
+    acoustic_path, G10_NAMES, G10_DIM,
+)
 from .head import LayerWeightedPooledHead
 from .head_a3 import MannerAwareHead, MannerStandardiser
 from .cache import CacheManifest, load_pooled, save_pooled
@@ -106,6 +110,13 @@ __all__ = [
     "cqt_features",
     "G9_NAMES",
     "G9_DIM",
+    "extract_g10",
+    "extract_signature",
+    "signature_features",
+    "logsig_depth2",
+    "acoustic_path",
+    "G10_NAMES",
+    "G10_DIM",
     "LayerWeightedPooledHead",
     "MannerAwareHead",
     "MannerStandardiser",
