@@ -1,0 +1,80 @@
+{
+  "rung_id": "audit_grouping_decomposition",
+  "locked_betas": {
+    "42": 8.0,
+    "123": 8.0,
+    "7": 6.0,
+    "999": 12.0,
+    "31337": 8.0
+  },
+  "per_grouping": {
+    "k100": {
+      "a2_alone": {
+        "mean": 0.634516872016872,
+        "std": 0.00770858285470663
+      },
+      "fusion_locked_beta": {
+        "mean": 0.6755574980574981,
+        "std": 0.004987449287979426
+      },
+      "fusion_reselected": {
+        "mean": 0.6362656787656787,
+        "std": 0.007220015264145964
+      },
+      "fusion_gain_locked": 0.04104062604062608
+    },
+    "k210_shipped": {
+      "a2_alone": {
+        "mean": 0.6533931082655975,
+        "std": 0.016063140237512513
+      },
+      "fusion_locked_beta": {
+        "mean": 0.7037251792136279,
+        "std": 0.006013375122536977
+      },
+      "fusion_reselected": {
+        "mean": 0.7037251792136279,
+        "std": 0.006013375122536977
+      },
+      "fusion_gain_locked": 0.05033207094803038
+    },
+    "k420": {
+      "a2_alone": {
+        "mean": 0.6357250992061202,
+        "std": 0.006392335006031377
+      },
+      "fusion_locked_beta": {
+        "mean": 0.6621499160874352,
+        "std": 0.009998928552768762
+      },
+      "fusion_reselected": {
+        "mean": 0.6575250064059799,
+        "std": 0.006457919086520363
+      },
+      "fusion_gain_locked": 0.02642481688131504
+    },
+    "pooled_k420": {
+      "a2_alone": {
+        "mean": 0.628224518318858,
+        "std": 0.009462337828999912
+      },
+      "fusion_locked_beta": {
+        "mean": 0.6394387873947622,
+        "std": 0.008199818773306989
+      },
+      "fusion_reselected": {
+        "mean": 0.6280132108748461,
+        "std": 0.009412137130192672
+      },
+      "fusion_gain_locked": 0.011214269075904282
+    }
+  },
+  "pooled_across_split_seeds": {
+    "42": 0.6394387873947622,
+    "1": 0.6335789595064136,
+    "2": 0.6538287287848282,
+    "3": 0.6606381391613775,
+    "5": 0.6171951115446974
+  },
+  "reading": "If A2.5-alone is stable across groupings but fusion@lockedB drops on honest groupings, the FUSION GAIN is grouping-specific. If A2.5-alone swings, it's devel_test partition difficulty. Hidden test was 0.62."
+}

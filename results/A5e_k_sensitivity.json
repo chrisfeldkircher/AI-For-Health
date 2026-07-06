@@ -1,0 +1,120 @@
+{
+  "rung_id": "A5e_k_sensitivity",
+  "description": "Sensitivity of the locked K=2 (A2.5+G4_gi+G5_mod) 5-seed devel_test UAR to the pseudo-speaker grouping (k100/k210/k420/pooled_k420). Same pipeline, only the grouping tsv that defines the grouped splits changes. Small spread => conclusions do not hinge on the exact speaker count.",
+  "split_seed": 42,
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "beta_grid": [
+    0.0,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.5,
+    2.0,
+    2.5,
+    3.0,
+    4.0,
+    6.0,
+    8.0,
+    12.0,
+    16.0
+  ],
+  "groupings": {
+    "k100": {
+      "uar_devel_test": {
+        "mean": 0.6362656787656787,
+        "std": 0.007220015264145964,
+        "n": 5
+      },
+      "locked_betas": [
+        0.0,
+        0.1,
+        0.5,
+        0.0,
+        0.25
+      ],
+      "n_speakers_used": 100,
+      "split_sizes": {
+        "train_fit": 8474,
+        "train_threshold": 1031,
+        "devel_val": 4802,
+        "devel_test": 4794
+      }
+    },
+    "k210_shipped": {
+      "uar_devel_test": {
+        "mean": 0.7037251792136279,
+        "std": 0.006013375122536977,
+        "n": 5
+      },
+      "locked_betas": [
+        8.0,
+        8.0,
+        6.0,
+        12.0,
+        8.0
+      ],
+      "n_speakers_used": 210,
+      "split_sizes": {
+        "train_fit": 8532,
+        "train_threshold": 973,
+        "devel_val": 4801,
+        "devel_test": 4795
+      }
+    },
+    "k420": {
+      "uar_devel_test": {
+        "mean": 0.6575250064059799,
+        "std": 0.006457919086520363,
+        "n": 5
+      },
+      "locked_betas": [
+        3.0,
+        4.0,
+        4.0,
+        8.0,
+        3.0
+      ],
+      "n_speakers_used": 420,
+      "split_sizes": {
+        "train_fit": 8554,
+        "train_threshold": 951,
+        "devel_val": 4802,
+        "devel_test": 4794
+      }
+    },
+    "pooled_k420": {
+      "uar_devel_test": {
+        "mean": 0.6280132108748461,
+        "std": 0.009412137130192672,
+        "n": 5
+      },
+      "locked_betas": [
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.0
+      ],
+      "n_speakers_used": 630,
+      "split_sizes": {
+        "train_fit": 8522,
+        "train_threshold": 983,
+        "devel_val": 4799,
+        "devel_test": 4797
+      }
+    }
+  },
+  "reference": "k210_shipped",
+  "max_min_spread": 0.0757119683387818,
+  "shadow_sigma_ref": 0.0157,
+  "elapsed_minutes": 3.4065327008565265
+}
