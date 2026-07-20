@@ -1,0 +1,323 @@
+{
+  "question": "Did the historical Train-centroid k=210 labels actually make the within-side experimental splits speaker-proxy disjoint?",
+  "inputs": {
+    "historical_split_groups": "cache\\pseudo_speakers\\k210_seed42.tsv",
+    "independent_audit_groups": "results\\speaker_proxy_method_labels.npz",
+    "audit_partition": "side-local raw-L2 ECAPA KMeans, k=210, seed=42",
+    "splitter": "model/data/cached_dataset.py::stratified_grouped_split",
+    "cold_label_use": "stratification only; not used to fit speaker proxies"
+  },
+  "train_canonical_seed42_val_frac_0.10": {
+    "seed": 42,
+    "fit_recordings": 8532,
+    "holdout_recordings": 973,
+    "fit_cold_rate": 0.10114861697140178,
+    "holdout_cold_rate": 0.10996916752312436,
+    "overlap_under_split_labels": {
+      "fit_unique_groups": 189,
+      "holdout_unique_groups": 21,
+      "overlapping_groups": 0,
+      "affected_recordings": 0,
+      "affected_recording_fraction": 0.0
+    },
+    "overlap_under_side_local_labels": {
+      "fit_unique_groups": 189,
+      "holdout_unique_groups": 21,
+      "overlapping_groups": 0,
+      "affected_recordings": 0,
+      "affected_recording_fraction": 0.0
+    }
+  },
+  "devel_historical_split_audited_by_side_local_groups": {
+    "canonical_seed42": {
+      "seed": 42,
+      "fit_recordings": 4801,
+      "holdout_recordings": 4795,
+      "fit_cold_rate": 0.1058112893147261,
+      "holdout_cold_rate": 0.10490093847758081,
+      "overlap_under_split_labels": {
+        "fit_unique_groups": 99,
+        "holdout_unique_groups": 107,
+        "overlapping_groups": 0,
+        "affected_recordings": 0,
+        "affected_recording_fraction": 0.0
+      },
+      "overlap_under_side_local_labels": {
+        "fit_unique_groups": 203,
+        "holdout_unique_groups": 208,
+        "overlapping_groups": 201,
+        "affected_recordings": 9399,
+        "affected_recording_fraction": 0.9794706127553147
+      }
+    },
+    "all_seeds": [
+      {
+        "seed": 42,
+        "fit_recordings": 4801,
+        "holdout_recordings": 4795,
+        "fit_cold_rate": 0.1058112893147261,
+        "holdout_cold_rate": 0.10490093847758081,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 99,
+          "holdout_unique_groups": 107,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 203,
+          "holdout_unique_groups": 208,
+          "overlapping_groups": 201,
+          "affected_recordings": 9399,
+          "affected_recording_fraction": 0.9794706127553147
+        }
+      },
+      {
+        "seed": 1,
+        "fit_recordings": 4798,
+        "holdout_recordings": 4798,
+        "fit_cold_rate": 0.10504376823676533,
+        "holdout_cold_rate": 0.10566902876198415,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 110,
+          "holdout_unique_groups": 96,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 204,
+          "holdout_unique_groups": 201,
+          "overlapping_groups": 195,
+          "affected_recordings": 9152,
+          "affected_recording_fraction": 0.9537307211338057
+        }
+      },
+      {
+        "seed": 2,
+        "fit_recordings": 4791,
+        "holdout_recordings": 4805,
+        "fit_cold_rate": 0.10415362137340847,
+        "holdout_cold_rate": 0.10655567117585849,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 113,
+          "holdout_unique_groups": 93,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 201,
+          "holdout_unique_groups": 200,
+          "overlapping_groups": 191,
+          "affected_recordings": 9120,
+          "affected_recording_fraction": 0.9503959983326385
+        }
+      },
+      {
+        "seed": 3,
+        "fit_recordings": 4790,
+        "holdout_recordings": 4806,
+        "fit_cold_rate": 0.10438413361169102,
+        "holdout_cold_rate": 0.10632542655014565,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 110,
+          "holdout_unique_groups": 96,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 204,
+          "holdout_unique_groups": 199,
+          "overlapping_groups": 193,
+          "affected_recordings": 9109,
+          "affected_recording_fraction": 0.9492496873697374
+        }
+      },
+      {
+        "seed": 5,
+        "fit_recordings": 4807,
+        "holdout_recordings": 4789,
+        "fit_cold_rate": 0.10630330767630539,
+        "holdout_cold_rate": 0.10440593025683859,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 98,
+          "holdout_unique_groups": 108,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 200,
+          "holdout_unique_groups": 206,
+          "overlapping_groups": 196,
+          "affected_recordings": 9208,
+          "affected_recording_fraction": 0.9595664860358483
+        }
+      },
+      {
+        "seed": 11,
+        "fit_recordings": 4810,
+        "holdout_recordings": 4786,
+        "fit_cold_rate": 0.10623700623700624,
+        "holdout_cold_rate": 0.10447137484329294,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 97,
+          "holdout_unique_groups": 109,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 202,
+          "holdout_unique_groups": 200,
+          "overlapping_groups": 192,
+          "affected_recordings": 9083,
+          "affected_recording_fraction": 0.9465402250937891
+        }
+      },
+      {
+        "seed": 17,
+        "fit_recordings": 4798,
+        "holdout_recordings": 4798,
+        "fit_cold_rate": 0.10566902876198415,
+        "holdout_cold_rate": 0.10504376823676533,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 101,
+          "holdout_unique_groups": 105,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 202,
+          "holdout_unique_groups": 205,
+          "overlapping_groups": 197,
+          "affected_recordings": 9284,
+          "affected_recording_fraction": 0.9674864526886202
+        }
+      },
+      {
+        "seed": 23,
+        "fit_recordings": 4798,
+        "holdout_recordings": 4798,
+        "fit_cold_rate": 0.10483534806169237,
+        "holdout_cold_rate": 0.10587744893705711,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 111,
+          "holdout_unique_groups": 95,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 205,
+          "holdout_unique_groups": 207,
+          "overlapping_groups": 202,
+          "affected_recordings": 9358,
+          "affected_recording_fraction": 0.9751979991663193
+        }
+      },
+      {
+        "seed": 31,
+        "fit_recordings": 4787,
+        "holdout_recordings": 4809,
+        "fit_cold_rate": 0.10424065176519741,
+        "holdout_cold_rate": 0.10646704096485755,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 112,
+          "holdout_unique_groups": 94,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 203,
+          "holdout_unique_groups": 204,
+          "overlapping_groups": 197,
+          "affected_recordings": 9322,
+          "affected_recording_fraction": 0.9714464360150062
+        }
+      },
+      {
+        "seed": 53,
+        "fit_recordings": 4789,
+        "holdout_recordings": 4807,
+        "fit_cold_rate": 0.10440593025683859,
+        "holdout_cold_rate": 0.10630330767630539,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 107,
+          "holdout_unique_groups": 99,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 203,
+          "holdout_unique_groups": 202,
+          "overlapping_groups": 195,
+          "affected_recordings": 9059,
+          "affected_recording_fraction": 0.9440391829929137
+        }
+      },
+      {
+        "seed": 99,
+        "fit_recordings": 4808,
+        "holdout_recordings": 4788,
+        "fit_cold_rate": 0.1064891846921797,
+        "holdout_cold_rate": 0.10421888053467,
+        "overlap_under_split_labels": {
+          "fit_unique_groups": 99,
+          "holdout_unique_groups": 107,
+          "overlapping_groups": 0,
+          "affected_recordings": 0,
+          "affected_recording_fraction": 0.0
+        },
+        "overlap_under_side_local_labels": {
+          "fit_unique_groups": 204,
+          "holdout_unique_groups": 205,
+          "overlapping_groups": 199,
+          "affected_recordings": 9306,
+          "affected_recording_fraction": 0.9697790746144227
+        }
+      }
+    ],
+    "summary": {
+      "n_splits": 11,
+      "overlapping_groups_min": 191,
+      "overlapping_groups_max": 202,
+      "overlapping_groups_mean": 196.1818181818182,
+      "affected_recording_fraction_min": 0.9440391829929137,
+      "affected_recording_fraction_max": 0.9794706127553147,
+      "affected_recording_fraction_mean": 0.960627534199856,
+      "affected_recording_fraction_population_sd": 0.011953171515421282
+    }
+  },
+  "devel_side_local_split_positive_control_seed42": {
+    "seed": 42,
+    "fit_recordings": 4805,
+    "holdout_recordings": 4791,
+    "fit_cold_rate": 0.10697190426638918,
+    "holdout_cold_rate": 0.10373617198914632,
+    "overlap_under_split_labels": {
+      "fit_unique_groups": 106,
+      "holdout_unique_groups": 104,
+      "overlapping_groups": 0,
+      "affected_recordings": 0,
+      "affected_recording_fraction": 0.0
+    },
+    "overlap_under_side_local_labels": {
+      "fit_unique_groups": 106,
+      "holdout_unique_groups": 104,
+      "overlapping_groups": 0,
+      "affected_recordings": 0,
+      "affected_recording_fraction": 0.0
+    }
+  },
+  "interpretation": {
+    "train": "The shipped labels were fitted on Train, so the canonical Train split remains disjoint under the independently recovered Train-local partition.",
+    "devel": "Zero overlap under the historical IDs is true by construction but is not evidence of speaker-proxy disjointness: those IDs fragment the recovered Development-local structure across both halves.",
+    "scope": "This invalidates speaker-disjoint wording for results selected/evaluated on the historical within-Development split. It does not invalidate whole-side Train-to-Development or Development-to-Train evaluations, which do not use pseudo-speaker sub-splitting."
+  }
+}

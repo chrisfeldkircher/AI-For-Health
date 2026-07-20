@@ -1,0 +1,125 @@
+{
+  "rung_id": "audit_evaluation_protocol",
+  "metric_math": {
+    "pass": true,
+    "max_abs_delta": 0.0,
+    "cases": [
+      {
+        "n": 11,
+        "pipeline_compute_uar": 0.3666666666666667,
+        "pipeline_fusion_uar": 0.3666666666666667,
+        "sklearn_balanced_accuracy": 0.3666666666666667
+      },
+      {
+        "n": 101,
+        "pipeline_compute_uar": 0.45674603174603173,
+        "pipeline_fusion_uar": 0.45674603174603173,
+        "sklearn_balanced_accuracy": 0.45674603174603173
+      },
+      {
+        "n": 1000,
+        "pipeline_compute_uar": 0.5207800728942873,
+        "pipeline_fusion_uar": 0.5207800728942873,
+        "sklearn_balanced_accuracy": 0.5207800728942873
+      }
+    ]
+  },
+  "official_protocol": {
+    "source": "schuller17_interspeech.pdf, Table 1, section 2.2, section 3",
+    "speaker_independent_partitions": true,
+    "speakers_per_partition": 210,
+    "train_devel_cold_non_cold_speakers_each": [
+      37,
+      173
+    ],
+    "expected_final_fit": "Train + Development after model selection"
+  },
+  "effective_tuning_sample": {
+    "train_fit": {
+      "n_chunks": 8532,
+      "n_cold_chunks": 863,
+      "n_pseudo_speakers": 189,
+      "n_cold_pseudo_speakers": 30
+    },
+    "train_threshold": {
+      "n_chunks": 973,
+      "n_cold_chunks": 107,
+      "n_pseudo_speakers": 21,
+      "n_cold_pseudo_speakers": 3
+    },
+    "risk": "beta and tau are selected using only three cold pseudo-speakers"
+  },
+  "devel_split_soundness": {
+    "nearest_neighbor_same_cluster": 0.49187161317215505,
+    "same_speaker_proxy_cross_side_rate": 0.2745935806586077,
+    "literal_speaker_disjoint_claim_supported": false
+  },
+  "speaker_probe_validity": {
+    "held_chunk_same_identity_top1": 0.08766404199475065,
+    "cross_official_pool_top1": 0.021154647769904125,
+    "understatement_ratio": 4.14396131518043,
+    "cross_pool_majority_baseline": 0.05835764902042518,
+    "valid_identity_leakage_gate": false
+  },
+  "holdout_reuse": {
+    "n_code_cells": 79,
+    "n_code_cells_referencing_devel_test": 45,
+    "n_devel_test_cells_with_decision_or_comparison_markers": 42,
+    "holdout_remained_one_shot": false,
+    "note": "Static source audit; it counts experiment cells, not executions."
+  },
+  "estimate_sensitivity": {
+    "uar_by_grouping": {
+      "k100": 0.6362656787656787,
+      "k210_shipped": 0.7037251792136279,
+      "k420": 0.6575250064059799,
+      "pooled_k420": 0.6280132108748461
+    },
+    "grouping_max_minus_min": 0.0757119683387818,
+    "canonical_minus_shadow_mean": 0.020815329138812677,
+    "model_seed_std": 0.006013375122536977,
+    "shadow_split_std": 0.01685294031052181,
+    "shadow_to_model_seed_std_ratio": 2.802575919030932,
+    "grouping_spread_to_model_seed_std_ratio": 12.59059459886809
+  },
+  "uncertainty_scale_illustration": {
+    "naive_chunk_iid_se_uar": 0.007375645403596701,
+    "subject_count_se_uar": 0.040454680723354675,
+    "naive_95pct_half_width": 0.014456264991049534,
+    "subject_count_95pct_half_width": 0.07929117421777516,
+    "note": "Illustrative binomial scales, not a replacement for a cluster bootstrap."
+  },
+  "final_training_coverage": {
+    "labeled_train_chunks": 9505,
+    "labeled_devel_chunks": 9596,
+    "submitted_head_fit_chunks": 8532,
+    "total_available_labeled_chunks": 19101,
+    "fraction_used_for_final_parameter_fit": 0.4466781843882519,
+    "official_final_refit_followed": false
+  },
+  "submission_integrity": {
+    "n_rows": 9551,
+    "unique_files": 9551,
+    "valid_labels_only": true,
+    "matches_test_wav_set": true,
+    "predicted_cold_rate": 0.4317872474086483
+  },
+  "verdict": {
+    "uar_implementation_correct": true,
+    "reported_internal_uar_is_reliable_hidden_test_estimate": false,
+    "dominant_problems": [
+      "nominal devel_test repeatedly reused for selection and comparison",
+      "speaker probe evaluated across unseen identities with nearest-centroid proxy labels",
+      "beta/tau tuned on only three cold pseudo-speakers",
+      "uncertainty reported across model seeds rather than outer speaker samples",
+      "final model not refit on Train + Development"
+    ]
+  },
+  "recommended_protocol": [
+    "Use grouped nested CV inside Train for all architecture, beta, tau, and epoch choices.",
+    "Evaluate the locked pipeline once on the entire official Development partition.",
+    "Use within-identity held-chunk or pairwise verification for speaker leakage; do not classify unseen speaker IDs.",
+    "Report outer-fold or cluster-bootstrap uncertainty, not only training-seed standard deviation.",
+    "After locking, refit or cross-fold ensemble on all Train + Development labels before Test inference."
+  ]
+}

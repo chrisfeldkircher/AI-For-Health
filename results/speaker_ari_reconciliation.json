@@ -1,0 +1,133 @@
+{
+  "question": "Why did raw-space KMeans-vs-HDBSCAN ARI appear as both ~0.856 and ~0.309?",
+  "cold_labels_loaded": false,
+  "embedding_space": "raw 192-D ECAPA, L2 normalized",
+  "historical_notebook_provenance": {
+    "file": "model/test.ipynb",
+    "cell_index_zero_based": 14,
+    "n_items": 9505,
+    "scope": "Train only",
+    "kmeans_k": 210,
+    "hdbscan_nonnoise_clusters": 204,
+    "reported_ARI": 0.8557,
+    "reported_NMI": 0.962,
+    "umap_used_for_clustering": false
+  },
+  "like_for_like_side_local_results": {
+    "train": {
+      "all_points": {
+        "ARI": 0.8557332311687167,
+        "NMI": 0.9620063628360488
+      },
+      "hdbscan_nonnoise_only": {
+        "ARI": 0.9296577846715222,
+        "NMI": 0.981878108022597
+      },
+      "nonnoise_coverage": 0.9727511835875855,
+      "note": "The non-noise sensitivity analysis removes recordings HDBSCAN declined to assign. It must be reported with coverage and must not silently replace the conservative all-point ARI.",
+      "kmeans_clusters": 210,
+      "hdbscan_nonnoise_clusters": 204,
+      "hdbscan_noise_fraction": 0.027248816412414518
+    },
+    "devel": {
+      "all_points": {
+        "ARI": 0.8291911195914672,
+        "NMI": 0.960763225878178
+      },
+      "hdbscan_nonnoise_only": {
+        "ARI": 0.928875490411887,
+        "NMI": 0.9831090011852085
+      },
+      "nonnoise_coverage": 0.9668611921634014,
+      "note": "The non-noise sensitivity analysis removes recordings HDBSCAN declined to assign. It must be reported with coverage and must not silently replace the conservative all-point ARI.",
+      "kmeans_clusters": 210,
+      "hdbscan_nonnoise_clusters": 205,
+      "hdbscan_noise_fraction": 0.03313880783659858
+    },
+    "test": {
+      "all_points": {
+        "ARI": 0.879166515896474,
+        "NMI": 0.9666525386719667
+      },
+      "hdbscan_nonnoise_only": {
+        "ARI": 0.944015786409361,
+        "NMI": 0.9851215289949099
+      },
+      "nonnoise_coverage": 0.9759187519631453,
+      "note": "The non-noise sensitivity analysis removes recordings HDBSCAN declined to assign. It must be reported with coverage and must not silently replace the conservative all-point ARI.",
+      "kmeans_clusters": 210,
+      "hdbscan_nonnoise_clusters": 205,
+      "hdbscan_noise_fraction": 0.02408124803685478
+    }
+  },
+  "pooled_hdbscan": {
+    "scope": "Train+Development",
+    "n_items": 19101,
+    "nonnoise_clusters": 406,
+    "noise_fraction": 0.03769436155175122,
+    "comparisons": {
+      "historical_trainfit_k210_labels": {
+        "all_train_plus_development": {
+          "ARI": 0.30943500613161184,
+          "NMI": 0.7677532447782294
+        },
+        "by_side": {
+          "train": {
+            "ARI": 0.805096653918855,
+            "NMI": 0.9545096394919477
+          },
+          "devel": {
+            "ARI": 0.19321963852134205,
+            "NMI": 0.6485827524123299
+          }
+        }
+      },
+      "offset_side_local_k210_plus_k210_labels": {
+        "all_train_plus_development": {
+          "ARI": 0.7266936066396095,
+          "NMI": 0.9584161956413099
+        },
+        "by_side": {
+          "train": {
+            "ARI": 0.805096653918855,
+            "NMI": 0.9545096394919477
+          },
+          "devel": {
+            "ARI": 0.8050672690672254,
+            "NMI": 0.9568645911048738
+          }
+        }
+      }
+    },
+    "historical_trainfit_nonnoise_sensitivity": {
+      "all_points": {
+        "ARI": 0.30943500613161184,
+        "NMI": 0.7677532447782294
+      },
+      "hdbscan_nonnoise_only": {
+        "ARI": 0.37299370964690604,
+        "NMI": 0.7895483268027751
+      },
+      "nonnoise_coverage": 0.9623056384482488,
+      "note": "The non-noise sensitivity analysis removes recordings HDBSCAN declined to assign. It must be reported with coverage and must not silently replace the conservative all-point ARI."
+    },
+    "offset_side_local_nonnoise_sensitivity": {
+      "all_points": {
+        "ARI": 0.7266936066396095,
+        "NMI": 0.9584161956413099
+      },
+      "hdbscan_nonnoise_only": {
+        "ARI": 0.929587816084486,
+        "NMI": 0.9843858463861063
+      },
+      "nonnoise_coverage": 0.9623056384482488,
+      "note": "The non-noise sensitivity analysis removes recordings HDBSCAN declined to assign. It must be reported with coverage and must not silently replace the conservative all-point ARI."
+    }
+  },
+  "trainfit_labels_vs_offset_side_local_labels": {
+    "ARI": 0.3731901206513704,
+    "NMI": 0.7923138258583746
+  },
+  "verdict": "The 0.8557 result is a raw-space, side-local Train comparison and is reproduced. The 0.3094 result compares a single Train-fitted 210-label map, whose held-side assignments fragment Development, against a pooled density partition with about twice the cluster count. Using offset side-local labels raises pooled ARI materially; fitting both methods side-locally reproduces high agreement on every side. The gap is caused by scope/granularity/held-side assignment mismatch, not UMAP inflation.",
+  "paper_wording": "Report side-local raw-space concordance by side on all recordings as the primary result. Report the higher HDBSCAN-nonnoise-only ARI as a sensitivity analysis with its 96.7-97.6% coverage. Keep the historical pooled-vs-Train-fit result only as a demonstration that Train-centroid assignment is invalid for held official sides; do not present 0.309 as side-local method instability and do not present ~0.93 without stating that HDBSCAN noise was excluded."
+}

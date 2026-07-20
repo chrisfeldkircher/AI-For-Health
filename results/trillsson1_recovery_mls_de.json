@@ -1,0 +1,68 @@
+{
+  "question": "Does TRILLsson1 recover known speakers on an external labeled corpus?",
+  "corpus": "mls_de",
+  "pipeline": "TRILLsson1 deterministic 2-second windows -> mean -> L2 -> KMeans(true k)",
+  "metadata": {
+    "model": "google/trillsson/tensorFlow2/1/1",
+    "model_path": "C:\\Users\\Chris PC\\.cache\\kagglehub\\models\\google\\trillsson\\tensorFlow2\\1\\1",
+    "sample_rate": 16000,
+    "window_seconds": 2.0,
+    "max_windows_per_file": 3,
+    "segment_pooling": "mean then L2 normalize",
+    "timing": {
+      "elapsed_seconds": 8.894224882125854,
+      "n_files": 899,
+      "n_windows": 2697,
+      "files_per_second": 101.07682365966053
+    }
+  },
+  "known_speaker_recovery": {
+    "n_items": 899,
+    "n_true_speakers": 131,
+    "n_clusters": 131,
+    "ARI": 0.48829126734440553,
+    "NMI": 0.8356491746395074,
+    "purity": 0.7619577308120133,
+    "fragmentation_mean": 2.3969465648854964,
+    "fragmentation_median": 2.0,
+    "fragmentation_max": 7,
+    "frac_speakers_single_cluster": 0.3435114503816794
+  },
+  "kmeans_seed_stability": {
+    "pairs": [
+      {
+        "a": 42,
+        "b": 1,
+        "ARI": 0.467206812528791,
+        "NMI": 0.8324873215117344
+      },
+      {
+        "a": 42,
+        "b": 2,
+        "ARI": 0.48448018432915085,
+        "NMI": 0.840841394713136
+      },
+      {
+        "a": 1,
+        "b": 2,
+        "ARI": 0.4733409600695585,
+        "NMI": 0.8397589414755641
+      }
+    ],
+    "ARI_mean": 0.4750093189758335,
+    "ARI_min": 0.467206812528791,
+    "NMI_mean": 0.8376958859001449
+  },
+  "shuffled_label_negative_control": {
+    "n_items": 899,
+    "n_true_speakers": 131,
+    "n_clusters": 131,
+    "ARI": -4.959215170702042e-05,
+    "NMI": 0.5379371160768341,
+    "purity": 0.18687430478309233,
+    "fragmentation_mean": 6.549618320610687,
+    "fragmentation_median": 4.0,
+    "fragmentation_max": 15,
+    "frac_speakers_single_cluster": 0.25190839694656486
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "protocol": {
+    "unit": "k210_seed42 pseudo-speaker cluster",
+    "paired_bootstrap_draws": 20000,
+    "official_development_used": false,
+    "warning": "clusters are inferred proxies because true speaker IDs are unavailable"
+  },
+  "data": {
+    "chunks": 9505,
+    "groups": 210,
+    "mixed_label_groups": [
+      9,
+      38,
+      83,
+      93,
+      95,
+      119,
+      128,
+      137,
+      156,
+      157,
+      165,
+      170,
+      176,
+      183,
+      187
+    ]
+  },
+  "models": {
+    "G4_fixed_tau0": {
+      "uar": 0.5923846019120782,
+      "recall_C": 0.5948453608247423,
+      "recall_NC": 0.5899238429994141,
+      "bootstrap_95_ci": [
+        0.5320137989105559,
+        0.6563324420106387
+      ]
+    },
+    "G4_inner_tuned_tau": {
+      "uar": 0.5919213789188242,
+      "recall_C": 0.702061855670103,
+      "recall_NC": 0.4817809021675454,
+      "bootstrap_95_ci": [
+        0.5295518699497131,
+        0.6535227359546529
+      ]
+    },
+    "G9_CQT": {
+      "uar": 0.582975800071265,
+      "recall_C": 0.40309278350515465,
+      "recall_NC": 0.7628588166373755,
+      "bootstrap_95_ci": [
+        0.5134584763451429,
+        0.6652039670794941
+      ]
+    },
+    "unconstrained_stack": {
+      "uar": 0.5733504852668514,
+      "recall_C": 0.5072164948453608,
+      "recall_NC": 0.6394844756883421,
+      "bootstrap_95_ci": [
+        0.4976107771785982,
+        0.6587732963538874
+      ]
+    },
+    "G4_anchor_G5": {
+      "uar": 0.5929402279274546,
+      "recall_C": 0.7103092783505155,
+      "recall_NC": 0.47557117750439365,
+      "bootstrap_95_ci": [
+        0.5279425447655202,
+        0.6570186322571804
+      ]
+    },
+    "HuBERT_large": {
+      "uar": 0.5639691627561466,
+      "recall_C": 0.2463917525773196,
+      "recall_NC": 0.8815465729349736,
+      "bootstrap_95_ci": [
+        0.5016028778167999,
+        0.6485201190885727
+      ]
+    },
+    "G4_anchor_HuBERT": {
+      "uar": 0.5697159663967049,
+      "recall_C": 0.7484536082474227,
+      "recall_NC": 0.39097832454598713,
+      "bootstrap_95_ci": [
+        0.5026806986523722,
+        0.6378836077272559
+      ]
+    },
+    "WavLM_large": {
+      "uar": 0.551888222540298,
+      "recall_C": 0.26804123711340205,
+      "recall_NC": 0.8357352079671939,
+      "bootstrap_95_ci": [
+        0.49096460460745217,
+        0.6342034816112085
+      ]
+    },
+    "G4_anchor_WavLM": {
+      "uar": 0.5640938766389457,
+      "recall_C": 0.7175257731958763,
+      "recall_NC": 0.4106619800820152,
+      "bootstrap_95_ci": [
+        0.482677569052959,
+        0.6449017759035003
+      ]
+    }
+  },
+  "comparisons_vs_G4": {
+    "G4_inner_tuned_tau": {
+      "point_delta_uar_vs_G4": -0.00046322299325396443,
+      "paired_bootstrap_95_ci": [
+        -0.02047722758769675,
+        0.017700884185884575
+      ],
+      "probability_better_than_G4": 0.46115
+    },
+    "G9_CQT": {
+      "point_delta_uar_vs_G4": -0.009408801840813164,
+      "paired_bootstrap_95_ci": [
+        -0.08067374624790817,
+        0.06200750914163637
+      ],
+      "probability_better_than_G4": 0.408
+    },
+    "unconstrained_stack": {
+      "point_delta_uar_vs_G4": -0.019034116645226806,
+      "paired_bootstrap_95_ci": [
+        -0.08872211267321334,
+        0.04851716473152222
+      ],
+      "probability_better_than_G4": 0.2995
+    },
+    "G4_anchor_G5": {
+      "point_delta_uar_vs_G4": 0.0005556260153763981,
+      "paired_bootstrap_95_ci": [
+        -0.023741691033120314,
+        0.02442439988929933
+      ],
+      "probability_better_than_G4": 0.49215
+    },
+    "HuBERT_large": {
+      "point_delta_uar_vs_G4": -0.028415439155931588,
+      "paired_bootstrap_95_ci": [
+        -0.102330773029493,
+        0.05582423376451761
+      ],
+      "probability_better_than_G4": 0.2449
+    },
+    "G4_anchor_HuBERT": {
+      "point_delta_uar_vs_G4": -0.022668635515373348,
+      "paired_bootstrap_95_ci": [
+        -0.05071818874674437,
+        0.0075844909475097895
+      ],
+      "probability_better_than_G4": 0.06555
+    },
+    "WavLM_large": {
+      "point_delta_uar_vs_G4": -0.04049637937178019,
+      "paired_bootstrap_95_ci": [
+        -0.10913869299601552,
+        0.038088117601861135
+      ],
+      "probability_better_than_G4": 0.14705
+    },
+    "G4_anchor_WavLM": {
+      "point_delta_uar_vs_G4": -0.028290725273132478,
+      "paired_bootstrap_95_ci": [
+        -0.07855849581844065,
+        0.017790907774699924
+      ],
+      "probability_better_than_G4": 0.1224
+    }
+  }
+}

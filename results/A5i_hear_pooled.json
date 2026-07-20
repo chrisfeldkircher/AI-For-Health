@@ -1,0 +1,320 @@
+{
+  "rung_id": "A5i_hear_pooled",
+  "description": "HeAR (google/hear-pytorch) 512-d health-acoustic embedding under the pooled (speaker-honest) grouping. Standalone LR cold probe + late fusion with honest G4+G9 (NESTED marginal: handcrafted G4+G9 lock, then HeAR added at independent weight gamma; gamma=0 recovers handcrafted exactly), vs WavLM/HuBERT/ECAPA/handcrafted bars. Preprocessing = Google's exact mel-PCEN (vendored, verified 0.0 vs upstream); pooler reconstructed Linear(1024->512) from checkpoint.",
+  "backbone": "google/hear-pytorch",
+  "embedding_dim": 512,
+  "pooling": "2s windows, mean-pooled",
+  "grouping": "pooled_k420_seed42",
+  "split_seed": 42,
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "beta_grid": [
+    0.0,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.5,
+    2.0,
+    2.5,
+    3.0,
+    4.0,
+    6.0,
+    8.0,
+    12.0,
+    16.0,
+    24.0,
+    32.0,
+    48.0,
+    64.0
+  ],
+  "honest_bars": {
+    "wavlm_head": 0.579,
+    "hubertlarge_head": 0.592,
+    "ecapa_speaker": 0.594,
+    "handcrafted_G4G9_split42": 0.674,
+    "handcrafted_G4G9_shadow": 0.62
+  },
+  "speaker_gate": {
+    "top1": 0.01875390706397166,
+    "n_classes": 200,
+    "reference": 0.0501,
+    "chance": 0.002380952380952381,
+    "pass": true
+  },
+  "embedding_cold_probe_devel_val": {
+    "uar": 0.6130705537204211,
+    "sub_at_1": 0.09931664665644942
+  },
+  "hear_standalone": {
+    "mean": 0.5747188113540315,
+    "std": 0.0,
+    "n": 5
+  },
+  "handcrafted_only_g4_g9_inrun": {
+    "mean": 0.672710558716848,
+    "std": 0.0,
+    "n": 5
+  },
+  "handcrafted_g4_g9_plus_hear": {
+    "mean": 0.672710558716848,
+    "std": 0.0,
+    "n": 5
+  },
+  "hear_nested_marginal_over_handcrafted": 0.0,
+  "hear_locked_gammas": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "hear_base_plus_g4_g9": {
+    "mean": 0.6717704901667165,
+    "std": 0.0,
+    "n": 5
+  },
+  "hear_base_locked_betas": [
+    64.0,
+    64.0,
+    64.0,
+    64.0,
+    64.0
+  ],
+  "hc_only_runs": [
+    {
+      "seed": 42,
+      "locked": {
+        "beta": 4.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      }
+    },
+    {
+      "seed": 123,
+      "locked": {
+        "beta": 4.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "locked": {
+        "beta": 4.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      }
+    },
+    {
+      "seed": 999,
+      "locked": {
+        "beta": 4.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      }
+    },
+    {
+      "seed": 31337,
+      "locked": {
+        "beta": 4.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      }
+    }
+  ],
+  "hc_plus_hear_runs": [
+    {
+      "seed": 42,
+      "locked": {
+        "gamma": 0.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      },
+      "beta_hc": 4.0
+    },
+    {
+      "seed": 123,
+      "locked": {
+        "gamma": 0.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      },
+      "beta_hc": 4.0
+    },
+    {
+      "seed": 7,
+      "locked": {
+        "gamma": 0.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      },
+      "beta_hc": 4.0
+    },
+    {
+      "seed": 999,
+      "locked": {
+        "gamma": 0.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      },
+      "beta_hc": 4.0
+    },
+    {
+      "seed": 31337,
+      "locked": {
+        "gamma": 0.0,
+        "tau": -2.9749999999999996,
+        "uar_train_threshold": 0.7337460467717992,
+        "devel_test": {
+          "uar": 0.672710558716848,
+          "recall_C": 0.7658730158730159,
+          "recall_NC": 0.5795481015606802,
+          "acc": 0.5991244527829893
+        }
+      },
+      "beta_hc": 4.0
+    }
+  ],
+  "hear_base_runs": [
+    {
+      "seed": 42,
+      "locked": {
+        "beta": 64.0,
+        "tau": -4.0,
+        "uar_train_threshold": 0.7061702631182634,
+        "devel_test": {
+          "uar": 0.6717704901667165,
+          "recall_C": 0.7579365079365079,
+          "recall_NC": 0.5856044723969253,
+          "acc": 0.6037106524911403
+        }
+      }
+    },
+    {
+      "seed": 123,
+      "locked": {
+        "beta": 64.0,
+        "tau": -4.0,
+        "uar_train_threshold": 0.7061702631182634,
+        "devel_test": {
+          "uar": 0.6717704901667165,
+          "recall_C": 0.7579365079365079,
+          "recall_NC": 0.5856044723969253,
+          "acc": 0.6037106524911403
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "locked": {
+        "beta": 64.0,
+        "tau": -4.0,
+        "uar_train_threshold": 0.7061702631182634,
+        "devel_test": {
+          "uar": 0.6717704901667165,
+          "recall_C": 0.7579365079365079,
+          "recall_NC": 0.5856044723969253,
+          "acc": 0.6037106524911403
+        }
+      }
+    },
+    {
+      "seed": 999,
+      "locked": {
+        "beta": 64.0,
+        "tau": -4.0,
+        "uar_train_threshold": 0.7061702631182634,
+        "devel_test": {
+          "uar": 0.6717704901667165,
+          "recall_C": 0.7579365079365079,
+          "recall_NC": 0.5856044723969253,
+          "acc": 0.6037106524911403
+        }
+      }
+    },
+    {
+      "seed": 31337,
+      "locked": {
+        "beta": 64.0,
+        "tau": -4.0,
+        "uar_train_threshold": 0.7061702631182634,
+        "devel_test": {
+          "uar": 0.6717704901667165,
+          "recall_C": 0.7579365079365079,
+          "recall_NC": 0.5856044723969253,
+          "acc": 0.6037106524911403
+        }
+      }
+    }
+  ],
+  "g9_speaker_gate": {
+    "top1": 0.015003125651177328,
+    "reference": 0.0501,
+    "pass": true
+  },
+  "beats_speech_heads": false,
+  "adds_over_handcrafted": false,
+  "elapsed_minutes": 8.645651666323344
+}

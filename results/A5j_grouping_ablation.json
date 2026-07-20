@@ -1,0 +1,176 @@
+{
+  "rung_id": "A5j_grouping_ablation",
+  "description": "Decompose the k210->pooled_k420 honest re-lock into {train-only,pooled} x {210,420}. Identical clustering recipe; A5f WavLM K=2 (A2.5+G4+G5) under each grouping + handcrafted-only under each + evaluation-independence (pooled k420 refit without devel_test).",
+  "all_seeds": [
+    42,
+    123,
+    7,
+    999,
+    31337
+  ],
+  "beta_grid": [
+    0.0,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    1.5,
+    2.0,
+    2.5,
+    3.0,
+    4.0,
+    6.0,
+    8.0,
+    12.0,
+    16.0
+  ],
+  "ref_k210_k2": 0.7037,
+  "results": {
+    "train_only_k210": {
+      "a2_alone": {
+        "mean": 0.6426509906080756,
+        "std": 0.015228550994694775
+      },
+      "k2": {
+        "mean": 0.6923975716993472,
+        "std": 0.018795074543113917
+      },
+      "handcrafted_only": {
+        "mean": 0.668293130314108,
+        "std": 0.0
+      },
+      "betas": [
+        0.75,
+        6.0,
+        16.0,
+        4.0,
+        12.0
+      ],
+      "split_sizes": {
+        "train_fit": 8532,
+        "train_threshold": 973,
+        "devel_val": 4801,
+        "devel_test": 4795
+      },
+      "devel_leak": 0.2745935806586077
+    },
+    "train_only_k420": {
+      "a2_alone": {
+        "mean": 0.6228678936907447,
+        "std": 0.009282950231333591
+      },
+      "k2": {
+        "mean": 0.6291407214864644,
+        "std": 0.0082888458969114
+      },
+      "handcrafted_only": {
+        "mean": 0.6585797423295605,
+        "std": 0.0
+      },
+      "betas": [
+        0.25,
+        2.5,
+        1.0,
+        1.5,
+        1.0
+      ],
+      "split_sizes": {
+        "train_fit": 8554,
+        "train_threshold": 951,
+        "devel_val": 4802,
+        "devel_test": 4794
+      },
+      "devel_leak": 0.28480616923718216
+    },
+    "pooled_k210": {
+      "a2_alone": {
+        "mean": 0.5600142945204033,
+        "std": 0.008703495605408016
+      },
+      "k2": {
+        "mean": 0.5547972079751665,
+        "std": 0.006644749583615946
+      },
+      "handcrafted_only": {
+        "mean": 0.6537191475835737,
+        "std": 0.0
+      },
+      "betas": [
+        0.25,
+        1.0,
+        0.0,
+        0.5,
+        1.5
+      ],
+      "split_sizes": {
+        "train_fit": 8477,
+        "train_threshold": 1028,
+        "devel_val": 4795,
+        "devel_test": 4801
+      },
+      "devel_leak": 0.00854522717799083
+    },
+    "pooled_k420": {
+      "a2_alone": {
+        "mean": 0.6374733942599433,
+        "std": 0.010233675355355291
+      },
+      "k2": {
+        "mean": 0.6615973985498611,
+        "std": 0.007403088443558469
+      },
+      "handcrafted_only": {
+        "mean": 0.6460013474741735,
+        "std": 0.0
+      },
+      "betas": [
+        16.0,
+        16.0,
+        16.0,
+        16.0,
+        12.0
+      ],
+      "split_sizes": {
+        "train_fit": 8559,
+        "train_threshold": 946,
+        "devel_val": 4793,
+        "devel_test": 4803
+      },
+      "devel_leak": 0.012192580241767403
+    },
+    "pooled_k420_no_develtest": {
+      "a2_alone": {
+        "mean": 0.6028299200113181,
+        "std": 0.009115365596272261
+      },
+      "k2": {
+        "mean": 0.623314996660631,
+        "std": 0.007729029906553892
+      },
+      "handcrafted_only": {
+        "mean": 0.5937508325455729,
+        "std": 0.0
+      },
+      "betas": [
+        4.0,
+        8.0,
+        1.5,
+        8.0,
+        12.0
+      ],
+      "split_sizes": {
+        "train_fit": 8558,
+        "train_threshold": 947,
+        "devel_val": 4795,
+        "devel_test": 4801
+      },
+      "devel_leak": 0.1562109212171738
+    }
+  },
+  "pooling_effect": -0.052571843330392,
+  "k_effect": 0.021771670180905867,
+  "independence_delta": -0.038282401889230155,
+  "elapsed_minutes": 43.51320290962855
+}

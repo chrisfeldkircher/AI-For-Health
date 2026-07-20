@@ -10,10 +10,10 @@ The Upper Respiratory Tract Infection Corpus (URTIC) was distributed for the Com
 
 We use \texttt{microsoft/wavlm-large} (24 Transformer layers + 1 input layer, 1024-d hidden) without any fine-tuning. For each chunk, frame-level activations from layers $L \in \{0, 1, \dots, 24\}$ are mean+std+skew+kurt-pooled along the time axis after stripping the padding mask, producing a per-chunk fp16 tensor of shape $[25, 4096]$ ($25 \cdot 4 \cdot 1024 = 4 \cdot 25 \cdot 1024$ stats). The cache lives at \path|cache/microsoft_wavlm-large/pooled/{stem}.pt| and is reused by every downstream rung — A2, A2.5, A5b, A5.5, A6, A6b, A7, A7c, A7c-v2 all consume the same cache.
 
-\subsection{Speaker-grouped sub-splits (within-partition leak fix)}
+\subsection{Historical proxy-grouped sub-splits and overlap audit}
 \label{ssec:splits}
 
-The default URTIC distribution provides train/devel/test as three top-level partitions. For internal evaluation, we sub-split train into \texttt{train\_fit} (90\,\%, used for training the head + cold probes) and \texttt{train\_threshold} (10\,\%, used for sweeping the calibration threshold $\tau$), and devel into \texttt{devel\_val} (50\,\%, used for early stopping) and \texttt{devel\_test} (50\,\%, the held-out evaluation split). The naive per-class random subsplit shared 198/210 pseudo-speakers between \texttt{train\_fit} and \texttt{train\_threshold}, and 198/206 between \texttt{devel\_val} and \texttt{devel\_test}. We replace the random subsplit with \texttt{StratifiedGroupKFold} keyed on the $k{=}210$ pseudo-speaker assignments, giving 0/0 overlap. The argmax UAR on the leak-corrected baseline (0.6361) is $\sim$0.007 lower than on the leaky variant ($\sim$0.6428). This fix is the foundation of every number we report; we call out the leak-corrected baseline as the load-bearing comparison reference. Where the 2017 baseline (0.710) was reported on a hidden test split with unknown speaker overlap properties, our devel\_test number is on a strictly speaker-disjoint subsplit. We discuss this devel-vs-hidden-test framing in Section~\ref{sec:disc}.
+The default URTIC distribution provides train/devel/test as three top-level partitions. Historically, we sub-split train into \texttt{train\_fit}/\texttt{train\_threshold} (90/10\,\%) and devel into \texttt{devel\_val}/\texttt{devel\_test} (50/50\,\%) with \texttt{StratifiedGroupKFold} keyed on Train-fitted $k{=}210$ pseudo-speaker assignments. This gives zero overlap under the same IDs used to construct the split. An independent side-local audit changes the interpretation: the Train split remains disjoint under recovered Train-local labels, but the canonical Development boundary is crossed by 201/210 Development-local groups, affecting 9,399/9,596 recordings; 27.46\,\% of recordings also have their nearest ECAPA neighbour across the boundary. These are proxy-connectivity diagnostics, not estimates or bounds of UAR optimism. A separate simplified-fusion comparison changed from $0.6317$ under the historical grouping to $0.6353$ under corrected pooled grouping, opposite to an optimism hypothesis and with high corrected-grouping variation. We therefore retract the speaker-disjoint wording but apply no numerical UAR correction. The historical Development results are pseudo-grouped partition diagnostics; load-bearing performance checks must use corrected side-local grouping or whole official sides.
 
 \subsection{Pseudo-speaker clustering (k=210 ECAPA-TDNN)}
 \label{ssec:pseudo}
@@ -21,11 +21,33 @@ The default URTIC distribution provides train/devel/test as three top-level part
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{fig1}
-\caption{ECAPA-TDNN pseudo-speaker validation. \textbf{(A)} UMAP of the 19{,}101 train$+$devel ECAPA embeddings (log-density hexbin): the embedding space is highly clustered, not a single blob. \textbf{(B)} Per-cluster tightness vs separation for the shipped $k{=}210$ partition (marker area $\propto$ cluster size, colour $=$ cluster cold rate). \textbf{(C)} Validation of the \emph{shipped} $k{=}210$ labels computed in the raw L2-normalised 192-d ECAPA space (the production clustering space; \emph{not} the optimistic UMAP-reduced space). The load-bearing number is the kNN label cohesion: a chunk's 10 nearest ECAPA neighbours share its pseudo-speaker $94\times$ above chance. Independent raw-space HDBSCAN is non-degenerate and recovers a consistent finer partition (NMI $0.77$; ARI $0.31$ reflects $406{>}210$ granularity, not disagreement). Silhouette is reported relative only. Pseudo-speakers are thus a validated speaker-correlated proxy, not ground-truth IDs.}
+\caption{ECAPA-TDNN speaker-proxy diagnostics. \textbf{(A)} UMAP of the 19{,}101 train$+$devel ECAPA embeddings is descriptive only; clustering and validation use raw L2-normalised 192-d embeddings. \textbf{(B)} Tightness and separation of the historical Train-fitted $k{=}210$ map. \textbf{(C)} The pooled shipped-map comparison (all-recording ARI $0.309$) is a held-side fragmentation diagnostic, not validation of the shipped assignments. In side-local fits, all-recording KMeans--HDBSCAN ARI is $0.856/0.829/0.879$ on train/devel/test; excluding HDBSCAN noise gives $0.930/0.929/0.944$ at $97.28/96.69/97.59\,\%$ coverage. Thus ECAPA contains reproducible speaker-correlated structure, but its proxy IDs remain inferred and must be fitted within the side where they are used.}
 \label{fig:ecapa}
 \end{figure*}
 
-Since URTIC's 4students release omits speaker IDs, we cluster ECAPA-TDNN embeddings on train chunks into $k{=}210$ pseudo-speaker clusters via $k$-means and assign devel/test chunks by nearest centroid (validated in Fig.~\ref{fig:ecapa}). The pseudo-speaker assignments serve three purposes: (i) the group key for \texttt{StratifiedGroupKFold} sub-splitting; (ii) the target labels for the speaker probe (Section~\ref{ssec:probes}); and (iii) the masked-positive partner pool for the A6 supervised-contrastive variant (Section~\ref{sec:deconf}). $k{=}210$ approximates the corpus's true speaker count; a coarser $k{=}100$ and finer $k{=}420$ are also tested for the disc-ceiling diagnostics in M14 (Section~\ref{sec:deconf}).
+\begin{table*}[t]
+\centering\small
+\caption{Reconciled raw-space ECAPA speaker-proxy diagnostics. KMeans stability
+is the mean ARI over all 15 pairs from six seeds, not a single seed pair.
+Non-noise ARI excludes HDBSCAN's unassigned points and is therefore reported
+with coverage. The HDBSCAN cluster count is compared with the chosen $k=210$
+prior, not a known true side-level speaker count. The final row deliberately
+retains the disputed $0.309$ as a labeled held-side fragmentation diagnostic.}
+\label{tab:ecapa_reconciliation}
+\begin{tabular}{lrrrrrr}
+\toprule
+side & KMeans seed ARI & KM--HDB all & KM--HDB non-noise & coverage & HDB $k$ & shipped--local \\
+\midrule
+train & 0.889 & 0.856 & 0.930 & 97.28\% & 204 & 1.000 \\
+devel & 0.897 & 0.829 & 0.929 & 96.69\% & 205 & 0.200 \\
+test  & 0.888 & 0.879 & 0.944 & 97.59\% & 205 & 0.191 \\
+\midrule
+\multicolumn{7}{l}{Pooled Train+Development shipped-$k210$ versus pooled HDBSCAN, all recordings: ARI $=0.309$.} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Since URTIC's 4students release omits speaker IDs, the historical experiments cluster Train ECAPA-TDNN embeddings into $k{=}210$ pseudo-speakers and assign devel/test chunks by nearest Train centroid. Those assignments served as split keys, probe targets and masked-positive pools, but the side-local audit shows that the held-side assignments fragment Development and Test structure. As external calibration of the representation and clustering recipe, the same ECAPA--KMeans pipeline reaches ARI $0.963$ on 741 MLS-German recordings from 56 known speakers when fit at the known $k=56$; this does not supply URTIC ground truth. Corrected analyses fit proxy groups independently within each official side and prohibit cold labels from selecting the embedding, grouping method or $k$. These remain speaker-correlated proxies, not ground-truth identities.
 
 \subsection{Speaker probe substrates}
 \label{ssec:probes}

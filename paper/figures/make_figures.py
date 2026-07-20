@@ -8,6 +8,7 @@ No model training, no cache reads. Reads:
   paper_data/shadow_distributions_long.csv
   paper_data/layer_audit_wavlm_grouped.csv
   results/pseudo_speaker_ecapa_diagnostics.json
+  results/speaker_ari_reconciliation.json
 
 Writes paper/figures/fig{1,2,3,4} as PDF (for the LaTeX includegraphics)
 plus PNG (for visual inspection at print size). Datascience env.
@@ -56,6 +57,7 @@ def fig1():
     u = pd.read_csv(EDA / "umap_coords_ecapa_2d.csv")
     cs = pd.read_csv(EDA / "pseudo_speaker_cluster_stats.csv")
     diag = json.loads((RES / "pseudo_speaker_ecapa_diagnostics.json").read_text())
+    recon = json.loads((RES / "speaker_ari_reconciliation.json").read_text())
     knn = diag["knn_label_cohesion"]; hdb = diag["hdbscan"]
     agg = diag["agglomerative_k_matched"]
     sil = diag["silhouette_shipped_labels_RELATIVE"]
@@ -90,25 +92,30 @@ def fig1():
     cbB = fig.colorbar(sb, ax=axB, fraction=0.046, pad=0.02)
     cbB.set_label("cluster cold rate", fontsize=7)
 
-    # (C) raw-L2 validation numbers on their own clean axes (no data overlap)
+    # (C) corrected raw-L2 reconciliation (no data overlap)
     axC.axis("off")
-    axC.set_title("(C) raw-L2 192-D validation")
+    axC.set_title("(C) raw-L2 192-D reconciliation")
+    sides = recon["like_for_like_side_local_results"]
+    all_ari = [sides[s]["all_points"]["ARI"] for s in ("train", "devel", "test")]
+    nz_ari = [sides[s]["hdbscan_nonnoise_only"]["ARI"] for s in ("train", "devel", "test")]
+    cov = [sides[s]["nonnoise_coverage"] for s in ("train", "devel", "test")]
+    hdb_k = [sides[s]["hdbscan_nonnoise_clusters"] for s in ("train", "devel", "test")]
+    pooled = recon["pooled_hdbscan"]["comparisons"]["historical_trainfit_k210_labels"]["all_train_plus_development"]["ARI"]
     lines = [
-        ("Validated: SHIPPED k=210 labels", "0.0", True),
-        ("(production cluster.py space;", "0.0", False),
-        ("NOT the optimistic UMAP-32)", "0.0", False),
+        ("Side-local KM--HDB ARI", "0.0", True),
+        ("  train / devel / test", "0.0", False),
+        ("  all: " + " / ".join(f"{x:.3f}" for x in all_ari), "0.0", False),
+        ("  non-noise: " + " / ".join(f"{x:.3f}" for x in nz_ari), "0.0", False),
+        ("  coverage: " + " / ".join(f"{100*x:.1f}%" for x in cov), "0.0", False),
         ("", "", False),
-        (f"kNN label cohesion (k=10)", "0.0", True),
-        (f"  {knn['mean_same_pseudo_speaker']:.3f}  vs chance {knn['chance_baseline_sum_p2']:.4f}", "0.0", False),
-        (f"  = {knn['lift_over_chance']:.0f}x  (load-bearing)", "0.0", False),
+        ("Historical pooled mismatch", "0.0", True),
+        (f"  shipped--HDB all: {pooled:.3f}", "0.0", False),
+        ("  held-side fragmentation", "0.0", False),
         ("", "", False),
-        (f"HDBSCAN (independent)", "0.0", True),
-        (f"  {hdb['n_clusters']} clusters, noise {hdb['noise_frac']*100:.1f}%", "0.0", False),
-        (f"  non-degenerate; NMI {hdb['nmi_vs_shipped']:.2f}", "0.0", False),
-        (f"  (ARI {hdb['ari_vs_shipped']:.2f}: 406>210 granularity)", "0.0", False),
-        ("", "", False),
-        (f"Agglomerative@210  NMI {agg['nmi_vs_shipped']:.2f}", "0.0", False),
-        (f"Silhouette {sil['value']:.3f}  (relative only)", "0.0", False),
+        ("HDB non-noise clusters", "0.0", True),
+        ("  " + " / ".join(str(x) for x in hdb_k), "0.0", False),
+        ("  k=210 is a prior, not truth", "0.0", False),
+        ("  UMAP not used to cluster", "0.0", False),
     ]
     y = 0.97
     for s, _, bold in lines:
@@ -119,8 +126,7 @@ def fig1():
     _save(fig, "fig1")
     print(f"  CHECK kNN={knn['mean_same_pseudo_speaker']:.4f} chance={knn['chance_baseline_sum_p2']:.4f}"
           f" lift={knn['lift_over_chance']:.1f} | HDBSCAN n={hdb['n_clusters']} noise={hdb['noise_frac']:.4f}"
-          f" NMI={hdb['nmi_vs_shipped']:.4f} ARI={hdb['ari_vs_shipped']:.4f} | sil={sil['value']:.4f}"
-          f" | branch={diag['narrative_branch']}")
+          f" NMI={hdb['nmi_vs_shipped']:.4f} ARI={hdb['ari_vs_shipped']:.4f} | sil={sil['value']:.4f}")
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +150,7 @@ def fig2():
         ax.annotate(f"{y:.3f}", (x, y), textcoords="offset points",
                     xytext=(0, 7), ha="center", fontsize=6.2)
 
-    # ensemble / multi-K fork: canonical hollow + shadow filled
+    # ensemble / multi-K fork: canonical historical boundary + replayed boundaries
     xe = len(ladder)
     canon_ml = cum.loc["A5b_K2_mean_logit_ens", "devel_test_uar"]   # 0.709
     canon_mk = cum.loc["A5b_multiK", "devel_test_uar"]              # 0.7111
@@ -153,10 +159,10 @@ def fig2():
 
     ax.scatter([xe, xe + 1], [canon_ml, canon_mk], facecolors="none",
                edgecolors="#c00000", s=55, lw=1.4, zorder=5,
-               label="canonical split (single partition)")
+               label="canonical historical boundary")
     ax.errorbar([xe, xe + 1], [sh_ml_m, sh_mk_m], yerr=[sh_ml_s, sh_mk_s],
                 fmt="s", color="#c00000", capsize=2.5, ms=5, lw=1.2,
-                label="shadow mean $\\pm\\sigma$ (10 partitions)")
+                label="replay mean $\\pm\\sigma$ (10 old boundaries)")
     for x, yc, ys_, lab in [(xe, canon_ml, sh_ml_m, "K=2 ens"),
                             (xe + 1, canon_mk, sh_mk_m, "multi-K")]:
         ax.annotate(f"{yc:.3f}", (x, yc), textcoords="offset points",
@@ -165,12 +171,12 @@ def fig2():
                     xytext=(0, -12), ha="center", fontsize=6.2, color="#c00000")
 
     ax.axhline(0.710, ls="--", color="0.4", lw=1.0)
-    ax.text(0.15, 0.7105, "2017 hidden-test baseline 0.710", fontsize=6.0,
+    ax.text(0.15, 0.7105, "2017 hidden test 0.710 (not comparable)", fontsize=6.0,
             color="0.3", va="bottom")
     ax.set_xticks(list(xs) + [xe, xe + 1])
     ax.set_xticklabels(labels + ["K=2 ens", "multi-K"], fontsize=7)
     ax.set_ylabel("devel_test UAR")
-    ax.set_title("Cumulative audited stack (shadow-first)")
+    ax.set_title("Historical cumulative stack")
     ax.set_ylim(0.62, 0.725)
     ax.legend(loc="lower right", fontsize=5.6, framealpha=0.92)
     _save(fig, "fig2")
@@ -229,14 +235,14 @@ def fig4():
         canon = sub[sub.partition == "canonical"]
         xj = i + (rng.random(len(shadow)) - 0.5) * 0.22
         ax.scatter(xj, shadow.devel_test_uar, s=22, alpha=0.7, color="#1f4e79",
-                   label="shadow split" if i == 0 else None, zorder=3)
+                   label="replayed old boundary" if i == 0 else None, zorder=3)
         sm, ss = sh.loc[m, "shadow_mean"], sh.loc[m, "shadow_std"]
         ax.errorbar(i, sm, yerr=ss, fmt="s", color="#c00000", ms=7, capsize=4,
                     lw=1.6, zorder=4,
-                    label="shadow mean $\\pm\\sigma$" if i == 0 else None)
+                    label="replay mean $\\pm\\sigma$" if i == 0 else None)
         ax.scatter([i], canon.devel_test_uar, marker="*", s=170,
                    facecolors="none", edgecolors="#c00000", lw=1.6, zorder=5,
-                   label="canonical split" if i == 0 else None)
+                   label="canonical historical boundary" if i == 0 else None)
         # seed-23 annotation (low outlier)
         s23 = shadow[shadow.split_seed == 23]
         if len(s23):
@@ -247,12 +253,12 @@ def fig4():
                         arrowprops=dict(arrowstyle="->", color="0.5", lw=0.6))
 
     ax.axhline(0.710, ls="--", color="0.4", lw=1.0)
-    ax.text(-0.45, 0.7108, "2017 hidden-test baseline 0.710", fontsize=6.2,
+    ax.text(-0.45, 0.7108, "2017 hidden test 0.710 (reference only)", fontsize=6.2,
             color="0.3", va="bottom")
     ax.set_xticks(range(len(methods)))
     ax.set_xticklabels([nice[m] for m in methods])
     ax.set_ylabel("devel_test UAR")
-    ax.set_title("Shadow-split robustness: canonical is one partition in a distribution")
+    ax.set_title("Historical pseudo-group partition sensitivity")
     ax.set_xlim(-0.5, len(methods) - 0.4)
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4,
               fontsize=6.4, framealpha=0.92)

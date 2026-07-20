@@ -28,7 +28,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-ROOT = Path(__file__).resolve().parent
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "model").is_dir() and (p / "cache").is_dir())
 EMB_DIR = ROOT / "cache" / "ecapa-voxceleb"
 OUT = EMB_DIR / "ecapa_embeddings.npz"
 

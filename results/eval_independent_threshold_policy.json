@@ -1,0 +1,670 @@
+{
+  "protocol": {
+    "evaluation_independence": "all model and threshold choices use fitting side only",
+    "threshold_estimation": "median of six 5-fold side-local speaker-proxy-disjoint OOF UAR optima",
+    "grouping": {
+      "train": {
+        "construction": "KMeans(k=210, n_init=10, seed=42) on train ECAPA only",
+        "n_groups": 210,
+        "mixed_label_groups": 15
+      },
+      "devel": {
+        "construction": "KMeans(k=210, n_init=10, seed=42) on devel ECAPA only",
+        "n_groups": 210,
+        "mixed_label_groups": 9
+      }
+    },
+    "fixed_architecture": "G4 and G9 balanced LR; train-logit zscore; equal average",
+    "rate43_status": "diagnostic only; UAR does not imply a target predicted-cold prevalence"
+  },
+  "directions": {
+    "train_to_devel": {
+      "fit_side": "train",
+      "eval_side": "devel",
+      "threshold_free_auc": {
+        "G4": 0.69930669450258,
+        "G9_CQT": 0.7332090164855201,
+        "fusion": 0.7710053707412983,
+        "fusion_minus_G9": 0.03779635425577821
+      },
+      "standalone_raw_threshold_zero": {
+        "G4": {
+          "uar": 0.6422383484639265,
+          "recall_C": 0.6785361028684471,
+          "recall_NC": 0.6059405940594059,
+          "predicted_cold_rate": 0.4240308461859108,
+          "threshold": 0.0
+        },
+        "G9_CQT": {
+          "uar": 0.6416875637642312,
+          "recall_C": 0.4381800197823937,
+          "recall_NC": 0.8451951077460688,
+          "predicted_cold_rate": 0.1846602751146311,
+          "threshold": 0.0
+        }
+      },
+      "fusion_fixed_zero": {
+        "uar": 0.6897469132495375,
+        "recall_C": 0.8288822947576657,
+        "recall_NC": 0.5506115317414094,
+        "predicted_cold_rate": 0.4893705710712797,
+        "threshold": 0.0
+      },
+      "fit_side_oof_thresholds": {
+        "values": [
+          0.11896094894877357,
+          -0.3116054337930736,
+          0.09389340453295078,
+          0.24462644880242074,
+          0.14226869650150342,
+          0.027680937533151484
+        ],
+        "mean": 0.05263750042095441,
+        "std": 0.19198442760608955,
+        "median_policy_threshold": 0.10642717674086218,
+        "seed_rows": [
+          {
+            "seed": 42,
+            "oof_at_zero": {
+              "uar": 0.6124366616539537,
+              "recall_C": 0.7061855670103093,
+              "recall_NC": 0.5186877562975981,
+              "predicted_cold_rate": 0.5042609153077328,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.621226423640679,
+              "recall_C": 0.6649484536082474,
+              "recall_NC": 0.5775043936731107,
+              "predicted_cold_rate": 0.4472382956338769,
+              "threshold": 0.11896094894877357
+            },
+            "selected_threshold": 0.11896094894877357,
+            "roc_selected_uar_check": 0.621226423640679,
+            "eval_at_selected_threshold": {
+              "uar": 0.6962638121029767,
+              "recall_C": 0.7823936696340257,
+              "recall_NC": 0.6101339545719278,
+              "predicted_cold_rate": 0.43122134222592745,
+              "threshold": 0.11896094894877357
+            },
+            "rate43_threshold_diagnostic": 0.15297757448628138,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6973772486342718,
+              "recall_C": 0.7685459940652819,
+              "recall_NC": 0.6262085032032615,
+              "predicted_cold_rate": 0.4153814089203835,
+              "threshold": 0.15297757448628138
+            }
+          },
+          {
+            "seed": 1,
+            "oof_at_zero": {
+              "uar": 0.6273500866655796,
+              "recall_C": 0.734020618556701,
+              "recall_NC": 0.5206795547744582,
+              "predicted_cold_rate": 0.5053129931614939,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6332928692648223,
+              "recall_C": 0.8907216494845361,
+              "recall_NC": 0.3758640890451084,
+              "predicted_cold_rate": 0.6513413992635455,
+              "threshold": -0.3116054337930736
+            },
+            "selected_threshold": -0.3116054337930736,
+            "roc_selected_uar_check": 0.6332928692648222,
+            "eval_at_selected_threshold": {
+              "uar": 0.6533948926399011,
+              "recall_C": 0.9070227497527201,
+              "recall_NC": 0.3997670355270821,
+              "predicted_cold_rate": 0.6325552313463944,
+              "threshold": -0.3116054337930736
+            },
+            "rate43_threshold_diagnostic": 0.15378631949632335,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6974937308707306,
+              "recall_C": 0.7685459940652819,
+              "recall_NC": 0.6264414676761794,
+              "predicted_cold_rate": 0.41517298874531056,
+              "threshold": 0.15378631949632335
+            }
+          },
+          {
+            "seed": 2,
+            "oof_at_zero": {
+              "uar": 0.6367456017973294,
+              "recall_C": 0.7525773195876289,
+              "recall_NC": 0.5209138840070299,
+              "predicted_cold_rate": 0.5069963177275119,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6415164362630528,
+              "recall_C": 0.7144329896907217,
+              "recall_NC": 0.5685998828353838,
+              "predicted_cold_rate": 0.4602840610205155,
+              "threshold": 0.09389340453295078
+            },
+            "selected_threshold": 0.09389340453295078,
+            "roc_selected_uar_check": 0.6415164362630528,
+            "eval_at_selected_threshold": {
+              "uar": 0.6923587192023444,
+              "recall_C": 0.7883283877349159,
+              "recall_NC": 0.5963890506697729,
+              "predicted_cold_rate": 0.4441433930804502,
+              "threshold": 0.09389340453295078
+            },
+            "rate43_threshold_diagnostic": 0.15171073421774073,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6972607663978128,
+              "recall_C": 0.7685459940652819,
+              "recall_NC": 0.6259755387303436,
+              "predicted_cold_rate": 0.41558982909545644,
+              "threshold": 0.15171073421774073
+            }
+          },
+          {
+            "seed": 3,
+            "oof_at_zero": {
+              "uar": 0.6172977853471757,
+              "recall_C": 0.7268041237113402,
+              "recall_NC": 0.5077914469830112,
+              "predicted_cold_rate": 0.516149395055234,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6262904716177776,
+              "recall_C": 0.6216494845360825,
+              "recall_NC": 0.6309314586994728,
+              "predicted_cold_rate": 0.3948448185165702,
+              "threshold": 0.24462644880242074
+            },
+            "selected_threshold": 0.24462644880242074,
+            "roc_selected_uar_check": 0.6262904716177776,
+            "eval_at_selected_threshold": {
+              "uar": 0.6986475502149622,
+              "recall_C": 0.731948565776459,
+              "recall_NC": 0.6653465346534654,
+              "predicted_cold_rate": 0.3765110462692789,
+              "threshold": 0.24462644880242074
+            },
+            "rate43_threshold_diagnostic": 0.17440438946813075,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6987789527774562,
+              "recall_C": 0.7606330365974283,
+              "recall_NC": 0.636924868957484,
+              "predicted_cold_rate": 0.4049604001667361,
+              "threshold": 0.17440438946813075
+            }
+          },
+          {
+            "seed": 5,
+            "oof_at_zero": {
+              "uar": 0.6365112725647576,
+              "recall_C": 0.7525773195876289,
+              "recall_NC": 0.5204452255418863,
+              "predicted_cold_rate": 0.5074171488690163,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6415173421750342,
+              "recall_C": 0.6989690721649484,
+              "recall_NC": 0.5840656121851201,
+              "predicted_cold_rate": 0.4448185165702262,
+              "threshold": 0.14226869650150342
+            },
+            "selected_threshold": 0.14226869650150342,
+            "roc_selected_uar_check": 0.6415173421750342,
+            "eval_at_selected_threshold": {
+              "uar": 0.697753367586715,
+              "recall_C": 0.7734915924826904,
+              "recall_NC": 0.6220151426907397,
+              "predicted_cold_rate": 0.4196540225093789,
+              "threshold": 0.14226869650150342
+            },
+            "rate43_threshold_diagnostic": 0.17297919253917196,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6983712649498499,
+              "recall_C": 0.7606330365974283,
+              "recall_NC": 0.6361094933022714,
+              "predicted_cold_rate": 0.4056898707794915,
+              "threshold": 0.17297919253917196
+            }
+          },
+          {
+            "seed": 20260720,
+            "oof_at_zero": {
+              "uar": 0.6075972798482899,
+              "recall_C": 0.7144329896907217,
+              "recall_NC": 0.5007615700058582,
+              "predicted_cold_rate": 0.5211993687532878,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6107377747178084,
+              "recall_C": 0.7061855670103093,
+              "recall_NC": 0.5152899824253075,
+              "predicted_cold_rate": 0.5073119410836402,
+              "threshold": 0.027680937533151484
+            },
+            "selected_threshold": 0.027680937533151484,
+            "roc_selected_uar_check": 0.6107377747178084,
+            "eval_at_selected_threshold": {
+              "uar": 0.6921387164026229,
+              "recall_C": 0.820969337289812,
+              "recall_NC": 0.5633080955154339,
+              "predicted_cold_rate": 0.4771779908295123,
+              "threshold": 0.027680937533151484
+            },
+            "rate43_threshold_diagnostic": 0.19105432461131341,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6970070056403441,
+              "recall_C": 0.751730959446093,
+              "recall_NC": 0.6422830518345952,
+              "predicted_cold_rate": 0.3992288453522301,
+              "threshold": 0.19105432461131341
+            }
+          }
+        ]
+      },
+      "fusion_oof_median_threshold": {
+        "uar": 0.6948058254944014,
+        "recall_C": 0.7863501483679525,
+        "recall_NC": 0.6032615026208503,
+        "predicted_cold_rate": 0.4377865777407253,
+        "threshold": 0.10642717674086218
+      },
+      "fusion_rate43_diagnostic": {
+        "uar": 0.6984275474152408,
+        "recall_C": 0.7645895153313551,
+        "recall_NC": 0.6322655794991264,
+        "predicted_cold_rate": 0.409545644018341,
+        "threshold": 0.16338275601774765
+      },
+      "rate43_median_threshold": 0.16338275601774765,
+      "eval_uar_across_seed_specific_oof_thresholds": [
+        0.6962638121029767,
+        0.6533948926399011,
+        0.6923587192023444,
+        0.6986475502149622,
+        0.697753367586715,
+        0.6921387164026229
+      ],
+      "oof_median_minus_fixed_zero_uar": 0.005058912244863878,
+      "proxy_cluster_uncertainty": {
+        "eval_groups": 210,
+        "fusion_oof_threshold_vs_G9_raw_zero": {
+          "mean_delta": 0.05260156997287528,
+          "paired_95_ci": [
+            -0.001239536431111923,
+            0.10705677320783483
+          ],
+          "probability_positive": 0.9722
+        },
+        "fusion_oof_threshold_vs_fusion_fixed_zero": {
+          "mean_delta": 0.005138619088627153,
+          "paired_95_ci": [
+            -0.006445016961972746,
+            0.01621454883964261
+          ],
+          "probability_positive": 0.8123666666666667
+        },
+        "fusion_fixed_zero_vs_G9_raw_zero": {
+          "mean_delta": 0.04746295088424813,
+          "paired_95_ci": [
+            -0.011184739114239483,
+            0.10698473142961985
+          ],
+          "probability_positive": 0.9419
+        }
+      }
+    },
+    "devel_to_train": {
+      "fit_side": "devel",
+      "eval_side": "train",
+      "threshold_free_auc": {
+        "G4": 0.648796405341257,
+        "G9_CQT": 0.6859308245610857,
+        "fusion": 0.7187985191358808,
+        "fusion_minus_G9": 0.0328676945747951
+      },
+      "standalone_raw_threshold_zero": {
+        "G4": {
+          "uar": 0.6132257109899202,
+          "recall_C": 0.6371134020618556,
+          "recall_NC": 0.5893380199179847,
+          "predicted_cold_rate": 0.4337716991057338,
+          "threshold": 0.0
+        },
+        "G9_CQT": {
+          "uar": 0.6678558271278363,
+          "recall_C": 0.5010309278350515,
+          "recall_NC": 0.834680726420621,
+          "predicted_cold_rate": 0.19957916885849553,
+          "threshold": 0.0
+        }
+      },
+      "fusion_fixed_zero": {
+        "uar": 0.646809679971494,
+        "recall_C": 0.7587628865979381,
+        "recall_NC": 0.5348564733450498,
+        "predicted_cold_rate": 0.4951078379800105,
+        "threshold": 0.0
+      },
+      "fit_side_oof_thresholds": {
+        "values": [
+          0.3283158319323426,
+          0.27383525293504324,
+          0.3412538358915131,
+          0.4037257433028784,
+          0.2694920773662401,
+          0.3587599383043814
+        ],
+        "mean": 0.3292304466220665,
+        "std": 0.05138917933009182,
+        "median_policy_threshold": 0.3347848339119278,
+        "seed_rows": [
+          {
+            "seed": 42,
+            "oof_at_zero": {
+              "uar": 0.6301501192185897,
+              "recall_C": 0.7438180019782393,
+              "recall_NC": 0.51648223645894,
+              "predicted_cold_rate": 0.5109420591913297,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6412460603714412,
+              "recall_C": 0.6241345202769535,
+              "recall_NC": 0.658357600465929,
+              "predicted_cold_rate": 0.3714047519799917,
+              "threshold": 0.3283158319323426
+            },
+            "selected_threshold": 0.3283158319323426,
+            "roc_selected_uar_check": 0.6412460603714412,
+            "eval_at_selected_threshold": {
+              "uar": 0.6625994238399797,
+              "recall_C": 0.6278350515463917,
+              "recall_NC": 0.6973637961335677,
+              "predicted_cold_rate": 0.33582325092056814,
+              "threshold": 0.3283158319323426
+            },
+            "rate43_threshold_diagnostic": 0.19760389114798554,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6574179092759348,
+              "recall_C": 0.6762886597938145,
+              "recall_NC": 0.6385471587580551,
+              "predicted_cold_rate": 0.3935823250920568,
+              "threshold": 0.19760389114798554
+            }
+          },
+          {
+            "seed": 1,
+            "oof_at_zero": {
+              "uar": 0.6272923871196685,
+              "recall_C": 0.751730959446093,
+              "recall_NC": 0.502853814793244,
+              "predicted_cold_rate": 0.5239683201333889,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6460891175520065,
+              "recall_C": 0.6646884272997032,
+              "recall_NC": 0.6274898078043099,
+              "predicted_cold_rate": 0.4032930387661526,
+              "threshold": 0.27383525293504324
+            },
+            "selected_threshold": 0.27383525293504324,
+            "roc_selected_uar_check": 0.6460891175520065,
+            "eval_at_selected_threshold": {
+              "uar": 0.6593293835570936,
+              "recall_C": 0.6474226804123712,
+              "recall_NC": 0.671236086701816,
+              "predicted_cold_rate": 0.36128353498158866,
+              "threshold": 0.27383525293504324
+            },
+            "rate43_threshold_diagnostic": 0.21073579691492023,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6582265867048358,
+              "recall_C": 0.6721649484536083,
+              "recall_NC": 0.6442882249560633,
+              "predicted_cold_rate": 0.3880063124671226,
+              "threshold": 0.21073579691492023
+            }
+          },
+          {
+            "seed": 2,
+            "oof_at_zero": {
+              "uar": 0.6292104267155638,
+              "recall_C": 0.7596439169139466,
+              "recall_NC": 0.49877693651718114,
+              "predicted_cold_rate": 0.5284493538974573,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6447977892570196,
+              "recall_C": 0.6261127596439169,
+              "recall_NC": 0.6634828188701223,
+              "predicted_cold_rate": 0.36702792830345976,
+              "threshold": 0.3412538358915131
+            },
+            "selected_threshold": 0.3412538358915131,
+            "roc_selected_uar_check": 0.6447977892570196,
+            "eval_at_selected_threshold": {
+              "uar": 0.6627872495908298,
+              "recall_C": 0.6216494845360825,
+              "recall_NC": 0.703925014645577,
+              "predicted_cold_rate": 0.32930036822724884,
+              "threshold": 0.3412538358915131
+            },
+            "rate43_threshold_diagnostic": 0.20668355553343448,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6577461513839316,
+              "recall_C": 0.6731958762886598,
+              "recall_NC": 0.6422964264792033,
+              "predicted_cold_rate": 0.3899000526038927,
+              "threshold": 0.20668355553343448
+            }
+          },
+          {
+            "seed": 3,
+            "oof_at_zero": {
+              "uar": 0.6256932046844063,
+              "recall_C": 0.7467853610286844,
+              "recall_NC": 0.5046010483401281,
+              "predicted_cold_rate": 0.5218841183826595,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6422775215206982,
+              "recall_C": 0.599406528189911,
+              "recall_NC": 0.6851485148514852,
+              "predicted_cold_rate": 0.34483117965819093,
+              "threshold": 0.4037257433028784
+            },
+            "selected_threshold": 0.4037257433028784,
+            "roc_selected_uar_check": 0.6422775215206981,
+            "eval_at_selected_threshold": {
+              "uar": 0.6644991212653779,
+              "recall_C": 0.6,
+              "recall_NC": 0.7289982425307557,
+              "predicted_cold_rate": 0.30457653866386114,
+              "threshold": 0.4037257433028784
+            },
+            "rate43_threshold_diagnostic": 0.2118376617967592,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6585194982455504,
+              "recall_C": 0.6721649484536083,
+              "recall_NC": 0.6448740480374927,
+              "predicted_cold_rate": 0.387480273540242,
+              "threshold": 0.2118376617967592
+            }
+          },
+          {
+            "seed": 5,
+            "oof_at_zero": {
+              "uar": 0.6264483805685508,
+              "recall_C": 0.7507418397626113,
+              "recall_NC": 0.5021549213744904,
+              "predicted_cold_rate": 0.5244893705710713,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6405887595217892,
+              "recall_C": 0.6577645895153313,
+              "recall_NC": 0.6234129295282469,
+              "predicted_cold_rate": 0.40621092121717384,
+              "threshold": 0.2694920773662401
+            },
+            "selected_threshold": 0.2694920773662401,
+            "roc_selected_uar_check": 0.6405887595217892,
+            "eval_at_selected_threshold": {
+              "uar": 0.6605242814608132,
+              "recall_C": 0.6505154639175258,
+              "recall_NC": 0.6705330990041007,
+              "predicted_cold_rate": 0.3622304050499737,
+              "threshold": 0.2694920773662401
+            },
+            "rate43_threshold_diagnostic": 0.22140076205230297,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6591992342024049,
+              "recall_C": 0.6690721649484536,
+              "recall_NC": 0.6493263034563562,
+              "predicted_cold_rate": 0.38316675433982117,
+              "threshold": 0.22140076205230297
+            }
+          },
+          {
+            "seed": 20260720,
+            "oof_at_zero": {
+              "uar": 0.633174740060845,
+              "recall_C": 0.751730959446093,
+              "recall_NC": 0.514618520675597,
+              "predicted_cold_rate": 0.513443101292205,
+              "threshold": 0.0
+            },
+            "oof_selected": {
+              "uar": 0.6527748638016184,
+              "recall_C": 0.6300692383778437,
+              "recall_NC": 0.6754804892253932,
+              "predicted_cold_rate": 0.3567111296373489,
+              "threshold": 0.3587599383043814
+            },
+            "selected_threshold": 0.3587599383043814,
+            "roc_selected_uar_check": 0.6527748638016184,
+            "eval_at_selected_threshold": {
+              "uar": 0.6614990427530061,
+              "recall_C": 0.6113402061855671,
+              "recall_NC": 0.7116578793204452,
+              "predicted_cold_rate": 0.32130457653866384,
+              "threshold": 0.3587599383043814
+            },
+            "rate43_threshold_diagnostic": 0.19130980866105504,
+            "eval_at_rate43_threshold_diagnostic": {
+              "uar": 0.6574411610167956,
+              "recall_C": 0.6793814432989691,
+              "recall_NC": 0.6355008787346221,
+              "predicted_cold_rate": 0.39663335086796425,
+              "threshold": 0.19130980866105504
+            }
+          }
+        ]
+      },
+      "fusion_oof_median_threshold": {
+        "uar": 0.6626347544072617,
+        "recall_C": 0.6247422680412371,
+        "recall_NC": 0.7005272407732864,
+        "predicted_cold_rate": 0.3326670173592846,
+        "threshold": 0.3347848339119278
+      },
+      "fusion_rate43_diagnostic": {
+        "uar": 0.6579336751641212,
+        "recall_C": 0.6721649484536083,
+        "recall_NC": 0.6437024018746339,
+        "predicted_cold_rate": 0.38853235139400316,
+        "threshold": 0.20870967622417735
+      },
+      "rate43_median_threshold": 0.20870967622417735,
+      "eval_uar_across_seed_specific_oof_thresholds": [
+        0.6625994238399797,
+        0.6593293835570936,
+        0.6627872495908298,
+        0.6644991212653779,
+        0.6605242814608132,
+        0.6614990427530061
+      ],
+      "oof_median_minus_fixed_zero_uar": 0.01582507443576775,
+      "proxy_cluster_uncertainty": {
+        "eval_groups": 210,
+        "fusion_oof_threshold_vs_G9_raw_zero": {
+          "mean_delta": -0.0056036195288435625,
+          "paired_95_ci": [
+            -0.040280647063044,
+            0.029893323474466802
+          ],
+          "probability_positive": 0.3742
+        },
+        "fusion_oof_threshold_vs_fusion_fixed_zero": {
+          "mean_delta": 0.016382961293426358,
+          "paired_95_ci": [
+            -0.01389985476253155,
+            0.04657529698493399
+          ],
+          "probability_positive": 0.8569333333333333
+        },
+        "fusion_fixed_zero_vs_G9_raw_zero": {
+          "mean_delta": -0.021986580822269917,
+          "paired_95_ci": [
+            -0.08387900314771121,
+            0.041235880071206515
+          ],
+          "probability_positive": 0.24686666666666668
+        }
+      }
+    }
+  },
+  "bidirectional_summary": {
+    "fixed_zero_mean_uar": 0.6682782966105157,
+    "oof_median_threshold_mean_uar": 0.6787202899508316,
+    "oof_median_minus_zero_mean_uar": 0.010441993340315814,
+    "rate43_diagnostic_mean_uar": 0.678180611289681,
+    "directional_oof_median_minus_zero": [
+      0.005058912244863878,
+      0.01582507443576775
+    ],
+    "proxy_cluster_uncertainty": {
+      "fusion_oof_threshold_vs_G9_raw_zero": {
+        "mean_delta": 0.023498975222015862,
+        "paired_95_ci": [
+          -0.008578281115877967,
+          0.055647896816189445
+        ],
+        "probability_positive": 0.9216333333333333
+      },
+      "fusion_oof_threshold_vs_fusion_fixed_zero": {
+        "mean_delta": 0.010760790191026754,
+        "paired_95_ci": [
+          -0.005298955020211213,
+          0.026993504490960676
+        ],
+        "probability_positive": 0.9051
+      },
+      "fusion_fixed_zero_vs_G9_raw_zero": {
+        "mean_delta": 0.012738185030989106,
+        "paired_95_ci": [
+          -0.030525711492606293,
+          0.05568783478092636
+        ],
+        "probability_positive": 0.7176333333333333
+      }
+    }
+  },
+  "recommendation": "oof_median_threshold_transfers_in_both_directions",
+  "limitations": [
+    "True speaker IDs are unavailable; side-local ECAPA clusters are proxies.",
+    "Development has historical selection exposure, so this remains a diagnostic rather than pristine model selection.",
+    "A threshold selected to maximize finite-sample OOF UAR can itself overfit; median aggregation reduces but does not remove that risk."
+  ]
+}

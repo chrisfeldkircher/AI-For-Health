@@ -1,0 +1,46 @@
+{
+  "fit": {
+    "chunks": 19101,
+    "cold_chunks": 1981,
+    "train_chunks": 9505,
+    "development_chunks": 9596
+  },
+  "test": {
+    "chunks": 9551,
+    "cqt_extraction": {
+      "needed": 9551,
+      "previously_cached": 0,
+      "written": 9551,
+      "n_jobs": 12
+    }
+  },
+  "candidates": {
+    "G4_only_monolithic": {
+      "cold_rate": 0.4329389592712805
+    },
+    "G4_G9_monolithic": {
+      "cold_rate": 0.5136634907339546
+    },
+    "G4_only_ensemble10": {
+      "cold_rate": 0.43252015495759605,
+      "agreement_with_monolithic": 0.9995811956863155,
+      "score_correlation": 0.9999991670849527
+    },
+    "G4_G9_ensemble10": {
+      "cold_rate": 0.5150246047534289,
+      "agreement_with_monolithic": 0.9946602450005235,
+      "score_correlation": 0.9997008380320811
+    }
+  },
+  "old_submission_comparison": {
+    "old_cold_rate": 0.4317872474086483,
+    "agreement_old_vs_G4_G9_monolithic": 0.8228457753114857,
+    "agreement_old_vs_G4_only": 0.8713223746204586
+  },
+  "performance_warning": "No Test UAR is computed or inferred; Test labels are unavailable.",
+  "files": {
+    "monolithic_fusion": "E:\\Development\\Research\\Advanced AI in Health\\results\\submission_candidate_G4_G9_fixed_monolithic.csv",
+    "ensemble_fusion": "E:\\Development\\Research\\Advanced AI in Health\\results\\submission_candidate_G4_G9_fixed_ensemble10.csv",
+    "G4_fallback": "E:\\Development\\Research\\Advanced AI in Health\\results\\submission_candidate_G4_only_monolithic.csv"
+  }
+}

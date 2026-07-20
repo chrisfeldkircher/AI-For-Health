@@ -33,7 +33,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "model").is_dir() and (p / "cache").is_dir())
 sys.path.insert(0, str(ROOT / "model"))
 
 # This box sits behind a TLS-intercepting proxy: requests/huggingface_hub reject

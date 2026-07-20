@@ -1,0 +1,4849 @@
+{
+  "protocol": {
+    "cold_labels_loaded": false,
+    "n_pairs": 300,
+    "sides": [
+      "train",
+      "devel",
+      "test"
+    ],
+    "pairs_per_side_per_stratum": 20,
+    "strata": [
+      "ecapa_same_trillsson_different",
+      "trillsson_same_ecapa_different",
+      "ecapa_internal_disagreement",
+      "all_methods_same",
+      "all_methods_different"
+    ],
+    "nearest_neighbours_per_embedding_view": 30,
+    "recording_reuse": "none within each side; selected pairs use 600 unique recordings",
+    "selection_note": "Disagreement-enriched case-control sample. Method accuracy on this set is not a population prevalence estimate.",
+    "seed": 20260720,
+    "blinded_csv_sha256": "e30305d6aff6793f860c7bba458bfa8f93b10a3f53600c5062ed821ac2f646fc"
+  },
+  "candidate_counts": {
+    "train": {
+      "ecapa_same_trillsson_different": 67595,
+      "trillsson_same_ecapa_different": 14517,
+      "ecapa_internal_disagreement": 32327,
+      "all_methods_same": 106055,
+      "all_methods_different": 83077
+    },
+    "devel": {
+      "ecapa_same_trillsson_different": 76267,
+      "trillsson_same_ecapa_different": 16694,
+      "ecapa_internal_disagreement": 28388,
+      "all_methods_same": 101533,
+      "all_methods_different": 87152
+    },
+    "test": {
+      "ecapa_same_trillsson_different": 69876,
+      "trillsson_same_ecapa_different": 15953,
+      "ecapa_internal_disagreement": 26282,
+      "all_methods_same": 108285,
+      "all_methods_different": 82636
+    }
+  },
+  "pairs": [
+    {
+      "pair_id": "SP001",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3855234980583191,
+      "cosine_trillsson": 0.9842557311058044,
+      "hardness": 0.9842557311058044,
+      "side": "devel",
+      "stem_a": "devel_2443",
+      "stem_b": "devel_9181"
+    },
+    {
+      "pair_id": "SP002",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.6982590556144714,
+      "cosine_trillsson": 0.9874284863471985,
+      "hardness": 0.9874284863471985,
+      "side": "devel",
+      "stem_a": "devel_2199",
+      "stem_b": "devel_5813"
+    },
+    {
+      "pair_id": "SP003",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5381622314453125,
+      "cosine_trillsson": 0.9883882999420166,
+      "hardness": 0.9883882999420166,
+      "side": "test",
+      "stem_a": "test_1478",
+      "stem_b": "test_1978"
+    },
+    {
+      "pair_id": "SP004",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.28259992599487305,
+      "cosine_trillsson": 0.9848470687866211,
+      "hardness": 0.9848470687866211,
+      "side": "train",
+      "stem_a": "train_3938",
+      "stem_b": "train_7203"
+    },
+    {
+      "pair_id": "SP005",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.999999463558197,
+      "cosine_trillsson": 0.9999988079071045,
+      "hardness": 0.999999463558197,
+      "side": "devel",
+      "stem_a": "devel_2063",
+      "stem_b": "devel_2158"
+    },
+    {
+      "pair_id": "SP006",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7071261405944824,
+      "cosine_trillsson": 0.9891923069953918,
+      "hardness": 0.9891923069953918,
+      "side": "devel",
+      "stem_a": "devel_1613",
+      "stem_b": "devel_7910"
+    },
+    {
+      "pair_id": "SP007",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8443812131881714,
+      "cosine_trillsson": 0.99045330286026,
+      "hardness": 0.99045330286026,
+      "side": "train",
+      "stem_a": "train_2140",
+      "stem_b": "train_6704"
+    },
+    {
+      "pair_id": "SP008",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.35406023263931274,
+      "cosine_trillsson": 0.9848840236663818,
+      "hardness": 0.9848840236663818,
+      "side": "test",
+      "stem_a": "test_3840",
+      "stem_b": "test_6205"
+    },
+    {
+      "pair_id": "SP009",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7221747636795044,
+      "cosine_trillsson": 0.992005467414856,
+      "hardness": 0.992005467414856,
+      "side": "train",
+      "stem_a": "train_3306",
+      "stem_b": "train_3979"
+    },
+    {
+      "pair_id": "SP010",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8091500997543335,
+      "cosine_trillsson": 0.9889358282089233,
+      "hardness": 0.9889358282089233,
+      "side": "train",
+      "stem_a": "train_3702",
+      "stem_b": "train_8196"
+    },
+    {
+      "pair_id": "SP011",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2956371605396271,
+      "cosine_trillsson": 0.9837765693664551,
+      "hardness": 0.9837765693664551,
+      "side": "train",
+      "stem_a": "train_3276",
+      "stem_b": "train_5570"
+    },
+    {
+      "pair_id": "SP012",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.720625102519989,
+      "cosine_trillsson": 0.9856243133544922,
+      "hardness": 0.9856243133544922,
+      "side": "test",
+      "stem_a": "test_5220",
+      "stem_b": "test_9480"
+    },
+    {
+      "pair_id": "SP013",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8193356990814209,
+      "cosine_trillsson": 0.9891581535339355,
+      "hardness": 0.9891581535339355,
+      "side": "train",
+      "stem_a": "train_5594",
+      "stem_b": "train_5816"
+    },
+    {
+      "pair_id": "SP014",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7825444936752319,
+      "cosine_trillsson": 0.9882696866989136,
+      "hardness": 0.9882696866989136,
+      "side": "test",
+      "stem_a": "test_0469",
+      "stem_b": "test_1753"
+    },
+    {
+      "pair_id": "SP015",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.21786567568778992,
+      "cosine_trillsson": 0.9857429265975952,
+      "hardness": 0.9857429265975952,
+      "side": "test",
+      "stem_a": "test_0905",
+      "stem_b": "test_4364"
+    },
+    {
+      "pair_id": "SP016",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4301583468914032,
+      "cosine_trillsson": 0.9865014553070068,
+      "hardness": 0.9865014553070068,
+      "side": "train",
+      "stem_a": "train_6689",
+      "stem_b": "train_8179"
+    },
+    {
+      "pair_id": "SP017",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7415943145751953,
+      "cosine_trillsson": 0.9877561330795288,
+      "hardness": 0.9877561330795288,
+      "side": "test",
+      "stem_a": "test_1531",
+      "stem_b": "test_8344"
+    },
+    {
+      "pair_id": "SP018",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7055791616439819,
+      "cosine_trillsson": 0.9893090724945068,
+      "hardness": 0.9893090724945068,
+      "side": "devel",
+      "stem_a": "devel_5981",
+      "stem_b": "devel_6481"
+    },
+    {
+      "pair_id": "SP019",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.999998927116394,
+      "cosine_trillsson": 0.9999995231628418,
+      "hardness": 0.9999995231628418,
+      "side": "devel",
+      "stem_a": "devel_0206",
+      "stem_b": "devel_8275"
+    },
+    {
+      "pair_id": "SP020",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.49764561653137207,
+      "cosine_trillsson": 0.9853432774543762,
+      "hardness": 0.9853432774543762,
+      "side": "test",
+      "stem_a": "test_1759",
+      "stem_b": "test_4040"
+    },
+    {
+      "pair_id": "SP021",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999979734420776,
+      "cosine_trillsson": 0.9999996423721313,
+      "hardness": 0.9999996423721313,
+      "side": "devel",
+      "stem_a": "devel_9256",
+      "stem_b": "devel_9508"
+    },
+    {
+      "pair_id": "SP022",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8722559213638306,
+      "cosine_trillsson": 0.9874687194824219,
+      "hardness": 0.9874687194824219,
+      "side": "train",
+      "stem_a": "train_1708",
+      "stem_b": "train_6095"
+    },
+    {
+      "pair_id": "SP023",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8619089126586914,
+      "cosine_trillsson": 0.9871112108230591,
+      "hardness": 0.9871112108230591,
+      "side": "test",
+      "stem_a": "test_3704",
+      "stem_b": "test_6976"
+    },
+    {
+      "pair_id": "SP024",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.39533162117004395,
+      "cosine_trillsson": 0.9864982962608337,
+      "hardness": 0.9864982962608337,
+      "side": "test",
+      "stem_a": "test_2733",
+      "stem_b": "test_3478"
+    },
+    {
+      "pair_id": "SP025",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7489608526229858,
+      "cosine_trillsson": 0.9862188696861267,
+      "hardness": 0.9862188696861267,
+      "side": "test",
+      "stem_a": "test_0056",
+      "stem_b": "test_3968"
+    },
+    {
+      "pair_id": "SP026",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3267071843147278,
+      "cosine_trillsson": 0.9837583303451538,
+      "hardness": 0.9837583303451538,
+      "side": "train",
+      "stem_a": "train_2930",
+      "stem_b": "train_5229"
+    },
+    {
+      "pair_id": "SP027",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8359769582748413,
+      "cosine_trillsson": 0.9875893592834473,
+      "hardness": 0.9875893592834473,
+      "side": "test",
+      "stem_a": "test_3441",
+      "stem_b": "test_4965"
+    },
+    {
+      "pair_id": "SP028",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7449552416801453,
+      "cosine_trillsson": 0.9908427596092224,
+      "hardness": 0.9908427596092224,
+      "side": "devel",
+      "stem_a": "devel_1031",
+      "stem_b": "devel_6461"
+    },
+    {
+      "pair_id": "SP029",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2815515398979187,
+      "cosine_trillsson": 0.9854880571365356,
+      "hardness": 0.9854880571365356,
+      "side": "devel",
+      "stem_a": "devel_2256",
+      "stem_b": "devel_5097"
+    },
+    {
+      "pair_id": "SP030",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5129163861274719,
+      "cosine_trillsson": 0.9865430593490601,
+      "hardness": 0.9865430593490601,
+      "side": "devel",
+      "stem_a": "devel_2433",
+      "stem_b": "devel_3229"
+    },
+    {
+      "pair_id": "SP031",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8424192667007446,
+      "cosine_trillsson": 0.9898350238800049,
+      "hardness": 0.9898350238800049,
+      "side": "train",
+      "stem_a": "train_1092",
+      "stem_b": "train_3397"
+    },
+    {
+      "pair_id": "SP032",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5590089559555054,
+      "cosine_trillsson": 0.9884867668151855,
+      "hardness": 0.9884867668151855,
+      "side": "devel",
+      "stem_a": "devel_1526",
+      "stem_b": "devel_7483"
+    },
+    {
+      "pair_id": "SP033",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.33531874418258667,
+      "cosine_trillsson": 0.9853140115737915,
+      "hardness": 0.9853140115737915,
+      "side": "train",
+      "stem_a": "train_0511",
+      "stem_b": "train_5856"
+    },
+    {
+      "pair_id": "SP034",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.373776912689209,
+      "cosine_trillsson": 0.9848392009735107,
+      "hardness": 0.9848392009735107,
+      "side": "train",
+      "stem_a": "train_3189",
+      "stem_b": "train_4006"
+    },
+    {
+      "pair_id": "SP035",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3668745458126068,
+      "cosine_trillsson": 0.9841537475585938,
+      "hardness": 0.9841537475585938,
+      "side": "test",
+      "stem_a": "test_3340",
+      "stem_b": "test_5111"
+    },
+    {
+      "pair_id": "SP036",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7750858068466187,
+      "cosine_trillsson": 0.9888042211532593,
+      "hardness": 0.9888042211532593,
+      "side": "train",
+      "stem_a": "train_1978",
+      "stem_b": "train_8374"
+    },
+    {
+      "pair_id": "SP037",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7469146847724915,
+      "cosine_trillsson": 0.9901764392852783,
+      "hardness": 0.9901764392852783,
+      "side": "devel",
+      "stem_a": "devel_0354",
+      "stem_b": "devel_2445"
+    },
+    {
+      "pair_id": "SP038",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7729645371437073,
+      "cosine_trillsson": 0.9881868958473206,
+      "hardness": 0.9881868958473206,
+      "side": "test",
+      "stem_a": "test_0886",
+      "stem_b": "test_7623"
+    },
+    {
+      "pair_id": "SP039",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2820024788379669,
+      "cosine_trillsson": 0.9859142899513245,
+      "hardness": 0.9859142899513245,
+      "side": "test",
+      "stem_a": "test_0120",
+      "stem_b": "test_5943"
+    },
+    {
+      "pair_id": "SP040",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8038023710250854,
+      "cosine_trillsson": 0.9872615337371826,
+      "hardness": 0.9872615337371826,
+      "side": "devel",
+      "stem_a": "devel_2172",
+      "stem_b": "devel_4068"
+    },
+    {
+      "pair_id": "SP041",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5973644256591797,
+      "cosine_trillsson": 0.987518310546875,
+      "hardness": 0.987518310546875,
+      "side": "train",
+      "stem_a": "train_6575",
+      "stem_b": "train_7762"
+    },
+    {
+      "pair_id": "SP042",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7738091945648193,
+      "cosine_trillsson": 0.9894134402275085,
+      "hardness": 0.9894134402275085,
+      "side": "devel",
+      "stem_a": "devel_0117",
+      "stem_b": "devel_7330"
+    },
+    {
+      "pair_id": "SP043",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.34786128997802734,
+      "cosine_trillsson": 0.9840002059936523,
+      "hardness": 0.9840002059936523,
+      "side": "train",
+      "stem_a": "train_3473",
+      "stem_b": "train_7744"
+    },
+    {
+      "pair_id": "SP044",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5331408977508545,
+      "cosine_trillsson": 0.9840115308761597,
+      "hardness": 0.9840115308761597,
+      "side": "test",
+      "stem_a": "test_3855",
+      "stem_b": "test_4741"
+    },
+    {
+      "pair_id": "SP045",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7591651678085327,
+      "cosine_trillsson": 0.9891743659973145,
+      "hardness": 0.9891743659973145,
+      "side": "train",
+      "stem_a": "train_0436",
+      "stem_b": "train_8705"
+    },
+    {
+      "pair_id": "SP046",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7337913513183594,
+      "cosine_trillsson": 0.9882640242576599,
+      "hardness": 0.9882640242576599,
+      "side": "devel",
+      "stem_a": "devel_1860",
+      "stem_b": "devel_5872"
+    },
+    {
+      "pair_id": "SP047",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.810905396938324,
+      "cosine_trillsson": 0.9888386726379395,
+      "hardness": 0.9888386726379395,
+      "side": "test",
+      "stem_a": "test_3016",
+      "stem_b": "test_4562"
+    },
+    {
+      "pair_id": "SP048",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.34265488386154175,
+      "cosine_trillsson": 0.9828715324401855,
+      "hardness": 0.9828715324401855,
+      "side": "test",
+      "stem_a": "test_4581",
+      "stem_b": "test_9371"
+    },
+    {
+      "pair_id": "SP049",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.34998971223831177,
+      "cosine_trillsson": 0.9856245517730713,
+      "hardness": 0.9856245517730713,
+      "side": "test",
+      "stem_a": "test_1095",
+      "stem_b": "test_7424"
+    },
+    {
+      "pair_id": "SP050",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4338020086288452,
+      "cosine_trillsson": 0.9837705492973328,
+      "hardness": 0.9837705492973328,
+      "side": "test",
+      "stem_a": "test_6250",
+      "stem_b": "test_7875"
+    },
+    {
+      "pair_id": "SP051",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9964987635612488,
+      "cosine_trillsson": 0.9977883100509644,
+      "hardness": 0.9977883100509644,
+      "side": "test",
+      "stem_a": "test_4291",
+      "stem_b": "test_8566"
+    },
+    {
+      "pair_id": "SP052",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7600516676902771,
+      "cosine_trillsson": 0.9886952638626099,
+      "hardness": 0.9886952638626099,
+      "side": "train",
+      "stem_a": "train_5966",
+      "stem_b": "train_7806"
+    },
+    {
+      "pair_id": "SP053",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5707476735115051,
+      "cosine_trillsson": 0.9845163226127625,
+      "hardness": 0.9845163226127625,
+      "side": "test",
+      "stem_a": "test_0144",
+      "stem_b": "test_6579"
+    },
+    {
+      "pair_id": "SP054",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8684943318367004,
+      "cosine_trillsson": 0.9892677068710327,
+      "hardness": 0.9892677068710327,
+      "side": "devel",
+      "stem_a": "devel_0059",
+      "stem_b": "devel_5199"
+    },
+    {
+      "pair_id": "SP055",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7438043355941772,
+      "cosine_trillsson": 0.9909205436706543,
+      "hardness": 0.9909205436706543,
+      "side": "test",
+      "stem_a": "test_4783",
+      "stem_b": "test_4966"
+    },
+    {
+      "pair_id": "SP056",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4539511501789093,
+      "cosine_trillsson": 0.9877490997314453,
+      "hardness": 0.9877490997314453,
+      "side": "devel",
+      "stem_a": "devel_5128",
+      "stem_b": "devel_9299"
+    },
+    {
+      "pair_id": "SP057",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.23551741242408752,
+      "cosine_trillsson": 0.9834414720535278,
+      "hardness": 0.9834414720535278,
+      "side": "train",
+      "stem_a": "train_3167",
+      "stem_b": "train_3529"
+    },
+    {
+      "pair_id": "SP058",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8061363697052002,
+      "cosine_trillsson": 0.9887621998786926,
+      "hardness": 0.9887621998786926,
+      "side": "devel",
+      "stem_a": "devel_5739",
+      "stem_b": "devel_7268"
+    },
+    {
+      "pair_id": "SP059",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.40602925419807434,
+      "cosine_trillsson": 0.983902633190155,
+      "hardness": 0.983902633190155,
+      "side": "devel",
+      "stem_a": "devel_4084",
+      "stem_b": "devel_4191"
+    },
+    {
+      "pair_id": "SP060",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8653614521026611,
+      "cosine_trillsson": 0.9903321266174316,
+      "hardness": 0.9903321266174316,
+      "side": "train",
+      "stem_a": "train_5298",
+      "stem_b": "train_8281"
+    },
+    {
+      "pair_id": "SP061",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7747517824172974,
+      "cosine_trillsson": 0.987625241279602,
+      "hardness": 0.987625241279602,
+      "side": "devel",
+      "stem_a": "devel_1690",
+      "stem_b": "devel_3479"
+    },
+    {
+      "pair_id": "SP062",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8584736585617065,
+      "cosine_trillsson": 0.989596962928772,
+      "hardness": 0.989596962928772,
+      "side": "test",
+      "stem_a": "test_2707",
+      "stem_b": "test_5778"
+    },
+    {
+      "pair_id": "SP063",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8262090682983398,
+      "cosine_trillsson": 0.9889044761657715,
+      "hardness": 0.9889044761657715,
+      "side": "devel",
+      "stem_a": "devel_1387",
+      "stem_b": "devel_3015"
+    },
+    {
+      "pair_id": "SP064",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8346918225288391,
+      "cosine_trillsson": 0.9883030652999878,
+      "hardness": 0.9883030652999878,
+      "side": "test",
+      "stem_a": "test_5550",
+      "stem_b": "test_8810"
+    },
+    {
+      "pair_id": "SP065",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2362554967403412,
+      "cosine_trillsson": 0.9862355589866638,
+      "hardness": 0.9862355589866638,
+      "side": "train",
+      "stem_a": "train_0889",
+      "stem_b": "train_3373"
+    },
+    {
+      "pair_id": "SP066",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8836563229560852,
+      "cosine_trillsson": 0.9915448427200317,
+      "hardness": 0.9915448427200317,
+      "side": "test",
+      "stem_a": "test_0538",
+      "stem_b": "test_1837"
+    },
+    {
+      "pair_id": "SP067",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7938354015350342,
+      "cosine_trillsson": 0.9919843673706055,
+      "hardness": 0.9919843673706055,
+      "side": "train",
+      "stem_a": "train_1156",
+      "stem_b": "train_3375"
+    },
+    {
+      "pair_id": "SP068",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8886952996253967,
+      "cosine_trillsson": 0.99202561378479,
+      "hardness": 0.99202561378479,
+      "side": "train",
+      "stem_a": "train_3123",
+      "stem_b": "train_6048"
+    },
+    {
+      "pair_id": "SP069",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3938050866127014,
+      "cosine_trillsson": 0.9830300211906433,
+      "hardness": 0.9830300211906433,
+      "side": "train",
+      "stem_a": "train_8011",
+      "stem_b": "train_9197"
+    },
+    {
+      "pair_id": "SP070",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9931373596191406,
+      "cosine_trillsson": 0.9994103908538818,
+      "hardness": 0.9994103908538818,
+      "side": "train",
+      "stem_a": "train_4080",
+      "stem_b": "train_4466"
+    },
+    {
+      "pair_id": "SP071",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4269416332244873,
+      "cosine_trillsson": 0.9856939315795898,
+      "hardness": 0.9856939315795898,
+      "side": "test",
+      "stem_a": "test_0669",
+      "stem_b": "test_8267"
+    },
+    {
+      "pair_id": "SP072",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8603042364120483,
+      "cosine_trillsson": 0.9855273365974426,
+      "hardness": 0.9855273365974426,
+      "side": "test",
+      "stem_a": "test_5595",
+      "stem_b": "test_8213"
+    },
+    {
+      "pair_id": "SP073",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8458755016326904,
+      "cosine_trillsson": 0.9874882102012634,
+      "hardness": 0.9874882102012634,
+      "side": "test",
+      "stem_a": "test_6748",
+      "stem_b": "test_6954"
+    },
+    {
+      "pair_id": "SP074",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8204745054244995,
+      "cosine_trillsson": 0.9887471199035645,
+      "hardness": 0.9887471199035645,
+      "side": "train",
+      "stem_a": "train_3074",
+      "stem_b": "train_5662"
+    },
+    {
+      "pair_id": "SP075",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9961262941360474,
+      "cosine_trillsson": 0.9996503591537476,
+      "hardness": 0.9996503591537476,
+      "side": "train",
+      "stem_a": "train_3237",
+      "stem_b": "train_6480"
+    },
+    {
+      "pair_id": "SP076",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.707959771156311,
+      "cosine_trillsson": 0.9910303950309753,
+      "hardness": 0.9910303950309753,
+      "side": "test",
+      "stem_a": "test_6355",
+      "stem_b": "test_8995"
+    },
+    {
+      "pair_id": "SP077",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5861080288887024,
+      "cosine_trillsson": 0.9848593473434448,
+      "hardness": 0.9848593473434448,
+      "side": "devel",
+      "stem_a": "devel_4836",
+      "stem_b": "devel_7042"
+    },
+    {
+      "pair_id": "SP078",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.270027220249176,
+      "cosine_trillsson": 0.9861840009689331,
+      "hardness": 0.9861840009689331,
+      "side": "test",
+      "stem_a": "test_2718",
+      "stem_b": "test_9250"
+    },
+    {
+      "pair_id": "SP079",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4891168177127838,
+      "cosine_trillsson": 0.9836766719818115,
+      "hardness": 0.9836766719818115,
+      "side": "test",
+      "stem_a": "test_4058",
+      "stem_b": "test_7598"
+    },
+    {
+      "pair_id": "SP080",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8489670157432556,
+      "cosine_trillsson": 0.9904106855392456,
+      "hardness": 0.9904106855392456,
+      "side": "devel",
+      "stem_a": "devel_4452",
+      "stem_b": "devel_7316"
+    },
+    {
+      "pair_id": "SP081",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8754873275756836,
+      "cosine_trillsson": 0.9894717931747437,
+      "hardness": 0.9894717931747437,
+      "side": "train",
+      "stem_a": "train_1467",
+      "stem_b": "train_4997"
+    },
+    {
+      "pair_id": "SP082",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.26099634170532227,
+      "cosine_trillsson": 0.9887665510177612,
+      "hardness": 0.9887665510177612,
+      "side": "devel",
+      "stem_a": "devel_1215",
+      "stem_b": "devel_3801"
+    },
+    {
+      "pair_id": "SP083",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.831753134727478,
+      "cosine_trillsson": 0.9905960559844971,
+      "hardness": 0.9905960559844971,
+      "side": "devel",
+      "stem_a": "devel_2104",
+      "stem_b": "devel_7000"
+    },
+    {
+      "pair_id": "SP084",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8705518245697021,
+      "cosine_trillsson": 0.9919372200965881,
+      "hardness": 0.9919372200965881,
+      "side": "test",
+      "stem_a": "test_3322",
+      "stem_b": "test_4872"
+    },
+    {
+      "pair_id": "SP085",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.33564305305480957,
+      "cosine_trillsson": 0.9880726337432861,
+      "hardness": 0.9880726337432861,
+      "side": "test",
+      "stem_a": "test_1239",
+      "stem_b": "test_6290"
+    },
+    {
+      "pair_id": "SP086",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.3602210581302643,
+      "cosine_trillsson": 0.9854556322097778,
+      "hardness": 0.9854556322097778,
+      "side": "devel",
+      "stem_a": "devel_4777",
+      "stem_b": "devel_5351"
+    },
+    {
+      "pair_id": "SP087",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8225609064102173,
+      "cosine_trillsson": 0.9898390173912048,
+      "hardness": 0.9898390173912048,
+      "side": "devel",
+      "stem_a": "devel_1184",
+      "stem_b": "devel_8212"
+    },
+    {
+      "pair_id": "SP088",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7563202977180481,
+      "cosine_trillsson": 0.9901219606399536,
+      "hardness": 0.9901219606399536,
+      "side": "devel",
+      "stem_a": "devel_1347",
+      "stem_b": "devel_2002"
+    },
+    {
+      "pair_id": "SP089",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2847803235054016,
+      "cosine_trillsson": 0.9865003824234009,
+      "hardness": 0.9865003824234009,
+      "side": "test",
+      "stem_a": "test_4367",
+      "stem_b": "test_4988"
+    },
+    {
+      "pair_id": "SP090",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8085061311721802,
+      "cosine_trillsson": 0.9860435128211975,
+      "hardness": 0.9860435128211975,
+      "side": "test",
+      "stem_a": "test_4250",
+      "stem_b": "test_6139"
+    },
+    {
+      "pair_id": "SP091",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9944174885749817,
+      "cosine_trillsson": 0.9994807839393616,
+      "hardness": 0.9994807839393616,
+      "side": "train",
+      "stem_a": "train_1031",
+      "stem_b": "train_1422"
+    },
+    {
+      "pair_id": "SP092",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.11869687587022781,
+      "cosine_trillsson": 0.983014702796936,
+      "hardness": 0.983014702796936,
+      "side": "train",
+      "stem_a": "train_4313",
+      "stem_b": "train_6776"
+    },
+    {
+      "pair_id": "SP093",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7140648365020752,
+      "cosine_trillsson": 0.9869731664657593,
+      "hardness": 0.9869731664657593,
+      "side": "train",
+      "stem_a": "train_4963",
+      "stem_b": "train_6234"
+    },
+    {
+      "pair_id": "SP094",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4159180521965027,
+      "cosine_trillsson": 0.9829235076904297,
+      "hardness": 0.9829235076904297,
+      "side": "train",
+      "stem_a": "train_2278",
+      "stem_b": "train_6399"
+    },
+    {
+      "pair_id": "SP095",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3802226781845093,
+      "cosine_trillsson": 0.9832929372787476,
+      "hardness": 0.9832929372787476,
+      "side": "train",
+      "stem_a": "train_4174",
+      "stem_b": "train_8895"
+    },
+    {
+      "pair_id": "SP096",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999980926513672,
+      "cosine_trillsson": 0.9999994039535522,
+      "hardness": 0.9999994039535522,
+      "side": "devel",
+      "stem_a": "devel_3522",
+      "stem_b": "devel_8001"
+    },
+    {
+      "pair_id": "SP097",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.6874836087226868,
+      "cosine_trillsson": 0.9900659322738647,
+      "hardness": 0.9900659322738647,
+      "side": "train",
+      "stem_a": "train_2414",
+      "stem_b": "train_5685"
+    },
+    {
+      "pair_id": "SP098",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8044740557670593,
+      "cosine_trillsson": 0.9887911081314087,
+      "hardness": 0.9887911081314087,
+      "side": "train",
+      "stem_a": "train_3657",
+      "stem_b": "train_4723"
+    },
+    {
+      "pair_id": "SP099",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7838706970214844,
+      "cosine_trillsson": 0.9904934167861938,
+      "hardness": 0.9904934167861938,
+      "side": "test",
+      "stem_a": "test_0800",
+      "stem_b": "test_8056"
+    },
+    {
+      "pair_id": "SP100",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999938011169434,
+      "cosine_trillsson": 0.9999986886978149,
+      "hardness": 0.9999986886978149,
+      "side": "devel",
+      "stem_a": "devel_0986",
+      "stem_b": "devel_5406"
+    },
+    {
+      "pair_id": "SP101",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4202424883842468,
+      "cosine_trillsson": 0.9838120937347412,
+      "hardness": 0.9838120937347412,
+      "side": "train",
+      "stem_a": "train_1162",
+      "stem_b": "train_9000"
+    },
+    {
+      "pair_id": "SP102",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8296266794204712,
+      "cosine_trillsson": 0.9899675250053406,
+      "hardness": 0.9899675250053406,
+      "side": "devel",
+      "stem_a": "devel_6823",
+      "stem_b": "devel_8157"
+    },
+    {
+      "pair_id": "SP103",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2634366452693939,
+      "cosine_trillsson": 0.9852477312088013,
+      "hardness": 0.9852477312088013,
+      "side": "devel",
+      "stem_a": "devel_4487",
+      "stem_b": "devel_7884"
+    },
+    {
+      "pair_id": "SP104",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7905743718147278,
+      "cosine_trillsson": 0.9871143698692322,
+      "hardness": 0.9871143698692322,
+      "side": "devel",
+      "stem_a": "devel_7262",
+      "stem_b": "devel_9001"
+    },
+    {
+      "pair_id": "SP105",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8080801367759705,
+      "cosine_trillsson": 0.9864665269851685,
+      "hardness": 0.9864665269851685,
+      "side": "train",
+      "stem_a": "train_4303",
+      "stem_b": "train_9177"
+    },
+    {
+      "pair_id": "SP106",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8494378328323364,
+      "cosine_trillsson": 0.9926288723945618,
+      "hardness": 0.9926288723945618,
+      "side": "test",
+      "stem_a": "test_6272",
+      "stem_b": "test_8899"
+    },
+    {
+      "pair_id": "SP107",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.48499953746795654,
+      "cosine_trillsson": 0.9849734306335449,
+      "hardness": 0.9849734306335449,
+      "side": "devel",
+      "stem_a": "devel_3016",
+      "stem_b": "devel_7008"
+    },
+    {
+      "pair_id": "SP108",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8090171217918396,
+      "cosine_trillsson": 0.9892259836196899,
+      "hardness": 0.9892259836196899,
+      "side": "devel",
+      "stem_a": "devel_2128",
+      "stem_b": "devel_4699"
+    },
+    {
+      "pair_id": "SP109",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4539227783679962,
+      "cosine_trillsson": 0.9869228601455688,
+      "hardness": 0.9869228601455688,
+      "side": "test",
+      "stem_a": "test_5081",
+      "stem_b": "test_9078"
+    },
+    {
+      "pair_id": "SP110",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3122512102127075,
+      "cosine_trillsson": 0.9856266379356384,
+      "hardness": 0.9856266379356384,
+      "side": "devel",
+      "stem_a": "devel_0714",
+      "stem_b": "devel_6457"
+    },
+    {
+      "pair_id": "SP111",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.1466529369354248,
+      "cosine_trillsson": 0.9840161204338074,
+      "hardness": 0.9840161204338074,
+      "side": "devel",
+      "stem_a": "devel_0662",
+      "stem_b": "devel_3899"
+    },
+    {
+      "pair_id": "SP112",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7057862281799316,
+      "cosine_trillsson": 0.9901261329650879,
+      "hardness": 0.9901261329650879,
+      "side": "train",
+      "stem_a": "train_4432",
+      "stem_b": "train_8500"
+    },
+    {
+      "pair_id": "SP113",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8684355020523071,
+      "cosine_trillsson": 0.9897562861442566,
+      "hardness": 0.9897562861442566,
+      "side": "train",
+      "stem_a": "train_4222",
+      "stem_b": "train_5019"
+    },
+    {
+      "pair_id": "SP114",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9909613132476807,
+      "cosine_trillsson": 0.9994999170303345,
+      "hardness": 0.9994999170303345,
+      "side": "train",
+      "stem_a": "train_7169",
+      "stem_b": "train_7668"
+    },
+    {
+      "pair_id": "SP115",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7430301904678345,
+      "cosine_trillsson": 0.9878808259963989,
+      "hardness": 0.9878808259963989,
+      "side": "train",
+      "stem_a": "train_0270",
+      "stem_b": "train_2262"
+    },
+    {
+      "pair_id": "SP116",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.6989085674285889,
+      "cosine_trillsson": 0.9903390407562256,
+      "hardness": 0.9903390407562256,
+      "side": "test",
+      "stem_a": "test_3538",
+      "stem_b": "test_9346"
+    },
+    {
+      "pair_id": "SP117",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8159579038619995,
+      "cosine_trillsson": 0.9893943071365356,
+      "hardness": 0.9893943071365356,
+      "side": "train",
+      "stem_a": "train_6649",
+      "stem_b": "train_8863"
+    },
+    {
+      "pair_id": "SP118",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.36712196469306946,
+      "cosine_trillsson": 0.9861368536949158,
+      "hardness": 0.9861368536949158,
+      "side": "test",
+      "stem_a": "test_2078",
+      "stem_b": "test_6349"
+    },
+    {
+      "pair_id": "SP119",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4548835754394531,
+      "cosine_trillsson": 0.9859405755996704,
+      "hardness": 0.9859405755996704,
+      "side": "train",
+      "stem_a": "train_1657",
+      "stem_b": "train_6876"
+    },
+    {
+      "pair_id": "SP120",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4634271264076233,
+      "cosine_trillsson": 0.9863135814666748,
+      "hardness": 0.9863135814666748,
+      "side": "test",
+      "stem_a": "test_4315",
+      "stem_b": "test_4967"
+    },
+    {
+      "pair_id": "SP121",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.23769249022006989,
+      "cosine_trillsson": 0.9878334403038025,
+      "hardness": 0.9878334403038025,
+      "side": "test",
+      "stem_a": "test_4814",
+      "stem_b": "test_6088"
+    },
+    {
+      "pair_id": "SP122",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999985694885254,
+      "cosine_trillsson": 0.9999995231628418,
+      "hardness": 0.9999995231628418,
+      "side": "devel",
+      "stem_a": "devel_7067",
+      "stem_b": "devel_9521"
+    },
+    {
+      "pair_id": "SP123",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.6659629344940186,
+      "cosine_trillsson": 0.9871923923492432,
+      "hardness": 0.9871923923492432,
+      "side": "test",
+      "stem_a": "test_2972",
+      "stem_b": "test_8216"
+    },
+    {
+      "pair_id": "SP124",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7237758040428162,
+      "cosine_trillsson": 0.990652322769165,
+      "hardness": 0.990652322769165,
+      "side": "train",
+      "stem_a": "train_4496",
+      "stem_b": "train_5714"
+    },
+    {
+      "pair_id": "SP125",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8828585147857666,
+      "cosine_trillsson": 0.988105833530426,
+      "hardness": 0.988105833530426,
+      "side": "devel",
+      "stem_a": "devel_2624",
+      "stem_b": "devel_8622"
+    },
+    {
+      "pair_id": "SP126",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.27718400955200195,
+      "cosine_trillsson": 0.9868143796920776,
+      "hardness": 0.9868143796920776,
+      "side": "train",
+      "stem_a": "train_6811",
+      "stem_b": "train_7550"
+    },
+    {
+      "pair_id": "SP127",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7978192567825317,
+      "cosine_trillsson": 0.9883631467819214,
+      "hardness": 0.9883631467819214,
+      "side": "devel",
+      "stem_a": "devel_1010",
+      "stem_b": "devel_4235"
+    },
+    {
+      "pair_id": "SP128",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8093597888946533,
+      "cosine_trillsson": 0.9905510544776917,
+      "hardness": 0.9905510544776917,
+      "side": "train",
+      "stem_a": "train_5677",
+      "stem_b": "train_6984"
+    },
+    {
+      "pair_id": "SP129",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8078559637069702,
+      "cosine_trillsson": 0.989180862903595,
+      "hardness": 0.989180862903595,
+      "side": "train",
+      "stem_a": "train_2779",
+      "stem_b": "train_8883"
+    },
+    {
+      "pair_id": "SP130",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8096420764923096,
+      "cosine_trillsson": 0.9869823455810547,
+      "hardness": 0.9869823455810547,
+      "side": "test",
+      "stem_a": "test_0337",
+      "stem_b": "test_5859"
+    },
+    {
+      "pair_id": "SP131",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5999311208724976,
+      "cosine_trillsson": 0.983728289604187,
+      "hardness": 0.983728289604187,
+      "side": "train",
+      "stem_a": "train_0951",
+      "stem_b": "train_3779"
+    },
+    {
+      "pair_id": "SP132",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2952363193035126,
+      "cosine_trillsson": 0.98604416847229,
+      "hardness": 0.98604416847229,
+      "side": "test",
+      "stem_a": "test_1341",
+      "stem_b": "test_5575"
+    },
+    {
+      "pair_id": "SP133",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.806462287902832,
+      "cosine_trillsson": 0.9902989268302917,
+      "hardness": 0.9902989268302917,
+      "side": "test",
+      "stem_a": "test_2722",
+      "stem_b": "test_3461"
+    },
+    {
+      "pair_id": "SP134",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7058734893798828,
+      "cosine_trillsson": 0.9865436553955078,
+      "hardness": 0.9865436553955078,
+      "side": "train",
+      "stem_a": "train_7307",
+      "stem_b": "train_8928"
+    },
+    {
+      "pair_id": "SP135",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.43579429388046265,
+      "cosine_trillsson": 0.9854601621627808,
+      "hardness": 0.9854601621627808,
+      "side": "test",
+      "stem_a": "test_6208",
+      "stem_b": "test_8859"
+    },
+    {
+      "pair_id": "SP136",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8095386028289795,
+      "cosine_trillsson": 0.9896230697631836,
+      "hardness": 0.9896230697631836,
+      "side": "test",
+      "stem_a": "test_0977",
+      "stem_b": "test_4215"
+    },
+    {
+      "pair_id": "SP137",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.522121787071228,
+      "cosine_trillsson": 0.9851236343383789,
+      "hardness": 0.9851236343383789,
+      "side": "test",
+      "stem_a": "test_2923",
+      "stem_b": "test_7406"
+    },
+    {
+      "pair_id": "SP138",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.6813232898712158,
+      "cosine_trillsson": 0.9900439977645874,
+      "hardness": 0.9900439977645874,
+      "side": "train",
+      "stem_a": "train_3810",
+      "stem_b": "train_6161"
+    },
+    {
+      "pair_id": "SP139",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.26855236291885376,
+      "cosine_trillsson": 0.9855736494064331,
+      "hardness": 0.9855736494064331,
+      "side": "devel",
+      "stem_a": "devel_6925",
+      "stem_b": "devel_7253"
+    },
+    {
+      "pair_id": "SP140",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8514954447746277,
+      "cosine_trillsson": 0.9878076314926147,
+      "hardness": 0.9878076314926147,
+      "side": "train",
+      "stem_a": "train_2418",
+      "stem_b": "train_4984"
+    },
+    {
+      "pair_id": "SP141",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8426007628440857,
+      "cosine_trillsson": 0.990378737449646,
+      "hardness": 0.990378737449646,
+      "side": "devel",
+      "stem_a": "devel_4321",
+      "stem_b": "devel_8407"
+    },
+    {
+      "pair_id": "SP142",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999963045120239,
+      "cosine_trillsson": 0.9999992251396179,
+      "hardness": 0.9999992251396179,
+      "side": "devel",
+      "stem_a": "devel_2214",
+      "stem_b": "devel_4601"
+    },
+    {
+      "pair_id": "SP143",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.740024209022522,
+      "cosine_trillsson": 0.9881742000579834,
+      "hardness": 0.9881742000579834,
+      "side": "test",
+      "stem_a": "test_2965",
+      "stem_b": "test_5403"
+    },
+    {
+      "pair_id": "SP144",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7704724669456482,
+      "cosine_trillsson": 0.9882383346557617,
+      "hardness": 0.9882383346557617,
+      "side": "train",
+      "stem_a": "train_1679",
+      "stem_b": "train_4139"
+    },
+    {
+      "pair_id": "SP145",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3201465606689453,
+      "cosine_trillsson": 0.9842640161514282,
+      "hardness": 0.9842640161514282,
+      "side": "test",
+      "stem_a": "test_6387",
+      "stem_b": "test_8687"
+    },
+    {
+      "pair_id": "SP146",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.782097339630127,
+      "cosine_trillsson": 0.990120530128479,
+      "hardness": 0.990120530128479,
+      "side": "devel",
+      "stem_a": "devel_1317",
+      "stem_b": "devel_8392"
+    },
+    {
+      "pair_id": "SP147",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.91286301612854,
+      "cosine_trillsson": 0.9905794858932495,
+      "hardness": 0.9905794858932495,
+      "side": "test",
+      "stem_a": "test_6447",
+      "stem_b": "test_8294"
+    },
+    {
+      "pair_id": "SP148",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5159950852394104,
+      "cosine_trillsson": 0.9868189692497253,
+      "hardness": 0.9868189692497253,
+      "side": "test",
+      "stem_a": "test_1722",
+      "stem_b": "test_3961"
+    },
+    {
+      "pair_id": "SP149",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.41154569387435913,
+      "cosine_trillsson": 0.9875016212463379,
+      "hardness": 0.9875016212463379,
+      "side": "train",
+      "stem_a": "train_0990",
+      "stem_b": "train_5652"
+    },
+    {
+      "pair_id": "SP150",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7988746166229248,
+      "cosine_trillsson": 0.9883115887641907,
+      "hardness": 0.9883115887641907,
+      "side": "devel",
+      "stem_a": "devel_1455",
+      "stem_b": "devel_6255"
+    },
+    {
+      "pair_id": "SP151",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.36597639322280884,
+      "cosine_trillsson": 0.984896719455719,
+      "hardness": 0.984896719455719,
+      "side": "train",
+      "stem_a": "train_4354",
+      "stem_b": "train_5738"
+    },
+    {
+      "pair_id": "SP152",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2389332354068756,
+      "cosine_trillsson": 0.9845255613327026,
+      "hardness": 0.9845255613327026,
+      "side": "train",
+      "stem_a": "train_0121",
+      "stem_b": "train_2560"
+    },
+    {
+      "pair_id": "SP153",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5696881413459778,
+      "cosine_trillsson": 0.9897242784500122,
+      "hardness": 0.9897242784500122,
+      "side": "test",
+      "stem_a": "test_0104",
+      "stem_b": "test_8001"
+    },
+    {
+      "pair_id": "SP154",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.30589187145233154,
+      "cosine_trillsson": 0.9873560667037964,
+      "hardness": 0.9873560667037964,
+      "side": "train",
+      "stem_a": "train_3887",
+      "stem_b": "train_9285"
+    },
+    {
+      "pair_id": "SP155",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7669945955276489,
+      "cosine_trillsson": 0.9916908144950867,
+      "hardness": 0.9916908144950867,
+      "side": "test",
+      "stem_a": "test_2210",
+      "stem_b": "test_6441"
+    },
+    {
+      "pair_id": "SP156",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8249329328536987,
+      "cosine_trillsson": 0.9913051128387451,
+      "hardness": 0.9913051128387451,
+      "side": "test",
+      "stem_a": "test_3860",
+      "stem_b": "test_8565"
+    },
+    {
+      "pair_id": "SP157",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.758695125579834,
+      "cosine_trillsson": 0.9910750389099121,
+      "hardness": 0.9910750389099121,
+      "side": "devel",
+      "stem_a": "devel_0696",
+      "stem_b": "devel_5377"
+    },
+    {
+      "pair_id": "SP158",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5534123182296753,
+      "cosine_trillsson": 0.9858385324478149,
+      "hardness": 0.9858385324478149,
+      "side": "test",
+      "stem_a": "test_0057",
+      "stem_b": "test_6627"
+    },
+    {
+      "pair_id": "SP159",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.46229225397109985,
+      "cosine_trillsson": 0.9859291315078735,
+      "hardness": 0.9859291315078735,
+      "side": "devel",
+      "stem_a": "devel_0395",
+      "stem_b": "devel_9335"
+    },
+    {
+      "pair_id": "SP160",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999978542327881,
+      "cosine_trillsson": 0.9999995827674866,
+      "hardness": 0.9999995827674866,
+      "side": "devel",
+      "stem_a": "devel_1734",
+      "stem_b": "devel_1980"
+    },
+    {
+      "pair_id": "SP161",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.5074591040611267,
+      "cosine_trillsson": 0.9846345782279968,
+      "hardness": 0.9846345782279968,
+      "side": "test",
+      "stem_a": "test_2010",
+      "stem_b": "test_6674"
+    },
+    {
+      "pair_id": "SP162",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999992251396179,
+      "cosine_trillsson": 0.9999988079071045,
+      "hardness": 0.9999992251396179,
+      "side": "devel",
+      "stem_a": "devel_0800",
+      "stem_b": "devel_8737"
+    },
+    {
+      "pair_id": "SP163",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7850404977798462,
+      "cosine_trillsson": 0.9866118431091309,
+      "hardness": 0.9866118431091309,
+      "side": "train",
+      "stem_a": "train_3432",
+      "stem_b": "train_5279"
+    },
+    {
+      "pair_id": "SP164",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8308008909225464,
+      "cosine_trillsson": 0.9867282509803772,
+      "hardness": 0.9867282509803772,
+      "side": "test",
+      "stem_a": "test_0788",
+      "stem_b": "test_9547"
+    },
+    {
+      "pair_id": "SP165",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8130449056625366,
+      "cosine_trillsson": 0.9905028343200684,
+      "hardness": 0.9905028343200684,
+      "side": "devel",
+      "stem_a": "devel_1693",
+      "stem_b": "devel_8189"
+    },
+    {
+      "pair_id": "SP166",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.44181177020072937,
+      "cosine_trillsson": 0.9852351546287537,
+      "hardness": 0.9852351546287537,
+      "side": "train",
+      "stem_a": "train_0971",
+      "stem_b": "train_5165"
+    },
+    {
+      "pair_id": "SP167",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7333711385726929,
+      "cosine_trillsson": 0.9860934019088745,
+      "hardness": 0.9860934019088745,
+      "side": "test",
+      "stem_a": "test_0801",
+      "stem_b": "test_8817"
+    },
+    {
+      "pair_id": "SP168",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3253975808620453,
+      "cosine_trillsson": 0.9857463240623474,
+      "hardness": 0.9857463240623474,
+      "side": "test",
+      "stem_a": "test_0673",
+      "stem_b": "test_3974"
+    },
+    {
+      "pair_id": "SP169",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.16568410396575928,
+      "cosine_trillsson": 0.9848344326019287,
+      "hardness": 0.9848344326019287,
+      "side": "test",
+      "stem_a": "test_0900",
+      "stem_b": "test_3874"
+    },
+    {
+      "pair_id": "SP170",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9971335530281067,
+      "cosine_trillsson": 0.9996412992477417,
+      "hardness": 0.9996412992477417,
+      "side": "train",
+      "stem_a": "train_3565",
+      "stem_b": "train_4117"
+    },
+    {
+      "pair_id": "SP171",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7726109027862549,
+      "cosine_trillsson": 0.9878477454185486,
+      "hardness": 0.9878477454185486,
+      "side": "test",
+      "stem_a": "test_0253",
+      "stem_b": "test_4258"
+    },
+    {
+      "pair_id": "SP172",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4364660978317261,
+      "cosine_trillsson": 0.9857988953590393,
+      "hardness": 0.9857988953590393,
+      "side": "devel",
+      "stem_a": "devel_4581",
+      "stem_b": "devel_8456"
+    },
+    {
+      "pair_id": "SP173",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7306358218193054,
+      "cosine_trillsson": 0.9870575666427612,
+      "hardness": 0.9870575666427612,
+      "side": "devel",
+      "stem_a": "devel_2629",
+      "stem_b": "devel_8695"
+    },
+    {
+      "pair_id": "SP174",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.25343647599220276,
+      "cosine_trillsson": 0.9861670136451721,
+      "hardness": 0.9861670136451721,
+      "side": "devel",
+      "stem_a": "devel_0521",
+      "stem_b": "devel_8655"
+    },
+    {
+      "pair_id": "SP175",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8242729306221008,
+      "cosine_trillsson": 0.9912921190261841,
+      "hardness": 0.9912921190261841,
+      "side": "test",
+      "stem_a": "test_3143",
+      "stem_b": "test_7331"
+    },
+    {
+      "pair_id": "SP176",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7830106019973755,
+      "cosine_trillsson": 0.9893587231636047,
+      "hardness": 0.9893587231636047,
+      "side": "devel",
+      "stem_a": "devel_4622",
+      "stem_b": "devel_5579"
+    },
+    {
+      "pair_id": "SP177",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.665895402431488,
+      "cosine_trillsson": 0.9870712161064148,
+      "hardness": 0.9870712161064148,
+      "side": "train",
+      "stem_a": "train_6025",
+      "stem_b": "train_9190"
+    },
+    {
+      "pair_id": "SP178",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.31084489822387695,
+      "cosine_trillsson": 0.9830315113067627,
+      "hardness": 0.9830315113067627,
+      "side": "train",
+      "stem_a": "train_1486",
+      "stem_b": "train_8114"
+    },
+    {
+      "pair_id": "SP179",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7907389402389526,
+      "cosine_trillsson": 0.9869633913040161,
+      "hardness": 0.9869633913040161,
+      "side": "train",
+      "stem_a": "train_2624",
+      "stem_b": "train_3155"
+    },
+    {
+      "pair_id": "SP180",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8512887954711914,
+      "cosine_trillsson": 0.990031361579895,
+      "hardness": 0.990031361579895,
+      "side": "train",
+      "stem_a": "train_7716",
+      "stem_b": "train_8017"
+    },
+    {
+      "pair_id": "SP181",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.390336275100708,
+      "cosine_trillsson": 0.985075831413269,
+      "hardness": 0.985075831413269,
+      "side": "test",
+      "stem_a": "test_0761",
+      "stem_b": "test_3431"
+    },
+    {
+      "pair_id": "SP182",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2403637170791626,
+      "cosine_trillsson": 0.9854971170425415,
+      "hardness": 0.9854971170425415,
+      "side": "devel",
+      "stem_a": "devel_0998",
+      "stem_b": "devel_1467"
+    },
+    {
+      "pair_id": "SP183",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5514558553695679,
+      "cosine_trillsson": 0.9900867342948914,
+      "hardness": 0.9900867342948914,
+      "side": "train",
+      "stem_a": "train_0182",
+      "stem_b": "train_3064"
+    },
+    {
+      "pair_id": "SP184",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3298971652984619,
+      "cosine_trillsson": 0.9841532707214355,
+      "hardness": 0.9841532707214355,
+      "side": "devel",
+      "stem_a": "devel_7834",
+      "stem_b": "devel_8992"
+    },
+    {
+      "pair_id": "SP185",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.3788577914237976,
+      "cosine_trillsson": 0.9834921360015869,
+      "hardness": 0.9834921360015869,
+      "side": "train",
+      "stem_a": "train_1280",
+      "stem_b": "train_8487"
+    },
+    {
+      "pair_id": "SP186",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9923710823059082,
+      "cosine_trillsson": 0.9990677833557129,
+      "hardness": 0.9990677833557129,
+      "side": "train",
+      "stem_a": "train_5114",
+      "stem_b": "train_8979"
+    },
+    {
+      "pair_id": "SP187",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7549598217010498,
+      "cosine_trillsson": 0.9905717372894287,
+      "hardness": 0.9905717372894287,
+      "side": "test",
+      "stem_a": "test_1572",
+      "stem_b": "test_8222"
+    },
+    {
+      "pair_id": "SP188",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.22585757076740265,
+      "cosine_trillsson": 0.9856077432632446,
+      "hardness": 0.9856077432632446,
+      "side": "test",
+      "stem_a": "test_4578",
+      "stem_b": "test_5842"
+    },
+    {
+      "pair_id": "SP189",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999983310699463,
+      "cosine_trillsson": 0.9999996423721313,
+      "hardness": 0.9999996423721313,
+      "side": "devel",
+      "stem_a": "devel_7680",
+      "stem_b": "devel_8315"
+    },
+    {
+      "pair_id": "SP190",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4109952449798584,
+      "cosine_trillsson": 0.9820860624313354,
+      "hardness": 0.9820860624313354,
+      "side": "train",
+      "stem_a": "train_6028",
+      "stem_b": "train_7277"
+    },
+    {
+      "pair_id": "SP191",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.3199704885482788,
+      "cosine_trillsson": 0.9843236207962036,
+      "hardness": 0.9843236207962036,
+      "side": "devel",
+      "stem_a": "devel_6416",
+      "stem_b": "devel_6866"
+    },
+    {
+      "pair_id": "SP192",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7756333947181702,
+      "cosine_trillsson": 0.9901087284088135,
+      "hardness": 0.9901087284088135,
+      "side": "train",
+      "stem_a": "train_1942",
+      "stem_b": "train_5318"
+    },
+    {
+      "pair_id": "SP193",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8090635538101196,
+      "cosine_trillsson": 0.9893234372138977,
+      "hardness": 0.9893234372138977,
+      "side": "devel",
+      "stem_a": "devel_4014",
+      "stem_b": "devel_9304"
+    },
+    {
+      "pair_id": "SP194",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8327192664146423,
+      "cosine_trillsson": 0.9921520948410034,
+      "hardness": 0.9921520948410034,
+      "side": "test",
+      "stem_a": "test_4924",
+      "stem_b": "test_5119"
+    },
+    {
+      "pair_id": "SP195",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8019160032272339,
+      "cosine_trillsson": 0.9913102388381958,
+      "hardness": 0.9913102388381958,
+      "side": "train",
+      "stem_a": "train_3198",
+      "stem_b": "train_8857"
+    },
+    {
+      "pair_id": "SP196",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7539072632789612,
+      "cosine_trillsson": 0.9908424615859985,
+      "hardness": 0.9908424615859985,
+      "side": "train",
+      "stem_a": "train_1366",
+      "stem_b": "train_6764"
+    },
+    {
+      "pair_id": "SP197",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7924565076828003,
+      "cosine_trillsson": 0.9917821884155273,
+      "hardness": 0.9917821884155273,
+      "side": "devel",
+      "stem_a": "devel_2777",
+      "stem_b": "devel_5804"
+    },
+    {
+      "pair_id": "SP198",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7622808814048767,
+      "cosine_trillsson": 0.9904133081436157,
+      "hardness": 0.9904133081436157,
+      "side": "test",
+      "stem_a": "test_1190",
+      "stem_b": "test_8601"
+    },
+    {
+      "pair_id": "SP199",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8433421850204468,
+      "cosine_trillsson": 0.987816572189331,
+      "hardness": 0.987816572189331,
+      "side": "devel",
+      "stem_a": "devel_0512",
+      "stem_b": "devel_8147"
+    },
+    {
+      "pair_id": "SP200",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.4066469669342041,
+      "cosine_trillsson": 0.986090898513794,
+      "hardness": 0.986090898513794,
+      "side": "train",
+      "stem_a": "train_2413",
+      "stem_b": "train_7954"
+    },
+    {
+      "pair_id": "SP201",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.34611621499061584,
+      "cosine_trillsson": 0.9856167435646057,
+      "hardness": 0.9856167435646057,
+      "side": "devel",
+      "stem_a": "devel_4147",
+      "stem_b": "devel_7517"
+    },
+    {
+      "pair_id": "SP202",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.24147984385490417,
+      "cosine_trillsson": 0.986198902130127,
+      "hardness": 0.986198902130127,
+      "side": "devel",
+      "stem_a": "devel_1934",
+      "stem_b": "devel_7234"
+    },
+    {
+      "pair_id": "SP203",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.40848857164382935,
+      "cosine_trillsson": 0.9851232171058655,
+      "hardness": 0.9851232171058655,
+      "side": "train",
+      "stem_a": "train_2650",
+      "stem_b": "train_5730"
+    },
+    {
+      "pair_id": "SP204",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7100561857223511,
+      "cosine_trillsson": 0.9867165088653564,
+      "hardness": 0.9867165088653564,
+      "side": "train",
+      "stem_a": "train_5865",
+      "stem_b": "train_9018"
+    },
+    {
+      "pair_id": "SP205",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7460494041442871,
+      "cosine_trillsson": 0.9867790937423706,
+      "hardness": 0.9867790937423706,
+      "side": "test",
+      "stem_a": "test_3844",
+      "stem_b": "test_5758"
+    },
+    {
+      "pair_id": "SP206",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.34454602003097534,
+      "cosine_trillsson": 0.9833717346191406,
+      "hardness": 0.9833717346191406,
+      "side": "test",
+      "stem_a": "test_1225",
+      "stem_b": "test_1885"
+    },
+    {
+      "pair_id": "SP207",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8377580642700195,
+      "cosine_trillsson": 0.9904756546020508,
+      "hardness": 0.9904756546020508,
+      "side": "train",
+      "stem_a": "train_4553",
+      "stem_b": "train_7151"
+    },
+    {
+      "pair_id": "SP208",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7762007713317871,
+      "cosine_trillsson": 0.9902480244636536,
+      "hardness": 0.9902480244636536,
+      "side": "train",
+      "stem_a": "train_8314",
+      "stem_b": "train_8831"
+    },
+    {
+      "pair_id": "SP209",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4197315573692322,
+      "cosine_trillsson": 0.9847114086151123,
+      "hardness": 0.9847114086151123,
+      "side": "test",
+      "stem_a": "test_5937",
+      "stem_b": "test_7898"
+    },
+    {
+      "pair_id": "SP210",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.40585771203041077,
+      "cosine_trillsson": 0.9849560260772705,
+      "hardness": 0.9849560260772705,
+      "side": "devel",
+      "stem_a": "devel_0842",
+      "stem_b": "devel_1733"
+    },
+    {
+      "pair_id": "SP211",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5461079478263855,
+      "cosine_trillsson": 0.9835943579673767,
+      "hardness": 0.9835943579673767,
+      "side": "test",
+      "stem_a": "test_4809",
+      "stem_b": "test_5038"
+    },
+    {
+      "pair_id": "SP212",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.297847718000412,
+      "cosine_trillsson": 0.9850496053695679,
+      "hardness": 0.9850496053695679,
+      "side": "devel",
+      "stem_a": "devel_0030",
+      "stem_b": "devel_2382"
+    },
+    {
+      "pair_id": "SP213",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9948151707649231,
+      "cosine_trillsson": 0.9996073246002197,
+      "hardness": 0.9996073246002197,
+      "side": "test",
+      "stem_a": "test_3730",
+      "stem_b": "test_9328"
+    },
+    {
+      "pair_id": "SP214",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.29355281591415405,
+      "cosine_trillsson": 0.9852566719055176,
+      "hardness": 0.9852566719055176,
+      "side": "train",
+      "stem_a": "train_0331",
+      "stem_b": "train_6311"
+    },
+    {
+      "pair_id": "SP215",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2952115535736084,
+      "cosine_trillsson": 0.9847006797790527,
+      "hardness": 0.9847006797790527,
+      "side": "train",
+      "stem_a": "train_1223",
+      "stem_b": "train_2501"
+    },
+    {
+      "pair_id": "SP216",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.29055142402648926,
+      "cosine_trillsson": 0.9848172664642334,
+      "hardness": 0.9848172664642334,
+      "side": "devel",
+      "stem_a": "devel_5362",
+      "stem_b": "devel_5711"
+    },
+    {
+      "pair_id": "SP217",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8215056657791138,
+      "cosine_trillsson": 0.9870805144309998,
+      "hardness": 0.9870805144309998,
+      "side": "devel",
+      "stem_a": "devel_0078",
+      "stem_b": "devel_9386"
+    },
+    {
+      "pair_id": "SP218",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8154354095458984,
+      "cosine_trillsson": 0.9865822196006775,
+      "hardness": 0.9865822196006775,
+      "side": "train",
+      "stem_a": "train_2712",
+      "stem_b": "train_7983"
+    },
+    {
+      "pair_id": "SP219",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.675375759601593,
+      "cosine_trillsson": 0.9864538908004761,
+      "hardness": 0.9864538908004761,
+      "side": "train",
+      "stem_a": "train_3479",
+      "stem_b": "train_3923"
+    },
+    {
+      "pair_id": "SP220",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.27803945541381836,
+      "cosine_trillsson": 0.9845594167709351,
+      "hardness": 0.9845594167709351,
+      "side": "devel",
+      "stem_a": "devel_0252",
+      "stem_b": "devel_5395"
+    },
+    {
+      "pair_id": "SP221",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7670056819915771,
+      "cosine_trillsson": 0.9911543726921082,
+      "hardness": 0.9911543726921082,
+      "side": "test",
+      "stem_a": "test_3397",
+      "stem_b": "test_8008"
+    },
+    {
+      "pair_id": "SP222",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.47115784883499146,
+      "cosine_trillsson": 0.986801028251648,
+      "hardness": 0.986801028251648,
+      "side": "devel",
+      "stem_a": "devel_0812",
+      "stem_b": "devel_9284"
+    },
+    {
+      "pair_id": "SP223",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8675045967102051,
+      "cosine_trillsson": 0.9926444888114929,
+      "hardness": 0.9926444888114929,
+      "side": "test",
+      "stem_a": "test_6052",
+      "stem_b": "test_7422"
+    },
+    {
+      "pair_id": "SP224",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.42534929513931274,
+      "cosine_trillsson": 0.9872951507568359,
+      "hardness": 0.9872951507568359,
+      "side": "devel",
+      "stem_a": "devel_1252",
+      "stem_b": "devel_5718"
+    },
+    {
+      "pair_id": "SP225",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.27183133363723755,
+      "cosine_trillsson": 0.9832285046577454,
+      "hardness": 0.9832285046577454,
+      "side": "train",
+      "stem_a": "train_4600",
+      "stem_b": "train_9110"
+    },
+    {
+      "pair_id": "SP226",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8433136940002441,
+      "cosine_trillsson": 0.9887768030166626,
+      "hardness": 0.9887768030166626,
+      "side": "train",
+      "stem_a": "train_2217",
+      "stem_b": "train_5821"
+    },
+    {
+      "pair_id": "SP227",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8248081803321838,
+      "cosine_trillsson": 0.9891553521156311,
+      "hardness": 0.9891553521156311,
+      "side": "test",
+      "stem_a": "test_0022",
+      "stem_b": "test_3637"
+    },
+    {
+      "pair_id": "SP228",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.1634596586227417,
+      "cosine_trillsson": 0.9839503765106201,
+      "hardness": 0.9839503765106201,
+      "side": "train",
+      "stem_a": "train_1858",
+      "stem_b": "train_7936"
+    },
+    {
+      "pair_id": "SP229",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8675462603569031,
+      "cosine_trillsson": 0.9904941320419312,
+      "hardness": 0.9904941320419312,
+      "side": "train",
+      "stem_a": "train_0033",
+      "stem_b": "train_0795"
+    },
+    {
+      "pair_id": "SP230",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.788094162940979,
+      "cosine_trillsson": 0.992116391658783,
+      "hardness": 0.992116391658783,
+      "side": "devel",
+      "stem_a": "devel_0659",
+      "stem_b": "devel_6541"
+    },
+    {
+      "pair_id": "SP231",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.29472070932388306,
+      "cosine_trillsson": 0.9834412336349487,
+      "hardness": 0.9834412336349487,
+      "side": "train",
+      "stem_a": "train_6834",
+      "stem_b": "train_8994"
+    },
+    {
+      "pair_id": "SP232",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8317303657531738,
+      "cosine_trillsson": 0.990767240524292,
+      "hardness": 0.990767240524292,
+      "side": "train",
+      "stem_a": "train_3139",
+      "stem_b": "train_6014"
+    },
+    {
+      "pair_id": "SP233",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8596094250679016,
+      "cosine_trillsson": 0.9921506643295288,
+      "hardness": 0.9921506643295288,
+      "side": "devel",
+      "stem_a": "devel_0624",
+      "stem_b": "devel_8853"
+    },
+    {
+      "pair_id": "SP234",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7764465808868408,
+      "cosine_trillsson": 0.9879841804504395,
+      "hardness": 0.9879841804504395,
+      "side": "train",
+      "stem_a": "train_0814",
+      "stem_b": "train_1883"
+    },
+    {
+      "pair_id": "SP235",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7642998695373535,
+      "cosine_trillsson": 0.987683892250061,
+      "hardness": 0.987683892250061,
+      "side": "devel",
+      "stem_a": "devel_6294",
+      "stem_b": "devel_6941"
+    },
+    {
+      "pair_id": "SP236",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.25891876220703125,
+      "cosine_trillsson": 0.9867493510246277,
+      "hardness": 0.9867493510246277,
+      "side": "devel",
+      "stem_a": "devel_3250",
+      "stem_b": "devel_6791"
+    },
+    {
+      "pair_id": "SP237",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8058077096939087,
+      "cosine_trillsson": 0.9911316633224487,
+      "hardness": 0.9911316633224487,
+      "side": "test",
+      "stem_a": "test_2685",
+      "stem_b": "test_6244"
+    },
+    {
+      "pair_id": "SP238",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2513343393802643,
+      "cosine_trillsson": 0.9847027063369751,
+      "hardness": 0.9847027063369751,
+      "side": "devel",
+      "stem_a": "devel_0157",
+      "stem_b": "devel_5851"
+    },
+    {
+      "pair_id": "SP239",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.809544026851654,
+      "cosine_trillsson": 0.9872485399246216,
+      "hardness": 0.9872485399246216,
+      "side": "test",
+      "stem_a": "test_0956",
+      "stem_b": "test_1146"
+    },
+    {
+      "pair_id": "SP240",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8603038191795349,
+      "cosine_trillsson": 0.9922541379928589,
+      "hardness": 0.9922541379928589,
+      "side": "devel",
+      "stem_a": "devel_4813",
+      "stem_b": "devel_6539"
+    },
+    {
+      "pair_id": "SP241",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.26509103178977966,
+      "cosine_trillsson": 0.9830295443534851,
+      "hardness": 0.9830295443534851,
+      "side": "train",
+      "stem_a": "train_1057",
+      "stem_b": "train_6570"
+    },
+    {
+      "pair_id": "SP242",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8193832039833069,
+      "cosine_trillsson": 0.9899792671203613,
+      "hardness": 0.9899792671203613,
+      "side": "devel",
+      "stem_a": "devel_2503",
+      "stem_b": "devel_6311"
+    },
+    {
+      "pair_id": "SP243",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5096144676208496,
+      "cosine_trillsson": 0.9863356947898865,
+      "hardness": 0.9863356947898865,
+      "side": "test",
+      "stem_a": "test_0955",
+      "stem_b": "test_3402"
+    },
+    {
+      "pair_id": "SP244",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8493397235870361,
+      "cosine_trillsson": 0.9899676442146301,
+      "hardness": 0.9899676442146301,
+      "side": "devel",
+      "stem_a": "devel_1019",
+      "stem_b": "devel_3774"
+    },
+    {
+      "pair_id": "SP245",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8639636635780334,
+      "cosine_trillsson": 0.9934539198875427,
+      "hardness": 0.9934539198875427,
+      "side": "devel",
+      "stem_a": "devel_0235",
+      "stem_b": "devel_8215"
+    },
+    {
+      "pair_id": "SP246",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.35323792695999146,
+      "cosine_trillsson": 0.9841731190681458,
+      "hardness": 0.9841731190681458,
+      "side": "devel",
+      "stem_a": "devel_4880",
+      "stem_b": "devel_7686"
+    },
+    {
+      "pair_id": "SP247",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7903155088424683,
+      "cosine_trillsson": 0.9904541969299316,
+      "hardness": 0.9904541969299316,
+      "side": "train",
+      "stem_a": "train_2080",
+      "stem_b": "train_3179"
+    },
+    {
+      "pair_id": "SP248",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8549636602401733,
+      "cosine_trillsson": 0.9908695220947266,
+      "hardness": 0.9908695220947266,
+      "side": "devel",
+      "stem_a": "devel_1422",
+      "stem_b": "devel_8124"
+    },
+    {
+      "pair_id": "SP249",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2863653898239136,
+      "cosine_trillsson": 0.9831365346908569,
+      "hardness": 0.9831365346908569,
+      "side": "train",
+      "stem_a": "train_1988",
+      "stem_b": "train_6989"
+    },
+    {
+      "pair_id": "SP250",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.19051119685173035,
+      "cosine_trillsson": 0.9843621850013733,
+      "hardness": 0.9843621850013733,
+      "side": "train",
+      "stem_a": "train_8074",
+      "stem_b": "train_8570"
+    },
+    {
+      "pair_id": "SP251",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8686996698379517,
+      "cosine_trillsson": 0.988327145576477,
+      "hardness": 0.988327145576477,
+      "side": "test",
+      "stem_a": "test_4317",
+      "stem_b": "test_6812"
+    },
+    {
+      "pair_id": "SP252",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.34748587012290955,
+      "cosine_trillsson": 0.9865779280662537,
+      "hardness": 0.9865779280662537,
+      "side": "train",
+      "stem_a": "train_0606",
+      "stem_b": "train_3344"
+    },
+    {
+      "pair_id": "SP253",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8468912243843079,
+      "cosine_trillsson": 0.9879200458526611,
+      "hardness": 0.9879200458526611,
+      "side": "test",
+      "stem_a": "test_6036",
+      "stem_b": "test_8238"
+    },
+    {
+      "pair_id": "SP254",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7985513806343079,
+      "cosine_trillsson": 0.9923528432846069,
+      "hardness": 0.9923528432846069,
+      "side": "train",
+      "stem_a": "train_7856",
+      "stem_b": "train_7976"
+    },
+    {
+      "pair_id": "SP255",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5803418159484863,
+      "cosine_trillsson": 0.9845805764198303,
+      "hardness": 0.9845805764198303,
+      "side": "train",
+      "stem_a": "train_0623",
+      "stem_b": "train_8165"
+    },
+    {
+      "pair_id": "SP256",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7888354063034058,
+      "cosine_trillsson": 0.9897217750549316,
+      "hardness": 0.9897217750549316,
+      "side": "test",
+      "stem_a": "test_3734",
+      "stem_b": "test_6318"
+    },
+    {
+      "pair_id": "SP257",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4183300733566284,
+      "cosine_trillsson": 0.9834909439086914,
+      "hardness": 0.9834909439086914,
+      "side": "train",
+      "stem_a": "train_0783",
+      "stem_b": "train_3097"
+    },
+    {
+      "pair_id": "SP258",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8842945098876953,
+      "cosine_trillsson": 0.9895882606506348,
+      "hardness": 0.9895882606506348,
+      "side": "test",
+      "stem_a": "test_4381",
+      "stem_b": "test_6741"
+    },
+    {
+      "pair_id": "SP259",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.3332303762435913,
+      "cosine_trillsson": 0.9848948121070862,
+      "hardness": 0.9848948121070862,
+      "side": "devel",
+      "stem_a": "devel_4499",
+      "stem_b": "devel_8257"
+    },
+    {
+      "pair_id": "SP260",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7397992610931396,
+      "cosine_trillsson": 0.9869545698165894,
+      "hardness": 0.9869545698165894,
+      "side": "test",
+      "stem_a": "test_2691",
+      "stem_b": "test_9157"
+    },
+    {
+      "pair_id": "SP261",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7286954522132874,
+      "cosine_trillsson": 0.9918391108512878,
+      "hardness": 0.9918391108512878,
+      "side": "devel",
+      "stem_a": "devel_4773",
+      "stem_b": "devel_6156"
+    },
+    {
+      "pair_id": "SP262",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7218540906906128,
+      "cosine_trillsson": 0.9875626564025879,
+      "hardness": 0.9875626564025879,
+      "side": "devel",
+      "stem_a": "devel_1802",
+      "stem_b": "devel_4057"
+    },
+    {
+      "pair_id": "SP263",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.27455976605415344,
+      "cosine_trillsson": 0.9868205189704895,
+      "hardness": 0.9868205189704895,
+      "side": "train",
+      "stem_a": "train_4366",
+      "stem_b": "train_6479"
+    },
+    {
+      "pair_id": "SP264",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7956061363220215,
+      "cosine_trillsson": 0.9877032041549683,
+      "hardness": 0.9877032041549683,
+      "side": "test",
+      "stem_a": "test_0544",
+      "stem_b": "test_3542"
+    },
+    {
+      "pair_id": "SP265",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7317022681236267,
+      "cosine_trillsson": 0.9913672208786011,
+      "hardness": 0.9913672208786011,
+      "side": "devel",
+      "stem_a": "devel_4110",
+      "stem_b": "devel_4412"
+    },
+    {
+      "pair_id": "SP266",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7657895684242249,
+      "cosine_trillsson": 0.9897361397743225,
+      "hardness": 0.9897361397743225,
+      "side": "test",
+      "stem_a": "test_0004",
+      "stem_b": "test_6180"
+    },
+    {
+      "pair_id": "SP267",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.766546905040741,
+      "cosine_trillsson": 0.9881477355957031,
+      "hardness": 0.9881477355957031,
+      "side": "train",
+      "stem_a": "train_1373",
+      "stem_b": "train_4049"
+    },
+    {
+      "pair_id": "SP268",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8384615778923035,
+      "cosine_trillsson": 0.9870104193687439,
+      "hardness": 0.9870104193687439,
+      "side": "test",
+      "stem_a": "test_5172",
+      "stem_b": "test_8094"
+    },
+    {
+      "pair_id": "SP269",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4362082779407501,
+      "cosine_trillsson": 0.9864897727966309,
+      "hardness": 0.9864897727966309,
+      "side": "train",
+      "stem_a": "train_6762",
+      "stem_b": "train_8010"
+    },
+    {
+      "pair_id": "SP270",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.3305400609970093,
+      "cosine_trillsson": 0.9855051040649414,
+      "hardness": 0.9855051040649414,
+      "side": "devel",
+      "stem_a": "devel_1842",
+      "stem_b": "devel_9093"
+    },
+    {
+      "pair_id": "SP271",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.23959295451641083,
+      "cosine_trillsson": 0.9846711158752441,
+      "hardness": 0.9846711158752441,
+      "side": "devel",
+      "stem_a": "devel_1092",
+      "stem_b": "devel_5176"
+    },
+    {
+      "pair_id": "SP272",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.5117922425270081,
+      "cosine_trillsson": 0.9859288930892944,
+      "hardness": 0.9859288930892944,
+      "side": "test",
+      "stem_a": "test_2571",
+      "stem_b": "test_3791"
+    },
+    {
+      "pair_id": "SP273",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7595474123954773,
+      "cosine_trillsson": 0.9877550005912781,
+      "hardness": 0.9877550005912781,
+      "side": "devel",
+      "stem_a": "devel_5139",
+      "stem_b": "devel_7883"
+    },
+    {
+      "pair_id": "SP274",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8165132403373718,
+      "cosine_trillsson": 0.9901106953620911,
+      "hardness": 0.9901106953620911,
+      "side": "test",
+      "stem_a": "test_0123",
+      "stem_b": "test_4029"
+    },
+    {
+      "pair_id": "SP275",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8271782994270325,
+      "cosine_trillsson": 0.9905260801315308,
+      "hardness": 0.9905260801315308,
+      "side": "test",
+      "stem_a": "test_2252",
+      "stem_b": "test_3516"
+    },
+    {
+      "pair_id": "SP276",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.37377703189849854,
+      "cosine_trillsson": 0.9859777092933655,
+      "hardness": 0.9859777092933655,
+      "side": "devel",
+      "stem_a": "devel_0255",
+      "stem_b": "devel_7357"
+    },
+    {
+      "pair_id": "SP277",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.6631379127502441,
+      "cosine_trillsson": 0.9880540370941162,
+      "hardness": 0.9880540370941162,
+      "side": "train",
+      "stem_a": "train_2896",
+      "stem_b": "train_8160"
+    },
+    {
+      "pair_id": "SP278",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.35030704736709595,
+      "cosine_trillsson": 0.9839182496070862,
+      "hardness": 0.9839182496070862,
+      "side": "test",
+      "stem_a": "test_1660",
+      "stem_b": "test_8922"
+    },
+    {
+      "pair_id": "SP279",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.22248798608779907,
+      "cosine_trillsson": 0.985456109046936,
+      "hardness": 0.985456109046936,
+      "side": "test",
+      "stem_a": "test_3683",
+      "stem_b": "test_7351"
+    },
+    {
+      "pair_id": "SP280",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7831114530563354,
+      "cosine_trillsson": 0.9863633513450623,
+      "hardness": 0.9863633513450623,
+      "side": "test",
+      "stem_a": "test_2577",
+      "stem_b": "test_7765"
+    },
+    {
+      "pair_id": "SP281",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8369513750076294,
+      "cosine_trillsson": 0.9930091500282288,
+      "hardness": 0.9930091500282288,
+      "side": "devel",
+      "stem_a": "devel_1035",
+      "stem_b": "devel_2883"
+    },
+    {
+      "pair_id": "SP282",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7332691550254822,
+      "cosine_trillsson": 0.9877545833587646,
+      "hardness": 0.9877545833587646,
+      "side": "devel",
+      "stem_a": "devel_1742",
+      "stem_b": "devel_6572"
+    },
+    {
+      "pair_id": "SP283",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7968082427978516,
+      "cosine_trillsson": 0.9874043464660645,
+      "hardness": 0.9874043464660645,
+      "side": "test",
+      "stem_a": "test_3277",
+      "stem_b": "test_7302"
+    },
+    {
+      "pair_id": "SP284",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.7600939273834229,
+      "cosine_trillsson": 0.989359974861145,
+      "hardness": 0.989359974861145,
+      "side": "devel",
+      "stem_a": "devel_1158",
+      "stem_b": "devel_6682"
+    },
+    {
+      "pair_id": "SP285",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.869620680809021,
+      "cosine_trillsson": 0.9888126254081726,
+      "hardness": 0.9888126254081726,
+      "side": "devel",
+      "stem_a": "devel_1723",
+      "stem_b": "devel_5672"
+    },
+    {
+      "pair_id": "SP286",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8475216627120972,
+      "cosine_trillsson": 0.9907994866371155,
+      "hardness": 0.9907994866371155,
+      "side": "test",
+      "stem_a": "test_3428",
+      "stem_b": "test_5898"
+    },
+    {
+      "pair_id": "SP287",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9999978542327881,
+      "cosine_trillsson": 0.9999997615814209,
+      "hardness": 0.9999997615814209,
+      "side": "devel",
+      "stem_a": "devel_3191",
+      "stem_b": "devel_7906"
+    },
+    {
+      "pair_id": "SP288",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7567234635353088,
+      "cosine_trillsson": 0.9873606562614441,
+      "hardness": 0.9873606562614441,
+      "side": "devel",
+      "stem_a": "devel_4170",
+      "stem_b": "devel_6073"
+    },
+    {
+      "pair_id": "SP289",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4002605676651001,
+      "cosine_trillsson": 0.9864879846572876,
+      "hardness": 0.9864879846572876,
+      "side": "devel",
+      "stem_a": "devel_4950",
+      "stem_b": "devel_6764"
+    },
+    {
+      "pair_id": "SP290",
+      "stratum": "ecapa_same_trillsson_different",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.8056501150131226,
+      "cosine_trillsson": 0.9889450073242188,
+      "hardness": 0.9889450073242188,
+      "side": "train",
+      "stem_a": "train_5357",
+      "stem_b": "train_9274"
+    },
+    {
+      "pair_id": "SP291",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.7491134405136108,
+      "cosine_trillsson": 0.990795910358429,
+      "hardness": 0.990795910358429,
+      "side": "train",
+      "stem_a": "train_1395",
+      "stem_b": "train_7090"
+    },
+    {
+      "pair_id": "SP292",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.4523587226867676,
+      "cosine_trillsson": 0.9852981567382812,
+      "hardness": 0.9852981567382812,
+      "side": "devel",
+      "stem_a": "devel_1170",
+      "stem_b": "devel_4844"
+    },
+    {
+      "pair_id": "SP293",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.24939988553524017,
+      "cosine_trillsson": 0.9852594137191772,
+      "hardness": 0.9852594137191772,
+      "side": "test",
+      "stem_a": "test_3496",
+      "stem_b": "test_7804"
+    },
+    {
+      "pair_id": "SP294",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.2602461576461792,
+      "cosine_trillsson": 0.9850444793701172,
+      "hardness": 0.9850444793701172,
+      "side": "devel",
+      "stem_a": "devel_6994",
+      "stem_b": "devel_8288"
+    },
+    {
+      "pair_id": "SP295",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.9898029565811157,
+      "cosine_trillsson": 0.9989594221115112,
+      "hardness": 0.9989594221115112,
+      "side": "test",
+      "stem_a": "test_0017",
+      "stem_b": "test_6156"
+    },
+    {
+      "pair_id": "SP296",
+      "stratum": "trillsson_same_ecapa_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.2768879532814026,
+      "cosine_trillsson": 0.9855291843414307,
+      "hardness": 0.9855291843414307,
+      "side": "devel",
+      "stem_a": "devel_2744",
+      "stem_b": "devel_5231"
+    },
+    {
+      "pair_id": "SP297",
+      "stratum": "all_methods_same",
+      "ecapa_same": {
+        "kmeans": true,
+        "agglomerative": true,
+        "spectral": true
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.8948677778244019,
+      "cosine_trillsson": 0.9913647174835205,
+      "hardness": 0.9913647174835205,
+      "side": "train",
+      "stem_a": "train_2050",
+      "stem_b": "train_2318"
+    },
+    {
+      "pair_id": "SP298",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.43415117263793945,
+      "cosine_trillsson": 0.9846051931381226,
+      "hardness": 0.9846051931381226,
+      "side": "test",
+      "stem_a": "test_0659",
+      "stem_b": "test_8122"
+    },
+    {
+      "pair_id": "SP299",
+      "stratum": "all_methods_different",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": false,
+        "spectral": false
+      },
+      "trillsson_same": false,
+      "cosine_ecapa": 0.26286211609840393,
+      "cosine_trillsson": 0.9842487573623657,
+      "hardness": 0.9842487573623657,
+      "side": "devel",
+      "stem_a": "devel_0554",
+      "stem_b": "devel_3601"
+    },
+    {
+      "pair_id": "SP300",
+      "stratum": "ecapa_internal_disagreement",
+      "ecapa_same": {
+        "kmeans": false,
+        "agglomerative": true,
+        "spectral": false
+      },
+      "trillsson_same": true,
+      "cosine_ecapa": 0.6199802756309509,
+      "cosine_trillsson": 0.9865250587463379,
+      "hardness": 0.9865250587463379,
+      "side": "test",
+      "stem_a": "test_0527",
+      "stem_b": "test_9213"
+    }
+  ]
+}

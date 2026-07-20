@@ -7,9 +7,9 @@ We tested three classes of de-confounding intervention on URTIC + frozen WavLM. 
 \subsection{A5.5 --- Data-level: cross-speaker augmentation}
 \label{ssec:a5_5}
 
-\textbf{Audio splicing v1 (killed by M8 self-splice control).} The original A5.5 design spliced anchor chunks with same-cold-different-pseudo-speaker partners using 200 ms crossfades. A binary splice-detector probe reached UAR $0.998$ across every WavLM layer; a self-splice control (splicing within the same pseudo-speaker cluster) gave UAR $0.990$, only $\Delta\,-0.008$ below cross-splice. The splicing operation itself accounts for $\sim 99\,\%$ of detectability; cross-speaker mixing accounts for $<1\,\%$. This rules out partner-selection refinements --- the splice operation produces a signature regardless of who you splice with --- and we pivoted to embedding mixup. Full splice-detector layer-by-layer numbers in Appendix~\ref{app:a55}.
+\textbf{Audio splicing v1 (stopped after M8 self-splice control).} A binary splice-detector probe reached UAR $0.998$ after cross-proxy-group splicing and $0.990$ after a within-proxy-group self-splice control. The near-equal detectability indicates that the splice operation, rather than partner selection alone, dominates this diagnostic. We therefore stopped refining that splicer and moved to embedding mixup; this control does not establish a true-speaker mixing mechanism.
 
-\textit{M8 finding (transferable beyond URTIC):} \emph{audio-level cross-speaker splicing on foundation-model representations is detectable at $>99\,\%$ UAR even within a single speaker. The splicing operation itself is the artefact; cross-speaker mixing accounts for $<1\,\%$. Anyone doing audio-level cross-speaker augmentation on FM features should run a self-splice control before training.}
+\textit{M8 finding:} \emph{In this implementation, cross-proxy-group and within-proxy-group splices are both more than $0.99$ detectable. A self-splice control is therefore necessary before attributing detectability to partner identity; transfer to other corpora or splicers is untested.}
 
 \textbf{Embedding mixup (M9 narrow window empty).} Plan B mixes WavLM pooled stats per chunk: $\tilde{X}_{\text{anchor}} = \alpha \cdot X_{\text{anchor}} + (1-\alpha) \cdot X_{\text{partner}}$, $\alpha \sim U(\alpha_{\min}, \alpha_{\max})$, partner = same-cold + different-pseudo-speaker, $K{=}3$ cached mixed variants per chunk. Two $\alpha$-axis endpoints tested: \emph{conservative} $\alpha \sim U(0.70, 0.85)$ and \emph{aggressive} $\alpha \sim U(0.50, 0.70)$. Both endpoints fail differently:
 
@@ -30,7 +30,7 @@ $U(0.50, 0.70)$ aggressive   & $0.6397 \pm 0.0186$ & $0.0485$ & branch (d) FAIL 
 
 Conservative $\alpha$ gives a small UAR lift ($+0.006$, $\sim 1.6\sigma$) without measurable probe drop --- the augmentation activated weak regularisation (recall pattern shifted to more cold-balanced) rather than de-confounding. Aggressive $\alpha$ drops UAR by $0.017$ ($\sigma$ explodes 6$\times$) AND the probe still doesn't drop. Branch (d) verdict: both endpoints fail differently; intermediate $\alpha \sim U(0.60, 0.80)$ can't escape --- gentler falls toward conservative's null, stronger toward aggressive's UAR damage. Per-$\alpha$ LR-probe and cos(init, final) details in Appendix~\ref{app:a55_alpha}.
 
-\textit{M9 finding:} \emph{per-chunk pooled-stat mixing on URTIC + frozen WavLM has an empty operating window across the $\alpha$-axis. Run both endpoints before declaring a mixup rung locked. Generalises beyond URTIC: for any cross-speaker augmentation on FM representations operating purely at the data level (without an explicit de-confounding loss), the operating window may be narrow or empty.}
+\textit{M9 finding:} \emph{Per-chunk pooled-stat mixing on URTIC + frozen WavLM has an empty operating window across the tested $\alpha$ axis. Running both endpoints is a useful project control; whether the pattern transfers to other corpora is untested.}
 
 \subsection{A6 — Representation-level head-only: contrastive with speaker-masked positives}
 \label{ssec:a6}
@@ -43,7 +43,7 @@ A6 adds a fresh projection MLP ($4096 \to 512 \to 128$ with GELU + LayerNorm, L2
 
 \begin{table*}[t]
 \centering\small
-\caption{A6 PoC controls: bottleneck explains the apparent LR drop; cold-CE Pareto-dominates A6 on every metric.}
+\caption{A6 PoC controls under the historical proxy protocol. Dimensionality accounts for most of the apparent LR-probe drop; cold-CE is best across the listed metrics among the tested 128-d heads.}
 \label{tab:a6_controls}
 \begin{tabular}{lcccc}
 \toprule
@@ -58,17 +58,17 @@ A6 spk-masked SupCon    & $0.0477$ & $0.0410$ & $0.5988$ & $+0.059$ \\
 \end{tabular}
 \end{table*}
 
-Three independent refutations of the head-only A6 mechanism: (i) random untrained projection drops LR to 0.0427 (within 0.0017 of A6); (ii) cold-CE-only Pareto-dominates A6 on every metric; (iii) vanilla SupCon (no speaker-masking) slightly beats A6 — the speaker-masking lever is mildly counterproductive (reduces positive count without buying de-confounding back).
+Three controls narrow the A6 interpretation: (i) a random 128-d projection drops LR to 0.0427, within 0.0017 of A6; (ii) cold-CE is better on every listed historical metric; and (iii) vanilla SupCon slightly exceeds speaker-masked SupCon. Thus the observed probe drop cannot be assigned to speaker masking.
 
-\textit{M10 finding:} \emph{Probe-substrate dimensionality is a confound for de-confounding measurements. Comparing a probe trained on a high-dim baseline against the same probe on a low-dim post-projection representation conflates information loss with de-confounding. Random-projection controls at the same target dim are mandatory.}
+\textit{M10 finding:} \emph{Probe-substrate dimensionality confounds this comparison. A matched random-projection control is needed before attributing a probe drop to the training objective.}
 
-\textbf{M11 --- subtractive auxiliary-objective interaction (combined-loss $\lambda$-sweep).} The surviving hypothesis after the controls was ``contrastive as a regulariser on top of CE-anchored cold bottleneck.'' The $\lambda$-sweep $L = L_{\text{cold-CE}} + \lambda \cdot L_{\text{SupCon-spkmasked}}$ over $\lambda \in \{0, 0.05, 0.1, 0.25, 0.5\}$ at 5 seeds gives $\lambda{=}0$ \emph{monotonically} the best on every metric. Adding any positive $\lambda$ strictly worsens every measurement; per-$\lambda$ numbers in Appendix~\ref{app:a6b}.
+\textbf{M11 --- combined-loss $\lambda$ sweep.} Over $\lambda\in\{0,0.05,0.1,0.25,0.5\}$ and five seeds, $\lambda=0$ is best on every listed historical metric. This is a negative result for the tested CE plus speaker-masked-SupCon recipe; per-$\lambda$ values are in Appendix~\ref{app:a6b}.
 
-\textit{Mechanism (4-step causal chain).} (1) CE on the 128-d projection bottleneck produces sharply class-separated geometry where speaker info is mostly compressed away by the bottleneck itself. (2) Adding SupCon class-pressure flattens within-class diversity --- CE already produced separation, contrastive adds no new structure; (3) the flattened diversity includes cold-relevant variation that helped CE generalise --- squeezing it out drops cold UAR; (4) SupCon's ``different cold class = separation'' regardless of speaker pulls same-speaker different-cold pairs apart, \emph{re-introducing speaker-correlated variance} and raising the MLP probe.
+One possible explanation is competition between CE and contrastive geometry in the 128-d bottleneck, but the sweep does not isolate that mechanism. In particular, the fragmented proxy labels prevent interpreting probe movement as true-speaker information.
 
-\textit{M11 finding:} \emph{in low-data settings, an auxiliary contrastive loss is purely subtractive on a CE-anchored bottleneck --- when CE has already maximised class margin, contrastive competes with rather than complements that geometry. The naive intuition ``CE for cold + SupCon for de-confounding = both gains stacked'' is empirically wrong here.}
+\textit{M11 finding:} \emph{For this head and sweep, adding the auxiliary contrastive term did not improve either historical gate. This project-local negative should not be generalised to all low-data contrastive objectives.}
 
-A6 head-only is closed across three recipes: pure speaker-masked SupCon, vanilla SupCon, combined CE+SupCon. Pure cold-CE is the Pareto-best head-only configuration.
+Among the three tested head-only recipes on the historical boundaries, pure cold-CE is best across the listed metrics. Corrected-group evaluation is required before a de-confounding conclusion.
 
 \subsection{A7 — Gradient-level: DANN/MDD speaker adversary}
 \label{ssec:a7}
@@ -77,17 +77,17 @@ A7 inserts a gradient-reversal layer between the projection output $z$ and a pse
 
 \textbf{Phase 1 PoC at 128-d projection.} Sweep $\lambda_{\max} \in \{0, 0.01, 0.03, 0.1, 0.3, 1.0\}$, 3 seeds. Result: \texttt{B\_null} verdict per the discriminator-health diagnostic — discriminator at $\lambda{=}0$ trained to only $\sim$5$\times$ chance (0.0235 vs threshold 0.025 = $5/210$); below this threshold, the verdict is uninterpretable.
 
-\textbf{M12 + M13 --- disc-ceiling-before-$\lambda$-sweep ordering.} The disc-ceiling diagnostic loads the saved $\lambda{=}0$ projection checkpoint, freezes it, and trains progressively stronger discriminators on the frozen $z$. The strongest (MLP $128 \to 1024 \to 512 \to 210$, 200 epochs) reaches \emph{train top-1 $= 0.9521$ with devel top-1 $= 0.0422$ --- memorisation gap $+0.910$}. The discriminator memorises individual training-chunk speaker IDs by fingerprint without learning generalising speaker structure that transfers to unseen chunks. The adversary in A7 was therefore pushing against memorised in-batch fingerprints, not generalising speaker direction; no $\lambda > 0$ produced a real probe drop.
+\textbf{M12 + M13 --- disc-ceiling-before-$\lambda$-sweep ordering.} The diagnostic freezes the saved $\lambda=0$ projection and trains progressively stronger discriminators on $z$. The strongest tested MLP reaches train top-1 $0.9521$ and devel top-1 $0.0422$ (gap $+0.910$). This large gap shows that train accuracy is not evidence of held-boundary recoverability under the historical proxy labels; it does not by itself identify chunk fingerprinting as the mechanism. No tested $\lambda>0$ improved the downstream historical gates.
 
-\textit{M12 + M13 findings:} \emph{(M12) the discriminator's train/devel memorisation gap is the in-flight validity check during adversarial training: high gap $=$ pushing against memorised fingerprints, no useful adversarial signal. (M13) the disc-ceiling diagnostic must run before the $\lambda$-sweep, with \texttt{devel > HIGH} checked before any memo-gap-as-kill condition. This paper's A7c v1$\to$v2 worked example (initial fail-fast on memo-gap was over-conservative; corrected logic + regularised disc + lower-$\lambda$ sweep gave \texttt{B\_dann\_dead\_substrate\_resistant}, a stronger closure) demonstrates the two-axis ordering directly; full v1$\to$v2 progression in Appendix~\ref{app:a7c}.}
+\textit{M12 + M13 findings:} \emph{Report discriminator train and held-boundary accuracy together, and run the held-boundary ceiling diagnostic before interpreting a $\lambda$ sweep. A large gap warns that training recovery does not transfer under the proxy-label protocol. The A7c v1$\to$v2 sequence is a within-project worked example, not a universal decision rule; details are in Appendix~\ref{app:a7c}.}
 
 \textbf{A7c --- un-bottlenecked DANN at 4096-d.} To rule out the projection-bottleneck explanation for A7, we tested DANN directly on the 4096-d fused substrate (no projection MLP at all), applying M13's ordering rule: disc-ceiling pre-flight first, then $\lambda$-sweep with a regularised discriminator.
 
-Pre-flight result: D3 MLP $4096 \to 2048 \to 1024 \to 210$ reaches \emph{train $1.0000$ / devel $0.0871$, memo gap $+0.91$}. Devel top-1 ($0.0871$) IS higher at 4096-d than at 128-d ($0.0422$) --- the un-bottlenecked substrate retains more recoverable speaker info --- but the memorisation gap is identical, so $\sim 91\,\%$ of apparent speaker recovery at \emph{any} substrate is chunk fingerprinting rather than generalising speaker structure.
+The 4096-d discriminator reaches train top-1 $1.0000$ and devel top-1 $0.0871$ (gap $+0.91$). The higher devel value than at 128-d ($0.0422$) shows greater recoverability of the historical proxy labels without the bottleneck. The gap cannot be converted into a percentage of chunk fingerprinting or true-speaker information.
 
-After applying the corrected M13 decision (devel $> 0.08$ proceeds regardless of memo gap) and running the $\lambda$-sweep with a regularised discriminator: cls UAR, MLP probe, LR probe, AND in-flight disc devel top-1 are \emph{all flat across $\lambda \in [0, 0.1]$} --- every metric within seed noise of $\lambda{=}0$. Verdict: \texttt{B\_dann\_dead\_substrate\_resistant}. DANN got a fair fight at every axis the v1 critique asked us to check and still didn't shape the substrate.
+With the regularised discriminator, class UAR and all three historical proxy-probe metrics remain within seed variation of $\lambda=0$ across $\lambda\in[0,0.1]$. The supported verdict is a negative result for this DANN implementation under the old protocol, not substrate-wide adversarial resistance.
 
-\textit{M14 finding:} \emph{speaker-probe-as-de-confounding-measurement has a fundamental noise floor on small-data corpora with coarse pseudo-speaker labels: discriminator memorisation dominates over generalising speaker structure on the substrate REGARDLESS of bottleneck, capping interpretable probe top-1 at $\sim$ceiling-$\times$-chance level ($\sim 9\,\%$ on URTIC at $k{=}210$). Anyone using speaker probes for de-confounding measurement on similar-scale corpora must report disc-ceiling alongside probe, report memorisation gap, and treat probe top-1 as an upper bound on speaker leakage rather than a precise measurement.}
+\textit{M14 finding:} \emph{Under the historical $k=210$ proxy-label protocol, low held-boundary probe accuracy coexists with near-perfect training accuracy. Probe values should therefore be accompanied by train accuracy and the train--held gap and should not be interpreted as precise true-speaker leakage. The numerical ceiling is protocol-specific and is not established as a universal small-corpus noise floor.}
 
 \subsection{Three-level closure summary}
 
@@ -102,41 +102,41 @@ level & rung & verdict \\
 data         & A5.5 mixup        & M9: empty $\alpha$-window \\
 repr (head)  & A6 / A6b          & M10 + M11 across 3 recipes \\
 repr (LW)    & A7 PoC            & M10 + M12 mem-dead \\
-repr (LW, no proj) & A7c (v2)    & M14: substrate-resistant \\
+repr (LW, no proj) & A7c (v2)    & negative in tested $\lambda$ range \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-Within the tested scope, all within-budget options were negative. The useful claim is therefore narrower than ``de-confounding is solved'' or ``de-confounding is impossible on URTIC'': these specific intervention families did not beat the simpler audited pipeline, and their failure modes produced a transferable instrumentation framework for future work on small-data paralinguistic foundation-model systems.
+Within the tested frozen-backbone configurations and historical boundaries, the listed options were negative. These experiments motivate diagnostics for future work, but their de-confounding verdicts and numerical thresholds require reproduction with corrected groups before external transfer is claimed.
 
 \subsection{Methodology contributions consolidated}
 \label{ssec:m_disciplines}
 
-References to M1--M7 elsewhere in the paper (e.g., M2 substrate$\times$split-protocol sensitivity, M4 the $\tau$-sweep pathology, M5 the lr$\times$init attractor finding) are \emph{internal} methodology checkpoints from the controlled-ladder construction and are not tabulated; the transferable, externally-reusable discipline set is M8--M19. For convenience, those twelve M-disciplines are summarised in Table~\ref{tab:m_disciplines}. Each contains a falsifiable mechanism + the failure mode it catches; each generalises beyond URTIC. M8--M14 emerged from the de-confounding ladder; M15--M17 emerged from a follow-up sweep of ensemble-aggregation ablations on the canonical K=2 5-seed mean-logit ensemble (Section~\ref{ssec:ensemble_defence}); M18 emerged from a shadow-split robustness analysis (Section~\ref{ssec:shadow_robustness}); M19 emerged from the cold-speaker-sparsity findings on URTIC (Section~\ref{ssec:cold_sparsity}).
+References to M1--M7 elsewhere in the paper are internal checkpoints from the controlled-ladder construction and are not tabulated. Table~\ref{tab:m_disciplines} summarises M8--M19 as project lessons and candidate diagnostics. Their broad applicability is a hypothesis; only their within-project observations have been tested. M8--M14 arose from the de-confounding ladder, M15--M17 from aggregation ablations, M18 from historical boundary replays, and M19 from proxy-group aggregation diagnostics.
 
 \begin{table*}[t]
 \centering\footnotesize
-\caption{Twelve negative-control disciplines for foundation-model paralinguistic pipelines (M8 -- M19). M8--M14: de-confounding ladder. M15--M17: ensemble-aggregation ablations. M18: shadow-split robustness. M19: sparse-minority-class-speaker corollaries.}
+\caption{Twelve project lessons and candidate diagnostics (M8--M19). Numerical thresholds and de-confounding verdicts are scoped to the historical proxy-label protocol.}
 \label{tab:m_disciplines}
 \begin{tabular}{lp{0.92\textwidth}}
 \toprule
 ID & one-line discipline \\
 \midrule
-M8  & Self-splice control disambiguates ``cross-speaker mixing'' from ``the splicing op itself'' on FM features. \\
+M8  & A within-proxy-group self-splice control separates operation detectability from partner-selection effects in this splicer. \\
 M9  & $\alpha$-endpoint controls test both ends of an embedding-mixup design before lock; the operating window may be empty. \\
-M10 & Random-projection control at the same target dim is mandatory for any de-confounding rung that introduces a bottleneck; otherwise the apparent probe drop is a bottleneck artefact. \\
-M11 & Auxiliary contrastive loss is purely subtractive on a CE-anchored bottleneck; combined-loss $\lambda$-sweep should default to checking $\lambda{=}0$ first. \\
-M12 & Discriminator train/devel memorisation gap is the in-flight validity check during adversarial training. \\
-M13 & Disc-ceiling diagnostic must run \emph{before} the adversarial $\lambda$-sweep, with $\textit{devel} > \textsc{HIGH}$ checked before any memo-gap-as-kill condition. \\
-M14 & Speaker probe top-1 has a memorisation noise floor on small-data corpora with coarse pseudo-speaker labels; treat as upper bound, not precise measurement; report disc-ceiling alongside. \\
+M10 & Use a same-dimensional random-projection control before attributing a probe drop across a new bottleneck to the training objective. \\
+M11 & In the tested CE-anchored bottleneck, the auxiliary contrastive loss was subtractive; include $\lambda=0$ in combined-loss sweeps. \\
+M12 & Report discriminator train and held-boundary accuracy together; a large gap warns against interpreting training recovery as transferable identity information. \\
+M13 & Run a held-boundary discriminator ceiling before interpreting an adversarial $\lambda$ sweep; the decision thresholds used here are project-specific. \\
+M14 & Under coarse historical proxy labels, probe top-1 is not a precise true-speaker leakage measurement; report training accuracy and the train--held gap alongside it. \\
 \midrule
 M15 & Monotonic calibration cannot improve UAR-at-optimal-$\tau$; the swept-threshold protocol already absorbs whatever isotonic / Platt would do. Any non-zero lift is a $\tau$-grid resolution artefact, not a calibration effect. \\
-M16 & On small calibration splits ($n \lesssim 1$\,k, $k_{\text{minority}} < 100$), L2-regularised LR-stacking on per-seed logits is prone to catastrophic generalisation failure (large-magnitude weights with sign flips). Equal-weight mean-logit is the default; UAR-grid-search with strict held-out evaluation is the next-most-conservative alternative. \\
-M17 & On FM substrates with input normalisation (Wav2Vec2 / HuBERT / WavLM all default to per-utterance zero-mean unit-variance via \texttt{do\_normalize=True}), waveform-level multiplicative perturbations are absorbed and produce identical pooled features. Standard TTA designs (gain + time-stretch) tested on cold detection produce: gain $=$ no-op; time-stretch $=$ systematic UAR drop because pooled per-frame outputs are sensitive to temporal-structure changes that positional encodings + attention patterns introduce. Use perturbations that survive input normalisation (additive noise) or operate at the pooled-stats stage (SpecAugment-style masking on $[L, 4D]$) instead. \\
+M16 & On this small calibration split, LR stacking and UAR-grid weights underperformed equal-weight mean-logit. Treat equal weights as the within-project default and require strict held-out testing for learned weights. \\
+M17 & With WavLM's per-utterance normalisation, the tested gain changes were no-ops; the tested $\pm2\%$ time stretch hurt. The causal contribution of temporal shift versus fusion mismatch was not isolated. \\
 \midrule
-M18 & On small-data corpora where the held-out test set is unavailable, a shadow-split robustness harness on the canonical pipeline's cached logits is a cheap diagnostic that quantifies devel-side overfit risk: re-evaluate the locked configuration across $N \geq 10$ different \texttt{(devel\_val, devel\_test)} partitions of the existing devel split (training-side splits and locked hyperparameters kept fixed); report the shadow distribution alongside the canonical headline UAR. The canonical's $z$-score in the shadow distribution quantifies the magnitude of canonical-favorability; partition variance becomes the right uncertainty unit for canonical-vs-baseline gap claims. \\
+M18 & Replaying locked predictions across alternative boundaries can reveal sensitivity to the exact partitioning procedure. If the grouping map is not validated on the held side, the replay spread is descriptive and is not speaker-independent uncertainty or a model for hidden-test variance. \\
 \midrule
-M19 & On corpora with sparse minority-class speaker representation (URTIC has $\sim 10$ cold speakers per devel half), speaker-level aggregation (smoothing or evaluation) increases variance rather than reducing it; the chunk-level metric is more stable. The naive ``aggregate to speaker level for noise reduction'' heuristic doesn't apply when minority-class speaker count is small. Empirical evidence on URTIC: chunk-UAR shadow $\sigma {=} 0.017$, speaker-UAR shadow $\sigma {=} 0.082$ ($\sim 5\times$ larger); speaker-mean smoothing produces monotone-decreasing $\alpha$-sweep with shadow-paired $\Delta {=} -0.096 \pm 0.015$ at full smoothing. Validates corpus-design choice of chunk-level UAR as the official metric and rules out a class of related interventions (multi-chunk inference, confidence weighting, speaker-level evaluation, multi-task speaker auxiliary heads). \\
+M19 & Aggregation over the fragmented historical proxy groups increased replay variance and smoothing hurt ($\Delta=-0.096\pm0.015$ at full smoothing). This result applies only to those proxy groups and neither validates a true-speaker mechanism nor rules out aggregation with verified identities. \\
 \bottomrule
 \end{tabular}
 \end{table*}

@@ -1,0 +1,228 @@
+{
+  "protocol": {
+    "official_splits": "Train and Development are speaker-independent by challenge design",
+    "model_selection_in_this_test": "none",
+    "threshold": 0,
+    "fusion": "fixed equal train-zscored G4+G9",
+    "pseudo_groups_used_for_models_or_splits": false,
+    "pseudo_groups_used_only_for_uncertainty_resampling": true
+  },
+  "point_results": {
+    "Train_to_Development": {
+      "metrics": {
+        "G4": {
+          "uar": 0.6422383484639265,
+          "recall_C": 0.6785361028684471,
+          "recall_NC": 0.6059405940594059
+        },
+        "G9": {
+          "uar": 0.6416875637642312,
+          "recall_C": 0.4381800197823937,
+          "recall_NC": 0.8451951077460688
+        },
+        "G4_G9_equal": {
+          "uar": 0.6897469132495375,
+          "recall_C": 0.8288822947576657,
+          "recall_NC": 0.5506115317414094
+        }
+      },
+      "fusion_delta_vs_G4": 0.04750856478561105,
+      "fusion_delta_vs_G9": 0.048059349485306324
+    },
+    "Development_to_Train": {
+      "metrics": {
+        "G4": {
+          "uar": 0.6132257109899202,
+          "recall_C": 0.6371134020618556,
+          "recall_NC": 0.5893380199179847
+        },
+        "G9": {
+          "uar": 0.6678558271278363,
+          "recall_C": 0.5010309278350515,
+          "recall_NC": 0.834680726420621
+        },
+        "G4_G9_equal": {
+          "uar": 0.646809679971494,
+          "recall_C": 0.7587628865979381,
+          "recall_NC": 0.5348564733450498
+        }
+      },
+      "fusion_delta_vs_G4": 0.033583968981573786,
+      "fusion_delta_vs_G9": -0.021046147156342343
+    },
+    "bidirectional_mean": {
+      "G4": 0.6277320297269233,
+      "G9": 0.6547716954460338,
+      "G4_G9_equal": 0.6682782966105157
+    }
+  },
+  "proxy_cluster_uncertainty": {
+    "k210_train_fit": {
+      "directions": {
+        "Train_to_Development": {
+          "fusion_vs_G4": {
+            "paired_95_ci": [
+              0.021179967671190538,
+              0.07211549246155048
+            ],
+            "probability_positive": 0.9998
+          },
+          "fusion_vs_G9": {
+            "paired_95_ci": [
+              0.009051583069929682,
+              0.08892931617699067
+            ],
+            "probability_positive": 0.9922666666666666
+          },
+          "eval_groups": 206,
+          "mixed_label_groups": 111
+        },
+        "Development_to_Train": {
+          "fusion_vs_G4": {
+            "paired_95_ci": [
+              -0.024023341488049705,
+              0.08681570178690597
+            ],
+            "probability_positive": 0.8786
+          },
+          "fusion_vs_G9": {
+            "paired_95_ci": [
+              -0.08427569578201079,
+              0.04140398993806911
+            ],
+            "probability_positive": 0.24613333333333334
+          },
+          "eval_groups": 210,
+          "mixed_label_groups": 15
+        }
+      },
+      "bidirectional_average": {
+        "fusion_vs_G4": {
+          "paired_95_ci": [
+            0.009021974194017193,
+            0.06983304391157193
+          ],
+          "probability_positive": 0.9933333333333333
+        },
+        "fusion_vs_G9": {
+          "paired_95_ci": [
+            -0.023657597534568565,
+            0.050589088420354936
+          ],
+          "probability_positive": 0.7548333333333334
+        }
+      }
+    },
+    "pooled_k420": {
+      "directions": {
+        "Train_to_Development": {
+          "fusion_vs_G4": {
+            "paired_95_ci": [
+              0.012944253139723704,
+              0.08429293467305424
+            ],
+            "probability_positive": 0.9967333333333334
+          },
+          "fusion_vs_G9": {
+            "paired_95_ci": [
+              -0.011786044386821678,
+              0.10637470199203519
+            ],
+            "probability_positive": 0.9403
+          },
+          "eval_groups": 236,
+          "mixed_label_groups": 10
+        },
+        "Development_to_Train": {
+          "fusion_vs_G4": {
+            "paired_95_ci": [
+              -0.02780215096939692,
+              0.0928062249779301
+            ],
+            "probability_positive": 0.8603333333333333
+          },
+          "fusion_vs_G9": {
+            "paired_95_ci": [
+              -0.08823154055478875,
+              0.04719848863190947
+            ],
+            "probability_positive": 0.2591
+          },
+          "eval_groups": 223,
+          "mixed_label_groups": 12
+        }
+      },
+      "bidirectional_average": {
+        "fusion_vs_G4": {
+          "paired_95_ci": [
+            0.00547379941780822,
+            0.07515875946263091
+          ],
+          "probability_positive": 0.9888333333333333
+        },
+        "fusion_vs_G9": {
+          "paired_95_ci": [
+            -0.03191386558595438,
+            0.05831395862557859
+          ],
+          "probability_positive": 0.7052666666666667
+        }
+      }
+    }
+  },
+  "chunk_uncertainty_anti_conservative": {
+    "Train_to_Development": {
+      "fusion_vs_G4": {
+        "paired_95_ci": [
+          0.03461746069876681,
+          0.060568516268628025
+        ],
+        "probability_positive": 1.0
+      },
+      "fusion_vs_G9": {
+        "paired_95_ci": [
+          0.032143624556206785,
+          0.06406001225886247
+        ],
+        "probability_positive": 1.0
+      }
+    },
+    "Development_to_Train": {
+      "fusion_vs_G4": {
+        "paired_95_ci": [
+          0.018518048786379967,
+          0.048661658483261816
+        ],
+        "probability_positive": 1.0
+      },
+      "fusion_vs_G9": {
+        "paired_95_ci": [
+          -0.03556128041599479,
+          -0.006531013896689895
+        ],
+        "probability_positive": 0.0024
+      }
+    },
+    "bidirectional_average": {
+      "fusion_vs_G4": {
+        "paired_95_ci": [
+          0.0305687403822206,
+          0.05047915814766889
+        ],
+        "probability_positive": 1.0
+      },
+      "fusion_vs_G9": {
+        "paired_95_ci": [
+          0.0026474028807809357,
+          0.02444351780892095
+        ],
+        "probability_positive": 0.9926
+      }
+    }
+  },
+  "limitations": [
+    "Development was inspected in earlier project iterations, so this is a protocol diagnostic rather than a pristine model-selection test.",
+    "True speaker IDs are unavailable; proxy-cluster bootstrap intervals depend on the proxy map.",
+    "Chunk bootstrap is anti-conservative because chunks from one subject are dependent."
+  ]
+}

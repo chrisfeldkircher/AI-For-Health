@@ -1,0 +1,34 @@
+{
+  "rung_id": "audit_speaker_probe_protocol",
+  "hypothesis": "Evaluating a speaker-ID probe on a different official speaker pool, labeled by nearest train centroid, understates recoverable identity.",
+  "representation": "A2.5 z, seed=42, dim=128",
+  "pseudo_labels": "cache\\pseudo_speakers\\k210_seed42.tsv",
+  "probe": "StandardScaler + cosine nearest centroid",
+  "held_chunk_same_identity": {
+    "n_fit": 7600,
+    "n_eval": 1905,
+    "n_identities_fit": 210,
+    "n_identities_eval": 210,
+    "top1": 0.08766404199475065,
+    "top5": 0.2551181102362205,
+    "nmi": 0.5076479451790205,
+    "uniform_chance_1_over_k": 0.004761904761904762,
+    "distribution_matched_chance": 0.00588078463876226,
+    "majority_baseline": 0.011023622047244094
+  },
+  "cross_official_pool_nearest_train_centroid_labels": {
+    "n_fit": 7600,
+    "n_eval": 9596,
+    "n_identities_fit": 210,
+    "n_identities_eval": 206,
+    "top1": 0.021154647769904125,
+    "top5": 0.06356815339724885,
+    "nmi": 0.2378544661992282,
+    "uniform_chance_1_over_k": 0.004761904761904762,
+    "distribution_matched_chance": 0.005262869945810754,
+    "majority_baseline": 0.05835764902042518
+  },
+  "same_identity_to_cross_pool_top1_ratio": 4.14396131518043,
+  "protocol_mismatch_confirmed": true,
+  "interpretation": "Use held-chunk same-identity classification or pairwise verification to measure identity leakage. Use group-disjoint folds separately to measure cold-classifier generalization. One split cannot serve both roles."
+}

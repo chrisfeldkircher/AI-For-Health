@@ -1,0 +1,624 @@
+{
+  "question": "How reproducible are ECAPA pseudo-speaker partitions within each official side?",
+  "protocol": {
+    "cold_labels_loaded": false,
+    "clustering_scope": "each official side independently",
+    "known_speaker_count_prior_per_side": 210,
+    "embedding": "SpeechBrain ECAPA-VoxCeleb 192d, L2 normalized",
+    "kmeans_seeds": [
+      42,
+      1,
+      2,
+      3,
+      5,
+      20260720
+    ],
+    "spectral_skipped": false
+  },
+  "external_labeled_corpus_calibration": {
+    "libri_en_dev": {
+      "n_items": 600,
+      "n_true_speakers": 40,
+      "n_clusters": 40,
+      "ARI": 0.9964654086796182,
+      "NMI": 0.9983249817041995,
+      "homogeneity": 0.9983099354940377,
+      "completeness": 0.9983400283679112,
+      "v_measure": 0.9983249817041994,
+      "purity": 0.9983333333333333,
+      "fragmentation_mean": 1.025,
+      "fragmentation_median": 1.0,
+      "fragmentation_max": 2,
+      "frac_speakers_single_cluster": 0.975,
+      "cluster_size_min": 14,
+      "cluster_size_median": 15,
+      "cluster_size_max": 16
+    },
+    "mls_de": {
+      "n_items": 741,
+      "n_true_speakers": 56,
+      "n_clusters": 56,
+      "ARI": 0.9626208790661442,
+      "NMI": 0.9879623512052417,
+      "homogeneity": 0.9871467394627291,
+      "completeness": 0.9887793118304892,
+      "v_measure": 0.9879623512052417,
+      "purity": 0.97165991902834,
+      "fragmentation_mean": 1.0892857142857142,
+      "fragmentation_median": 1.0,
+      "fragmentation_max": 2,
+      "frac_speakers_single_cluster": 0.9107142857142857,
+      "cluster_size_min": 2,
+      "cluster_size_median": 15,
+      "cluster_size_max": 16
+    },
+    "mls_de_small": {
+      "n_items": 69,
+      "n_true_speakers": 25,
+      "n_clusters": 25,
+      "ARI": 0.978557046716964,
+      "NMI": 0.9888721002913196,
+      "homogeneity": 0.9927243387115252,
+      "completeness": 0.9850496433072554,
+      "v_measure": 0.9888721002913194,
+      "purity": 0.9855072463768116,
+      "fragmentation_mean": 1.04,
+      "fragmentation_median": 1.0,
+      "fragmentation_max": 2,
+      "frac_speakers_single_cluster": 0.96,
+      "cluster_size_min": 1,
+      "cluster_size_median": 1,
+      "cluster_size_max": 12
+    }
+  },
+  "sides": {
+    "train": {
+      "n_chunks": 9505,
+      "embedding_dim": 192,
+      "k_prior": 210,
+      "kmeans_seed_stability": {
+        "pairs": [
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed1",
+            "ARI": 0.8802753354865775,
+            "NMI": 0.9695139236065519
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed2",
+            "ARI": 0.8982753334355316,
+            "NMI": 0.9732890728945085
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed3",
+            "ARI": 0.8737461982754614,
+            "NMI": 0.969961546473401
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed5",
+            "ARI": 0.8948654306143292,
+            "NMI": 0.9720993501479379
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8918273024812629,
+            "NMI": 0.9713443301077826
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed2",
+            "ARI": 0.8988511444535223,
+            "NMI": 0.9749007519753995
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed3",
+            "ARI": 0.880255906345085,
+            "NMI": 0.9702505216864264
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed5",
+            "ARI": 0.8983541380333117,
+            "NMI": 0.9726136445120488
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8860882854950326,
+            "NMI": 0.9721137890495846
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed3",
+            "ARI": 0.8874024942180935,
+            "NMI": 0.9715720237233338
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed5",
+            "ARI": 0.8962836234874214,
+            "NMI": 0.9726107978198095
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8981363080228286,
+            "NMI": 0.9729931531097993
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed5",
+            "ARI": 0.8929106156957255,
+            "NMI": 0.9722056103230932
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.875943981014211,
+            "NMI": 0.9695185664884147
+          },
+          {
+            "a": "kmeans_seed5",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8765310874905511,
+            "NMI": 0.9700495466092757
+          }
+        ],
+        "ARI_mean": 0.8886498123032632,
+        "ARI_min": 0.8737461982754614,
+        "ARI_max": 0.8988511444535223,
+        "NMI_mean": 0.9716691085684913,
+        "NMI_min": 0.9695139236065519,
+        "NMI_max": 0.9749007519753995
+      },
+      "method_summaries": {
+        "kmeans": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 3,
+          "cluster_size_median": 45.5,
+          "cluster_size_max": 104,
+          "knn10_same_cluster_fraction": 0.9573592845870594,
+          "top1_same_cluster_fraction": 0.9739084692267228,
+          "silhouette_sample": 0.2350599765777588
+        },
+        "agglomerative": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 1,
+          "cluster_size_median": 47.0,
+          "cluster_size_max": 203,
+          "knn10_same_cluster_fraction": 0.9915097317201473,
+          "top1_same_cluster_fraction": 0.9956864807995792,
+          "silhouette_sample": 0.2592368721961975
+        },
+        "hdbscan": {
+          "n_clusters_including_noise": 205,
+          "noise_fraction": 0.027248816412414518,
+          "cluster_size_min": 5,
+          "cluster_size_median": 50.0,
+          "cluster_size_max": 259,
+          "knn10_same_cluster_fraction": 0.9673750657548659,
+          "top1_same_cluster_fraction": 0.9752761704366123,
+          "silhouette_sample": 0.27258768677711487
+        },
+        "spectral": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 12,
+          "cluster_size_median": 44.0,
+          "cluster_size_max": 104,
+          "knn10_same_cluster_fraction": 0.967343503419253,
+          "top1_same_cluster_fraction": 0.9768542872172541,
+          "silhouette_sample": 0.24238139390945435
+        }
+      },
+      "agreement_vs_kmeans_seed42": {
+        "agglomerative": {
+          "ARI": 0.8443451627826719,
+          "NMI": 0.9680930253069676
+        },
+        "hdbscan": {
+          "ARI": 0.8557332311687167,
+          "NMI": 0.9620063628360488
+        },
+        "spectral": {
+          "ARI": 0.9016620008604244,
+          "NMI": 0.9738376070718431
+        }
+      },
+      "fixed_k_neighbour_consensus": {
+        "methods": [
+          "kmeans",
+          "agglomerative",
+          "spectral"
+        ],
+        "edge_definition": "directed ECAPA 10-nearest-neighbour edges",
+        "vote_fraction": {
+          "0": 0.0031983166754339823,
+          "1": 0.006817464492372436,
+          "2": 0.060557601262493425,
+          "3": 0.9294266175697001
+        },
+        "unanimous_same_fraction": 0.9294266175697001,
+        "majority_same_fraction": 0.9899842188321936,
+        "conditional_unanimity_given_any_same": 0.9324087560424714
+      },
+      "elapsed_minutes": 1.2112250367800395
+    },
+    "devel": {
+      "n_chunks": 9596,
+      "embedding_dim": 192,
+      "k_prior": 210,
+      "kmeans_seed_stability": {
+        "pairs": [
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed1",
+            "ARI": 0.9050438224709656,
+            "NMI": 0.9745962636283705
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed2",
+            "ARI": 0.9139316967739358,
+            "NMI": 0.9755531353432324
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed3",
+            "ARI": 0.8964652756762062,
+            "NMI": 0.9731734237017902
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed5",
+            "ARI": 0.8774053776084814,
+            "NMI": 0.9698539006702875
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.9004173303843153,
+            "NMI": 0.9748286109236477
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed2",
+            "ARI": 0.896713546101758,
+            "NMI": 0.9733984446547227
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed3",
+            "ARI": 0.9119997787461495,
+            "NMI": 0.9746157848739857
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed5",
+            "ARI": 0.8916621908304246,
+            "NMI": 0.9708201584595633
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.9091039566284286,
+            "NMI": 0.9756971705308521
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed3",
+            "ARI": 0.9007100828575046,
+            "NMI": 0.973558410414812
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed5",
+            "ARI": 0.8841687560190665,
+            "NMI": 0.9708937929451859
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8962966530555331,
+            "NMI": 0.9735624883077085
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed5",
+            "ARI": 0.8896608497572562,
+            "NMI": 0.971939053300098
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.9055659535142458,
+            "NMI": 0.9737588019600419
+          },
+          {
+            "a": "kmeans_seed5",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8819458880354486,
+            "NMI": 0.9696338989626629
+          }
+        ],
+        "ARI_mean": 0.8974060772306479,
+        "ARI_min": 0.8774053776084814,
+        "ARI_max": 0.9139316967739358,
+        "NMI_mean": 0.9730588892451306,
+        "NMI_min": 0.9696338989626629,
+        "NMI_max": 0.9756971705308521
+      },
+      "method_summaries": {
+        "kmeans": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 3,
+          "cluster_size_median": 46.0,
+          "cluster_size_max": 100,
+          "knn10_same_cluster_fraction": 0.9622967903293039,
+          "top1_same_cluster_fraction": 0.9772822009170488,
+          "silhouette_sample": 0.2326367348432541
+        },
+        "agglomerative": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 1,
+          "cluster_size_median": 46.0,
+          "cluster_size_max": 234,
+          "knn10_same_cluster_fraction": 0.991548561900792,
+          "top1_same_cluster_fraction": 0.9959358065860775,
+          "silhouette_sample": 0.2533080577850342
+        },
+        "hdbscan": {
+          "n_clusters_including_noise": 206,
+          "noise_fraction": 0.03313880783659858,
+          "cluster_size_min": 5,
+          "cluster_size_median": 48.5,
+          "cluster_size_max": 318,
+          "knn10_same_cluster_fraction": 0.9634014172571905,
+          "top1_same_cluster_fraction": 0.9696748645268862,
+          "silhouette_sample": 0.2642861604690552
+        },
+        "spectral": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 12,
+          "cluster_size_median": 46.0,
+          "cluster_size_max": 107,
+          "knn10_same_cluster_fraction": 0.9744893705710713,
+          "top1_same_cluster_fraction": 0.9831179658190913,
+          "silhouette_sample": 0.24536502361297607
+        }
+      },
+      "agreement_vs_kmeans_seed42": {
+        "agglomerative": {
+          "ARI": 0.8184001298241036,
+          "NMI": 0.9660952852962298
+        },
+        "hdbscan": {
+          "ARI": 0.8291911195914672,
+          "NMI": 0.960763225878178
+        },
+        "spectral": {
+          "ARI": 0.9148820521662051,
+          "NMI": 0.9771238712819521
+        }
+      },
+      "fixed_k_neighbour_consensus": {
+        "methods": [
+          "kmeans",
+          "agglomerative",
+          "spectral"
+        ],
+        "edge_definition": "directed ECAPA 10-nearest-neighbour edges",
+        "vote_fraction": {
+          "0": 0.003220091704877032,
+          "1": 0.0068674447686536055,
+          "2": 0.04827011254689454,
+          "3": 0.9416423509795748
+        },
+        "unanimous_same_fraction": 0.9416423509795748,
+        "majority_same_fraction": 0.9899124635264693,
+        "conditional_unanimity_given_any_same": 0.9446843211257593
+      },
+      "elapsed_minutes": 1.1850299080212912
+    },
+    "test": {
+      "n_chunks": 9551,
+      "embedding_dim": 192,
+      "k_prior": 210,
+      "kmeans_seed_stability": {
+        "pairs": [
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed1",
+            "ARI": 0.9025573889970157,
+            "NMI": 0.9741247856393795
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed2",
+            "ARI": 0.8947660748298383,
+            "NMI": 0.9724193423724007
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed3",
+            "ARI": 0.8855541192371231,
+            "NMI": 0.9718295636548538
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed5",
+            "ARI": 0.8996387579542079,
+            "NMI": 0.9740458603441337
+          },
+          {
+            "a": "kmeans_seed42",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8942175226159904,
+            "NMI": 0.9730033522883798
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed2",
+            "ARI": 0.880957726724809,
+            "NMI": 0.9704133947357746
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed3",
+            "ARI": 0.8760728219107186,
+            "NMI": 0.968954328278408
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed5",
+            "ARI": 0.8844494609070006,
+            "NMI": 0.970871573801855
+          },
+          {
+            "a": "kmeans_seed1",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8965954818635775,
+            "NMI": 0.9716654640910081
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed3",
+            "ARI": 0.8855751865533658,
+            "NMI": 0.9705838889996902
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed5",
+            "ARI": 0.8937508459295768,
+            "NMI": 0.9715861490382477
+          },
+          {
+            "a": "kmeans_seed2",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8857892098392333,
+            "NMI": 0.9704301163535444
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed5",
+            "ARI": 0.886831883281154,
+            "NMI": 0.9711492919747344
+          },
+          {
+            "a": "kmeans_seed3",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8832634379874681,
+            "NMI": 0.9701852350534125
+          },
+          {
+            "a": "kmeans_seed5",
+            "b": "kmeans_seed20260720",
+            "ARI": 0.8710334540335947,
+            "NMI": 0.9687989336109553
+          }
+        ],
+        "ARI_mean": 0.8880702248443115,
+        "ARI_min": 0.8710334540335947,
+        "ARI_max": 0.9025573889970157,
+        "NMI_mean": 0.9713374186824517,
+        "NMI_min": 0.9687989336109553,
+        "NMI_max": 0.9741247856393795
+      },
+      "method_summaries": {
+        "kmeans": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 2,
+          "cluster_size_median": 44.0,
+          "cluster_size_max": 104,
+          "knn10_same_cluster_fraction": 0.9667678777091404,
+          "top1_same_cluster_fraction": 0.9792691864726206,
+          "silhouette_sample": 0.23847509920597076
+        },
+        "agglomerative": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 1,
+          "cluster_size_median": 47.5,
+          "cluster_size_max": 195,
+          "knn10_same_cluster_fraction": 0.992723275049733,
+          "top1_same_cluster_fraction": 0.9959166579415768,
+          "silhouette_sample": 0.25868597626686096
+        },
+        "hdbscan": {
+          "n_clusters_including_noise": 206,
+          "noise_fraction": 0.02408124803685478,
+          "cluster_size_min": 5,
+          "cluster_size_median": 49.0,
+          "cluster_size_max": 230,
+          "knn10_same_cluster_fraction": 0.9713433148361428,
+          "top1_same_cluster_fraction": 0.9769657627473562,
+          "silhouette_sample": 0.2712671458721161
+        },
+        "spectral": {
+          "n_clusters_including_noise": 210,
+          "noise_fraction": 0.0,
+          "cluster_size_min": 13,
+          "cluster_size_median": 43.0,
+          "cluster_size_max": 104,
+          "knn10_same_cluster_fraction": 0.9750183226887237,
+          "top1_same_cluster_fraction": 0.9840854360799917,
+          "silhouette_sample": 0.24433504045009613
+        }
+      },
+      "agreement_vs_kmeans_seed42": {
+        "agglomerative": {
+          "ARI": 0.8633789697321638,
+          "NMI": 0.9730029798430619
+        },
+        "hdbscan": {
+          "ARI": 0.879166515896474,
+          "NMI": 0.9666525386719667
+        },
+        "spectral": {
+          "ARI": 0.9173954279286947,
+          "NMI": 0.978031818336139
+        }
+      },
+      "fixed_k_neighbour_consensus": {
+        "methods": [
+          "kmeans",
+          "agglomerative",
+          "spectral"
+        ],
+        "edge_definition": "directed ECAPA 10-nearest-neighbour edges",
+        "vote_fraction": {
+          "0": 0.002544236205632918,
+          "1": 0.004941890901476285,
+          "2": 0.047974034132551566,
+          "3": 0.9445398387603392
+        },
+        "unanimous_same_fraction": 0.9445398387603392,
+        "majority_same_fraction": 0.9925138728928908,
+        "conditional_unanimity_given_any_same": 0.9469491009478623
+      },
+      "elapsed_minutes": 1.1208096861839294
+    }
+  },
+  "headline": {
+    "mean_kmeans_pairwise_seed_ARI_across_sides": 0.8913753714594076,
+    "minimum_side_kmeans_pairwise_seed_ARI": 0.8710334540335947,
+    "mean_fixed_k_cross_method_ARI": 0.876677290549044
+  },
+  "limitations": [
+    "URTIC true speaker IDs are unavailable, so agreement is not accuracy.",
+    "HDBSCAN chooses its own granularity and should not be expected to match fixed k exactly.",
+    "All methods use the same ECAPA representation; a second embedding family is still required for cross-view validation.",
+    "Cold labels are deliberately excluded and must not be used to choose a speaker partition."
+  ]
+}

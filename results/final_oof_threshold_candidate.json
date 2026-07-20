@@ -1,0 +1,161 @@
+{
+  "architecture": "monolithic balanced-LR G4 + G9; train-logit zscore; fixed equal average",
+  "threshold_policy": "median of six repeated 5-fold grouped-OOF UAR-optimal thresholds",
+  "test_data_used_for_threshold_or_model_selection": false,
+  "proxy_grouping": {
+    "train": {
+      "construction": "KMeans(k=210, n_init=10, seed=42) on train ECAPA only",
+      "n_groups": 210,
+      "offset": 0,
+      "mixed_label_groups": 15
+    },
+    "devel": {
+      "construction": "KMeans(k=210, n_init=10, seed=42) on devel ECAPA only",
+      "n_groups": 210,
+      "offset": 210,
+      "mixed_label_groups": 9
+    }
+  },
+  "oof_thresholds": [
+    0.3403753193161029,
+    0.297993663106023,
+    0.39866722436614604,
+    0.21073940331279817,
+    0.39505249515331575,
+    0.23527834249698626
+  ],
+  "threshold_mean": 0.31301774129189536,
+  "threshold_std": 0.07942791365437762,
+  "final_median_threshold": 0.31918449121106296,
+  "oof_rows": [
+    {
+      "seed": 42,
+      "threshold": 0.3403753193161029,
+      "fixed_zero": {
+        "uar": 0.668580663499507,
+        "recall_C": 0.817768803634528,
+        "recall_NC": 0.5193925233644859,
+        "predicted_cold_rate": 0.5155751007800639,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6843846270881788,
+        "recall_C": 0.685007571933367,
+        "recall_NC": 0.6837616822429906,
+        "predicted_cold_rate": 0.3544840584262604,
+        "threshold": 0.3403753193161029
+      },
+      "roc_selected_uar_check": 0.6843846270881788
+    },
+    {
+      "seed": 1,
+      "threshold": 0.297993663106023,
+      "fixed_zero": {
+        "uar": 0.6730131488627946,
+        "recall_C": 0.8293791014639071,
+        "recall_NC": 0.5166471962616822,
+        "predicted_cold_rate": 0.519239830375373,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6860084500181631,
+        "recall_C": 0.7137809187279152,
+        "recall_NC": 0.6582359813084112,
+        "predicted_cold_rate": 0.38034657871315636,
+        "threshold": 0.297993663106023
+      },
+      "roc_selected_uar_check": 0.6860084500181631
+    },
+    {
+      "seed": 2,
+      "threshold": 0.39866722436614604,
+      "fixed_zero": {
+        "uar": 0.6672252196096562,
+        "recall_C": 0.8056537102473498,
+        "recall_NC": 0.5287967289719626,
+        "predicted_cold_rate": 0.5058897439924611,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6781364846886544,
+        "recall_C": 0.6426047450782433,
+        "recall_NC": 0.7136682242990654,
+        "predicted_cold_rate": 0.32328150358619967,
+        "threshold": 0.39866722436614604
+      },
+      "roc_selected_uar_check": 0.6781364846886544
+    },
+    {
+      "seed": 3,
+      "threshold": 0.21073940331279817,
+      "fixed_zero": {
+        "uar": 0.6683826816202523,
+        "recall_C": 0.8132256436143362,
+        "recall_NC": 0.5235397196261682,
+        "predicted_cold_rate": 0.5113868383854249,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6748949423731052,
+        "recall_C": 0.7314487632508834,
+        "recall_NC": 0.618341121495327,
+        "predicted_cold_rate": 0.4179362337050416,
+        "threshold": 0.21073940331279817
+      },
+      "roc_selected_uar_check": 0.6748949423731052
+    },
+    {
+      "seed": 5,
+      "threshold": 0.39505249515331575,
+      "fixed_zero": {
+        "uar": 0.666717961994084,
+        "recall_C": 0.8132256436143362,
+        "recall_NC": 0.5202102803738318,
+        "predicted_cold_rate": 0.5143709753416051,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6791353135157832,
+        "recall_C": 0.6521958606764261,
+        "recall_NC": 0.7060747663551402,
+        "predicted_cold_rate": 0.33108214229621485,
+        "threshold": 0.39505249515331575
+      },
+      "roc_selected_uar_check": 0.679135313515783
+    },
+    {
+      "seed": 20260720,
+      "threshold": 0.23527834249698626,
+      "fixed_zero": {
+        "uar": 0.6738355203876075,
+        "recall_C": 0.8192831903079253,
+        "recall_NC": 0.5283878504672898,
+        "predicted_cold_rate": 0.5076697555101827,
+        "threshold": 0.0
+      },
+      "selected_on_same_oof_diagnostic": {
+        "uar": 0.6888798138389467,
+        "recall_C": 0.7415446744068652,
+        "recall_NC": 0.6362149532710281,
+        "predicted_cold_rate": 0.40296319564420713,
+        "threshold": 0.23527834249698626
+      },
+      "roc_selected_uar_check": 0.6888798138389467
+    }
+  ],
+  "candidate": {
+    "path": "E:\\Development\\Research\\Advanced AI in Health\\results\\submission_candidate_G4_G9_oof_threshold_monolithic.csv",
+    "sha256": "bd8edf7a1c75f53576708f294c86673c7e93940dcae8c734a8b3bce3805e7d03",
+    "rows": 9551,
+    "predicted_cold_rate": 0.3691760025128259,
+    "agreement_with_fixed_zero": 0.8555125117788713,
+    "changed_predictions": 1380,
+    "changed_C_to_NC": 1380,
+    "changed_NC_to_C": 0
+  },
+  "fixed_zero_fallback": {
+    "path": "E:\\Development\\Research\\Advanced AI in Health\\results\\submission_candidate_G4_G9_fixed_monolithic.csv",
+    "predicted_cold_rate": 0.5136634907339546
+  },
+  "performance_warning": "Test labels are unavailable; no Test UAR is computed or inferred."
+}

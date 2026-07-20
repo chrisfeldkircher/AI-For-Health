@@ -1,0 +1,33 @@
+{
+  "question": "Does the full ComParE-2016 openSMILE representation improve the frozen G4+CQT pipeline?",
+  "run_date": "2026-07-20",
+  "script": "verify_opensmile_full.py",
+  "standalone_grouped_outer_cv": {
+    "protocol": "Train-only StratifiedGroupKFold(5), ECAPA proxy groups, seed=20260720, balanced logistic regression C=1, fixed threshold zero",
+    "ComParE_2016_6373d": {
+      "mean_UAR": 0.5507,
+      "fold_SD": 0.0530
+    },
+    "eGeMAPS_88d": {
+      "mean_UAR": 0.5383,
+      "fold_SD": 0.0734
+    },
+    "G4_reference_UAR": 0.592,
+    "caveat": "Fold SD from one five-fold partition is not a confidence interval or repeated-partition uncertainty."
+  },
+  "held_chunk_proxy_identity_probe": {
+    "target": "ECAPA k210 pseudo-speaker, not ground-truth speaker ID",
+    "ComParE_2016_top1": 0.875,
+    "eGeMAPS_top1": 0.859,
+    "majority_baseline": 0.011,
+    "interpretation": "Both representations strongly recover the ECAPA proxy partition; call this proxy-identity recoverability, not 87.5% true-speaker accuracy."
+  },
+  "fixed_official_train_to_development_fusion": {
+    "metric": "AUC",
+    "G4_plus_CQT_equal_z_average": 0.7710,
+    "G4_plus_CQT_plus_ComParE_equal_z_average": 0.7475,
+    "ComParE_alone": 0.6237,
+    "three_way_minus_two_way": -0.0235
+  },
+  "verdict": "The exact full-ComParE balanced-logistic and fixed-equal-fusion candidates do not improve the frozen submission pipeline. This closes that submission branch without further Development selection. It does not prove that all openSMILE classifiers, all fusion rules, or all future feature families are universally incapable of improvement."
+}

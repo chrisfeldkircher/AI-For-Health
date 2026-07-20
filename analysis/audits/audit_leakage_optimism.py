@@ -21,7 +21,7 @@ import torch
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import normalize
 
-ROOT = Path(__file__).resolve().parent
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "model").is_dir() and (p / "cache").is_dir())
 sys.path.insert(0, str(ROOT / "model"))
 
 from data.cached_dataset import PooledCacheDataset, stratified_grouped_split, load_labels

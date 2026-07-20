@@ -1,0 +1,74 @@
+{
+  "question": "Does an independent TRILLsson view support side-local ECAPA speaker proxies?",
+  "side": "train",
+  "n_chunks": 9505,
+  "cold_labels_loaded": false,
+  "known_speaker_count_prior": 210,
+  "metadata": {
+    "model": "google/trillsson/tensorFlow2/1/1",
+    "model_path": "C:\\Users\\Chris PC\\.cache\\kagglehub\\models\\google\\trillsson\\tensorFlow2\\1\\1",
+    "sample_rate": 16000,
+    "window_seconds": 2.0,
+    "max_windows_per_file": 3,
+    "segment_pooling": "mean then L2 normalize",
+    "timing": {
+      "elapsed_seconds": 81.40923476219177,
+      "n_files": 9505,
+      "n_windows": 26217,
+      "files_per_second": 116.75579592125499
+    }
+  },
+  "trillsson_kmeans_seed_stability": {
+    "pairs": [
+      {
+        "a": 42,
+        "b": 1,
+        "ARI": 0.5931838539366092,
+        "NMI": 0.8432887225997141
+      },
+      {
+        "a": 42,
+        "b": 2,
+        "ARI": 0.5912423700403358,
+        "NMI": 0.8418271642212042
+      },
+      {
+        "a": 1,
+        "b": 2,
+        "ARI": 0.5886536394277605,
+        "NMI": 0.8431683497140456
+      }
+    ],
+    "ARI_mean": 0.5910266211349019,
+    "ARI_min": 0.5886536394277605,
+    "NMI_mean": 0.8427614121783212
+  },
+  "agreement_vs_trillsson_seed42": {
+    "kmeans": {
+      "ARI": 0.5657033338899177,
+      "NMI": 0.8210145499800764
+    },
+    "agglomerative": {
+      "ARI": 0.5333180727817022,
+      "NMI": 0.8160410698864954
+    },
+    "spectral": {
+      "ARI": 0.5613564564635329,
+      "NMI": 0.8199762326465057
+    }
+  },
+  "cross_view_retrieval": {
+    "ecapa_partition_cohesion_in_trillsson_knn10": {
+      "kmeans": 0.7694792214623882,
+      "agglomerative": 0.8164650184113624,
+      "spectral": 0.7694371383482378
+    },
+    "trillsson_partition_cohesion_in_ecapa_knn10": 0.6447553918990006
+  },
+  "embedding_sha256": "3d825803b451742e009326f35599f0b6de62d6df340f2269c85b064282f53a1a",
+  "limitations": [
+    "URTIC speaker IDs are unavailable, so cross-view agreement is not accuracy.",
+    "TRILLsson1 is a general paralinguistic model, not a dedicated speaker verifier.",
+    "Cold labels are excluded and cannot be used to select or tune this partition."
+  ]
+}

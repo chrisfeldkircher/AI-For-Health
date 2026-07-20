@@ -1,0 +1,33 @@
+{
+  "question": "Was the historical Development sub-split disjoint under a Development-local ECAPA proxy?",
+  "grouping_used_to_construct_historical_split": "Train-fitted shipped k210 labels",
+  "independent_audit_partition": "Development-local raw-L2 ECAPA KMeans k=210 seed=42",
+  "seeds": [
+    {
+      "seed": 42,
+      "crossing_groups": 201,
+      "total_groups": 210,
+      "recordings_in_crossing_groups": 9399,
+      "recording_fraction_in_crossing_groups": 0.9794706127553147,
+      "cross_boundary_nearest_neighbor_fraction": 0.2745935806586077
+    },
+    {
+      "seed": 123,
+      "crossing_groups": 195,
+      "total_groups": 210,
+      "recordings_in_crossing_groups": 9051,
+      "recording_fraction_in_crossing_groups": 0.9432055022926219,
+      "cross_boundary_nearest_neighbor_fraction": 0.23572321800750312
+    },
+    {
+      "seed": 7,
+      "crossing_groups": 197,
+      "total_groups": 210,
+      "recordings_in_crossing_groups": 9307,
+      "recording_fraction_in_crossing_groups": 0.9698832847019592,
+      "cross_boundary_nearest_neighbor_fraction": 0.25687786577740723
+    }
+  ],
+  "corrected_side_local_seed42_overlapping_groups": 0,
+  "interpretation": "The group-crossing and cross-boundary-nearest-neighbor diagnostics show that the historical boundary is not disjoint under the Development-local speaker proxy. Neither statistic estimates or bounds UAR optimism. A separate downstream comparison is required for score impact."
+}

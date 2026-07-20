@@ -2,12 +2,40 @@
 \section{Conclusion}
 \label{sec:conc}
 
-This paper revisits URTIC 2017 as a structured investigation rather than a pure benchmark-chasing exercise. Starting from challenge-grounded baselines, a frozen WavLM-Large backbone with an audit-derived layer-weight prior and constrained late fusion gives a strong positive system, which we report shadow-first: the multi-K ensemble attains shadow-mean UAR $0.6940 \pm 0.0157$ over 10 speaker-disjoint devel partitions, and under the \emph{same} protocol a classical ComParE-2016$+$LR control attains $0.5853 \pm 0.0083$ --- a substantial $\Delta\,{+}0.109$ same-protocol margin (over an LR control, not a tuned SVM) that does not depend on any hidden-test extrapolation. On the single fixed canonical partition the system reaches $0.7111$ (per-seed K=2 $0.7037 \pm 0.0060$), adjacent to the 2017 hidden-test $0.710$; we treat that as one favourable partition within the measured partition variance, not as matching or beating the baseline.
+This work revisits URTIC 2017 as an evaluation audit rather than a hidden-test
+score claim. In the historical experiments, a frozen WavLM-Large system with an
+audit-derived prior and constrained fusion outperformed a matched
+ComParE-2016$+$LR control on the same pseudo-grouped Development partitions
+($0.6940 \pm 0.0157$ versus $0.5853 \pm 0.0083$). A later independent overlap
+audit found, however, that the Train-centroid IDs used for those boundaries
+fragment Development-local ECAPA structure. Those measurements are therefore
+same-partition architecture comparisons, not speaker-disjoint estimates, and
+their canonical $0.7111$ point is not an expected hidden-test result.
 
-The stronger contribution, however, is the audit. Speaker-grouped evaluation, negative controls, and shadow-split robustness checks show that several plausible de-confounding interventions do not improve over the simpler cold-CE pipeline within the tested frozen-backbone scope: data-level cross-speaker embedding mixup has an empty $\alpha$-axis operating window (M9); representation-level contrastive learning with speaker-masked positives is dominated by a simpler bottlenecked cold-CE head (M10, M11); and gradient-level DANN/MDD adversaries at both the projection bottleneck and the un-bottlenecked 4096-d substrate fail because the discriminator memorises training-speaker fingerprints rather than learning a useful generalising speaker direction (M12, M13, M14).
+The ECAPA representation itself remains supported: side-local raw-space
+KMeans--HDBSCAN all-recording ARI is $0.856/0.829/0.879$ on
+train/devel/test; excluding HDBSCAN noise gives $0.930/0.929/0.944$ at
+$97.28/96.69/97.59\,\%$ coverage. This distinction is the central lesson:
+validating a representation does not validate labels transferred to a new
+official side. Proxy grouping must be fitted side-locally, cold labels must
+never select its representation or clustering, and whole-official-side transfer
+is the load-bearing performance check when true identities are unavailable.
 
-The resulting M8--M19 discipline set is therefore best understood as the paper's main transferable output. Together with the same feature-family LR control and the shadow-split robustness framing, it turns the project into more than a final-score report: it becomes a clearer account of what works, what does not, and which conclusions about small-data paralinguistic cold detection on URTIC remain credible after stronger auditing.
+The historical negative-control trail---including mixup, speaker-masked
+contrastive learning, adversarial heads, calibration and augmentation---remains
+useful within its matched experimental boundaries. It does not constitute a
+definitive speaker-deconfounding closure until retained claims are reproduced
+under corrected side-local grouping or whole-side transfer.
 
-\paragraph{Reproducibility.} All cell sources, results JSONs, and per-rung diagnostic logs are tracked in the project repository under \texttt{model/run.ipynb} and \texttt{results/}. Trained head checkpoints are cached under \path|cache/microsoft_wavlm-large/|; downstream rungs reference checkpoints by seed and rung name (e.g., \path|head_A2grouped_honestprior_seed{42, 123, 7, 999, 31337}.pt|). We document every locked $\beta^*$ and $\tau^*$ per seed, every standalone candidate UAR, and every adversary-health diagnostic in the JSONs to enable straightforward replication.
+\paragraph{Reproducibility.} The exact overlap audit is implemented in
+\texttt{audit\_shipped\_group\_overlap.py}; the metric-policy reconciliation and
+all-recording/non-noise results are stored in
+\texttt{results/speaker\_ari\_reconciliation.json}. Model and ablation artifacts
+remain under \texttt{model/run.ipynb}, \texttt{cache/}, and \texttt{results/}.
 
-\paragraph{Future work.} Within the frozen-backbone commitment, two HuBERT-base variants have now been ruled out: mean-pooled across layers (standalone cold-LR UAR $0.5396$, M14 pre-flight failed; Section~\ref{ssec:k3_hubert}) and \emph{with learned layer-weighted softmax} (standalone $0.6217 \pm 0.029$ cleared the M14 threshold but K=3 fusion failed by logit-correlation with the WavLM-A2.5 anchor; Sections~\ref{ssec:k3_hubert}, \ref{ssec:standalone_predictor}). The latter result quantitatively decomposed the architectural advantage into $\sim 71\%$ from the audited LW softmax pooling and $\sim 29\%$ from backbone capacity / pretraining-corpus diversity --- both contribute, refuting the strong form of either hypothesis. Two ensemble-aggregation axes (calibration / stacked weighting and test-time augmentation) have also been ruled out within the architectures tested (Section~\ref{ssec:ensemble_defence}); these closures contributed M15--M17 to the methodology table. The remaining untested variants therefore narrow to: \emph{Multi-FM (recipe-orthogonal candidates only):} (i) HuBERT discrete-token histograms, which capture syllable-rate and utterance-rhythm patterns that pooled-stat representations average out --- a structurally-different feature with much lower per-token speaker-info capacity, and crucially \emph{not subject to the audit-recipe-mirror correlation issue} that closed HuBERT-A2.5 at K=3 (highest-information remaining axis). (ii) HuBERT-large mean-pooled, which has $\sim 3.5\times$ more capacity than HuBERT-base --- a confirmation test of the $\sim 29\%$ capacity contribution we measured on HuBERT-A2.5. \emph{Classical baseline alignment (partially done):} the 2017 ComParE Cold baseline used a 6373-d ComParE-2016 feature set with an SVM. We ran the same feature family with a regularised LR cold probe under our speaker-grouped subsplit (Section~\ref{ssec:multi_k}): shadow-mean $0.5853 \pm 0.0083$, with the FM-based system leading by $\Delta\,+0.109$ on the same strict protocol. A full replication of the original \emph{SVM} (vs our LR) under this protocol remains future work --- it would tighten the architecture-vs-protocol attribution but is unlikely to change the $+0.10{+}$-scale dominance conclusion. \emph{Beyond the rejected TTA designs:} M17 narrows future TTA work to perturbations that survive WavLM's input normalisation (additive noise with zero mean) or operate at the pooled-stats stage (SpecAugment-style masking on the $[L, 4D]$ pooled tensor); waveform-level multiplicative or temporal perturbations are now empirically ruled out for FM-substrate ensembling on cold detection. \emph{Outside the frozen-backbone commitment:} a full transformer fine-tune at the layer-weight-open scope (with the M10/M12/M13 control discipline applied) could test whether the de-confounding closure generalises beyond frozen-substrate scopes --- a meaningfully separate research question. The HuBERT discrete-token variant (i) is now the highest-priority untested path because it bypasses the structural correlation that closed HuBERT-A2.5.
+\paragraph{Future work.} The immediate priority is protocol correction, not a
+new backbone. Any WavLM result retained as a central paper claim should be
+rerun with Development-local groups, with all choices frozen on Train and the
+whole official Development side used for evaluation. The prepared blinded
+pair audit can provide an identity check independent of clustering-method
+agreement if requested by reviewers.
