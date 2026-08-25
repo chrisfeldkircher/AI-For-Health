@@ -1,45 +1,56 @@
-# Paper: Honesty-Audited Late Fusion for Cold Detection
+# URTIC course report
 
-LaTeX source for the URTIC cold-detection write-up, structured for the TUM Hauptseminar IEEE-style template (`latex8.sty`/`latex8.bst`/`latex8.bib`, IEEE Computer Society 2-column conference style).
+This directory contains the evaluation-aware rewrite of the Group 3 final
+report. The compiled paper is **7 pages including references**, below the
+course maximum of 8 pages. There is intentionally no appendix.
 
-## Layout
+## Paper structure
 
-```text
-paper/
-  main.tex              top-level document; uses \usepackage{latex8}; \input's section files
-  references.bib        BibTeX bibliography (cite-key-keyed)
-  sections/
-    01_introduction.tex
-    02_related_work.tex
-    03_background.tex
-    04_method.tex
-    05_deconfounding.tex
-    06_results.tex
-    07_discussion.tex
-    08_conclusion.tex
-  README.md             this file
-```
+- `main.tex`: ACM `acmart` conference template, title/authors, abstract and AI-use disclosure
+- `sections/01_introduction.tex`: problem, turning point and research questions
+- `sections/02_related_work.tex`: ComParE 2017, modern representations and confounding
+- `sections/03_background.tex`: URTIC, UAR and the corrected evaluation design
+- `sections/04_method.tex`: the three submitted model families
+- `sections/05_deconfounding.tex`: hidden-Test and corrected diagnostic protocols
+- `sections/06_results.tex`: five submissions, whole-side evidence and negative controls
+- `sections/07_discussion.tex`: lessons learned, limitations, ethics and what to change
+- `sections/08_conclusion.tex`: conclusion
+- `references.bib`: bibliography
+- `main.pdf`: compiled report
 
-## Compiling
-
-The TUM template ships as `Hauptseminar_IEEE_style_LaTeX.zip` from <https://www.ce.cit.tum.de/fileadmin/w00cgn/lmt/Templates/Hauptseminar_IEEE_style_LaTeX.zip>. Unzip into this `paper/` directory so `latex8.sty`, `latex8.bst` and friends sit alongside `main.tex`. Then:
+## Compile
 
 ```bash
-pdflatex main
-bibtex main
-pdflatex main
-pdflatex main
+latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-Or via `latexmk`:
+The current build has no unresolved citations, references or overfull boxes.
+The remaining underfull-box messages are non-fatal line-spacing notices in the
+two-column layout.
 
-```bash
-latexmk -pdf main.tex
-```
+## Evidence sources
 
-## Notes for editors
+Load-bearing numbers are drawn from:
 
-- All numerical results in the body cite from project files: `results/A2_grouped_honestprior.json`, `results/A5b_grouped_honestprior_betasweep_extended.json`, `results/A5b_k2_5seed_lock.json`, `results/A5b_k2_5seed_speaker_probes.json`, `results/A5b_k2_5seed_ensemble.json`, `results/A5b_k3_egemaps_5seed.json`, the A5.5/A6/A7/A7c JSON files. Don't change a number in the paper without updating the source JSON path in the relevant `\cite{}` or footnote.
-- Methodological-contribution paragraphs (M8 through M14) trace to `EXPLAINER.md §14.1`. Editing one should bring its EXPLAINER counterpart along.
-- The cumulative-stack table in `06_results.tex` is the load-bearing figure; it's reproduced verbatim from `plan.md §4.11.1.4` cumulative-final-state table.
-- The de-confounding ladder closure (data / representation-head / representation-LW+adversary) is the negative-result spine. See `plan.md §4.10.1.3` for the v1→v2 worked example and `EXPLAINER.md §13` diary entries for the per-rung diagnostic chain.
+- `../presentation/ML4Health_Group3_Final_TUM_version_2.pdf`
+- `../results/audit_evaluation_protocol.json`
+- `../results/shipped_group_overlap_audit.json`
+- `../results/fixed_g4_g9_repeated_cv.json`
+- `../results/eval_independent_official_split_fusion.json`
+- `../results/eval_independent_threshold_policy.json`
+- `../results/corrected_outer_cv_foundations.json`
+- `../results/reconciled_architecture_recommendation.md`
+
+The full project-wide record of attempted models, controls, negative results,
+evaluation caveats and lessons is in
+`../EXPERIMENT_INVENTORY_AND_LEARNINGS.md`.
+
+The pre-rewrite source tree is archived at
+`../../paper_before_8page_rewrite_20260825.tar.gz`.
+
+## Final author check
+
+Before submission, the group should confirm the author order/affiliation,
+course-specific filename requirements, and whether Moodle expects anonymous
+or named submission. The generative-AI disclosure is included because the
+course material requires disclosure when such tools are used.

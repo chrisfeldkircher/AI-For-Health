@@ -1,0 +1,93 @@
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+
+\documentclass[sigconf]{acmart}
+
+%% --- packages required by our sections (tables, figures, macros) ----------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc}
+\setlength{\headheight}{15.2pt}
+
+\newcommand{\etal}{\emph{et al.}}
+\newcommand{\C}{\mathrm{C}}
+\newcommand{\NC}{\mathrm{NC}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}p{3.0cm}}
+%% -------------------------------------------------------------------------
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+% --- Author Metadata here ---
+\setcopyright{acmcopyright}
+\acmConference[ML4Health, Chair of Health Informatics]{Advanced Practical Course -- Machine Learning for Health, Chair of Health Informatics}{2026}{TUM University Hospital, Germany}
+%\acmPrice{}
+\acmISBN{}
+\acmDOI{}
+\settopmatter{printccs=false}
+% --- End of Author Metadata ---
+
+\begin{document}
+\sloppy
+\setlength{\emergencystretch}{3em}
+
+%%% STUDENTS UPDATES START %%%
+\newcommand{\studentName}{Akshat Chouksey{,} Christoph Feldkircher{,} Ming Yuan Lee}
+\newcommand{\studentEmail}{\{{,} {,}ming.lee\}@tum.de}
+\newcommand{\supervisorName}{Anika Spiesberger{,} Xin Jing}
+\title{Speaker-disjoint evaluation for cold detection on URTIC}
+%% Alternative title used in the local draft:
+%% \title{When the Number Does Not Transfer: Evaluation-Aware Cold Detection on URTIC}
+%%% STUDENTS UPDATES END %%%
+
+\author{\studentName}
+\email{\studentEmail}
+\author{Supervisor(s): \supervisorName}
+\affiliation{%
+    \institution{Technical University of Munich (TUM)}
+    \city{Munich}
+    \country{Germany}
+}
+
+\renewcommand{\shortauthors}{\studentName}
+
+\input{sections/00_abstract}
+
+\keywords{
+computational paralinguistics, speech health, cold detection, speaker
+confounding, domain adaptation, evaluation methodology}
+
+\maketitle
+
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_background}
+\input{sections/04_method}
+\input{sections/05_deconfounding}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
+\section*{Generative AI Disclosure}
+Generative AI tools were used to assist with code review during the project,
+organization of experiment artifacts, and language and \LaTeX{} editing of
+this report. The authors checked the reported numbers against the stored
+results and remain responsible for the experimental choices, interpretation
+and final text.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
